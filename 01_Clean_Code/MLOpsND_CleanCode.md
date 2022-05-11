@@ -9,11 +9,14 @@ The nanodegree is composed of four modules:
 3. Deploying a Scalable ML Pipeline in Production
 4. ML Model Scoring and Monitoring
 
-Each module has a folder with its respective notes.
+Each module has a folder with its respective notes. This folder and file refer to the **first** module: **Clean Code Principles**.
 
-Additionally, note that:
+Note that:
 - `TODO`
 - `TODO`
+
+Mikel Sagardia, 2022.
+No guarantees.
 
 ## Practical Installation Notes
 
@@ -23,5 +26,9 @@ I basically followed the installation & setup guide from `TODO`.
 # TODO
 ```
 
-Mikel Sagardia, 2022.
-No guarantees.
+## Overview of Contents
+
+1. A
+2. B
+
+## 1. A
