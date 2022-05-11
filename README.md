@@ -19,8 +19,24 @@ Additionally, note that:
 
 I basically followed the installation & setup guide from `TODO`.
 
+We need to install:
+
+- Python 3.X
+- Anaconda
+- Machine Learning libraries: Scikit-Learn, Matplotlib, Pandas, Seaborn, Numpy, etc.
+- Git
+- GitHub account
+
 ```bash
-# TODO
+conda create -n ds python=3.7
+conda install jupyter numpy pandas matplotlib scipy sympy cython numba pytables jupyterlab pip -y
+conda install scikit-learn scikit-image -y
+conda install -c pytorch pytorch -y
+conda install statsmodels -y
+conda install seaborn -y
+conda install pandas-datareader -y
+# ...
+conda activate ds
 ```
 
 Mikel Sagardia, 2022.
