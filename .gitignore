@@ -1,0 +1,7 @@
+git_howto.txt
+keras_tensorflow_guide.txt
+python_manual.txt
+sklearn_scipy_sympy_stat_guide.txt
+.vscode
+__pycache__
+.DS_Store
