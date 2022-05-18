@@ -69,4 +69,249 @@ Typical actions for clean code:
 
 ## 2. Lesson 2: Coding Best Practices
 
+### Clean and Modular Code
 
+Clean code = readable, simple, concise.
+
+Modular code = functions and modules/files used extensively; that facilitates re-usability of code pieces and avoid re-programming.
+
+DRY Principle = Don't repeat yourself.
+
+**Variable names** should be as descriptive as possible, so that no explanatory comments are necessary!
+
+- Be descriptive and imply type:
+	- `booleans`: use `is_` or `has_`
+	- functions: try to use verbs
+	- variables: try to use nouns
+	- long names are not the same as descriptive... function names should not include implementation details!
+- Be consistent and clearly differentiate: better `age_list` than `ages`.
+- Avoid abbreviations and single letters, unless the audience know them. Exceptions: counters and math variables, e.g., `i, j, k, x, y, z, t`.
+- Use standard library functions when possible: `math.sqrt()` instead of `**0.5`, `np.mean()`, etc.; they are faster and have descriptive names!
+
+**Whitespaces and indentation**: have a look at [PEP8 Code Layout](https://peps.python.org/pep-0008/#code-lay-out)
+
+- 4 spaces for each indent.
+- Sections: whitespace separation.
+- Use the 79 character limit (activate the ruler); use function hanging indents and backslashes (if necessary).
+- Look at [PEP8 Code Layout](https://peps.python.org/pep-0008/#code-lay-out) and also below.
+
+### PEP 8 Summary (My Notes)
+
+- Key idea: code is more often read than written, thus, improve readability!
+- Indentation: prefer 4 white spaces - mixed white spaces and TABs are not allowed in Python 3.
+- Line width: prefer 79 characters max., 72 for docstrings.
+- Line breaks:
+    - Align if possible with `()`, `[]`, ... Break line after `(`, `[`.
+    - Long lines can be broken wrapping expressions in parenthesis, sometimes `\` is necessary (ex: `with`).
+    - It is more intuitive to break before operator (`+, -, and, or`, ...).
+- Module functions and classes surrounded by 2 blank lines.
+- Class methods surrounded by 1 blank line.
+- Use blank lines within functions sparinly to indicate logical sections.
+- Language: always english.
+- Encoding:
+    - UTF-8 (Python 3); if that encoding, avoid declaration.
+    - String literals and comments/docstrings must be in ASCII; use escapes otherwise.
+- Imports:
+    - Each in a separate line.
+    - Between module globals and constants.
+    - Grouped and in order: general to specific/own.
+    - Prefer absolute imports.
+    - Avoid wildcard imports: `from <module> import *`
+- Single-quoted or double-quoted strings are the same.
+- White spaces: similar to regular punctuation
+    - Avoid after parenthesis opening and before closing: `func( a ) (wrong)`.
+    - Avoid before comma/colon/semicolon: `a , b (wrong)`.
+    - Try to avoid for slicing operator unless it's visually required: `[lower + offset : upper + offset] (correct)`.
+    - Do not use before parenthesis of function call/name: `func (a) (wrong)` - same applies to `[]` accessing.
+    - Do not leave white spaces at the end of line.
+    - Surround these logical operators (and related) with 1 white space: `=, +, +=, and, not, in, >, ==, ...`
+    - Consider doing this for displaying operator priorities: `x*x + 2; (a+b) * (a-b)`
+    - Don't surround `=` with space for keyword arguments or default parameters.
+- Control-flow statements (`if, for, while`) break line after `:`.
+- Trailing commas:
+    - Necessary for single-element tuples: `FILES = ('my_file.txt',)`.
+    - Lists to be extended over time - BUT in this case use line breaking:
+        `FILES = [
+                'my_file.txt',
+                'other_file.txt',
+                ]`.
+- Naming conventions:
+    - **See DLR naming conventions below**
+    - Avoid single letter variables as `l`, `O`... which are difficult to distinguish from numbers.
+    - Prefer CamelCase to mixedCase; use mixedCase if code is already implemented like that.
+- For simple public variables you don't need setters/getters or the like in Python. BUT: attribute access (MyClass.a instead of MyClass.get_a()) assumes obtaining the attribute is cheap; so guarantee that.
+- All undocumented interfaces should be considered internal.
+- Names of public APIs: put them in the module file after imports: `__all__ = ['API1', 'API2']`.
+- Comparisons to singletons like `None` must be done with `is` or `is not`, never with `==` or `!=`
+- Comparisons to types or special structures should be done with `is` or `is not`, never with `==` or `!=`. BUT, for types, prefer the use of `isinstance`: `isinstance(obj, int)`
+- When implementing ordering operations, implement all six operations: `__eq__, __ne__, __lt__, __le__, __gt__, __ge__`. Note: reflexivity rules are applied by Python: `y > x` can be swapped by `x < y`.
+- Use `def` when a lambda is binded to an identifier, e.g., `f`:
+    `(right) def f(x): return 2*x`
+    `(wrong) f = lambda x: 2*x`
+- Exceptions:
+    - are inherited from `Exception` rather than `BaseException`
+    - have suffix `Error`
+    - don't leave `except` empty, use at least `Exception`:
+        `except Exception:`
+- Be consistent with return with a function:
+    ```
+    (wrong)
+    def f(x):
+        if x >= 0:
+            return math.sqrt(x)
+    (right)
+    def f(x):
+        if x >= 0:
+            return math.sqrt(x)
+        else:
+            return None
+    ```
+- Don't compare boolean values to `True/False`
+
+### Conventions (DLR)
+
+- General Structure:
+    - Author + description + docstring
+    - imports: from more general to specific/own
+    - in modules: `__version__ = '1.2.3'`; you could also add `__author__ = 'MS'`
+    - constants: `MY_CONSTANT = 'blah'`
+    - module-level variables (not indented)
+    - functions (not indented)
+    - classes (not indented)
+    - `if __name__ = '__main__':`
+- Language: ALWAYS ENGLISH.
+- File length: < 600 lines; otherwise, break them down to several.
+- Lines: one statement per line, 120 characters; otherwise, break them down to several with alignment. That is in conflict with the 79 character lines of PEP 8.
+- Indentation: 4 white spaces.
+- Blank lines
+    - Single: between 'paragraphs': methods within class.
+    - Double: between 'sections': between functions, classes.
+- White space: similar to text punctuation. BUT: avoid around `=` INSIDE function calls.
+- Comments: do not use when it's obvious; prefer extra line comments than inline comments.
+- Docstrings: use them for modules, functions, classes & methods.
+- Prefer dictionaries to `if-else` statements.
+- Avoid brackets in control flow statements (`if, for, while`)
+- Exceptions:
+    - inherit from `Exception`, don't simply catch `Exception`
+    - don't leave `except` empty, use at least `Exception`:
+        `except Exception:`
+- Files/streams: use `while open(.) as f:` 
+- Classes
+    - All member variables defined in `__init__()`.
+    - `self` alsways first argument of each method.
+    - Group methods functionally.
+    - Docstrings.
+- Naming conventions:
+    - Packages/Modules: `common, sdk, logger_utils`
+    - Classes: nouns, camel case, `_` for internal classes
+    	- Examples: `ImageMap, _Raster, RasterDelegate`
+        - Note: when importing, `*` does not select names stating with `_`
+    - Test classes: use `TestCase` suffix: `ImageMapTestCase, RasterTestCase`
+    - Exceptions: use `Error` suffix: `_InternalError, ApplicationError`
+    - Memeber methods: verbs, lower case separated by `_`
+        - Examples: `run(), run_fast(), get_variable(), set_variable()`
+        - Non-public/accessible methods: `_run_slow()`
+        - Non-public/accessible and non-inheritable methods: `__run_slower()`
+        - Test methods: `test_run()`
+    - Member variables: like methods, but use nouns instead; note `_` and `__` prefix applies also.
+    - Functions: like methods
+        - Internal functions: `_calculate_width()`
+        - Name conflicts: `print_()`
+    - Module variables, argument names: `new_width`, `property_`
+    - Constants: delcared at the begining of class / module: `TOTAL, MY_OPERATOR`
+
+### Writing Modular Code
+
+Data scientists are known to write spaghetti code. Don't be that person!
+
+- DRY = Don't Repeat Yourself; write reusable functions.
+- Abstract the logic for more readability.
+- Use list list comprehensions.
+- For/While-loops can iterate over several lists and use several conditions; use this property!
+- Minimize the number of entities: functions, classes, modules; break down code into the minimum but necessary amount of elements.
+- Functions should do one thing only:
+	- Otherwise, they're more difficult to generalize and re-use.
+	- Example: in a function don't perform a processing and the print.
+- Arbitrary variable names in general functions make the code more readable: `arr`, `n`
+- Try to use max. 3 arguments, whenever possible; if we have many variables, maybe we need to define a class?
+
+### Refactoring Code
+
+When we are at the research stage, it's easy to write messy and repetitive code. We don't know which pieces could be modularized how.
+
+Refactoring: when we finish, we come back to the code and re-structure it to improve its structure without changing the internal functionality. We clean and modularize. That way, we can develop for the long run: we can more easily understand it in the future and re-use it.
+
+### Notebook: `./lab/wine_quality/refactor_whine_quality.ipynb`
+
+Very easy example. Learnings:
+
+- Always abstract processing to functions
+- Use **list comprehensions** when iterating and modifying column items!
+
+```python
+import pandas as pd
+df = pd.read_csv('winequality-red.csv', sep=';')
+
+# Rename feature/column labels with list comprehensions
+labels = list(df.columns)
+df.columns = [label.replace(' ', '_') for label in labels]
+
+# Create feature buckets
+def stratify_by_feature_level(df, feature_name):
+    df_copy = df.copy()
+    median_feature = df_copy[feature_name].median()
+    for i, value in enumerate(df_copy[feature_name]):
+        if value >= median_feature:
+            df_copy.loc[i, feature_name] = 'high'
+        else:
+            df_copy.loc[i, feature_name] = 'low'
+    return df_copy.groupby(feature_name).quality.mean()
+
+# Print quality mean depending on feature high/low
+target = 'quality'
+for feature in df.columns:
+    if feature != target:
+        print(stratify_by_feature_level(df, feature),'\n')
+```
+
+### Efficient Code
+
+Efficiency is related to speed and memory. Of course, we need to optimize when the code is run frequently and in live events.
+
+### Notebook: `./lab/common_books/optimizing_code_common_books.ipynb`
+
+Nice notebook in which two lists are comapred to find common elements in both; `numpy.intersect1d` and `set.intersection` are compared.
+
+Learnings:
+
+- Use vector operations instead of loops when possible
+- Get used to google strategies, e.g.: "how to find common elements in two lists"
+- Be aware of the data structures and algorithms available in our language; e.g.: sets in python
+- When optimizing code, measure the time of different approaches! Use `time.time()`.
+- [What makes sets faster than lists?](https://stackoverflow.com/questions/8929284/what-makes-sets-faster-than-lists/8929445#8929445)
+
+
+```python
+import numpy as np
+import time
+
+with open('books_published_last_two_years.txt') as f:
+    recent_books = f.read().split('\n')
+    
+with open('all_coding_books.txt') as f:
+    coding_books = f.read().split('\n')
+
+# Strategy 1: np.intersect1d
+start = time.time()
+recent_coding_books = np.intersect1d(coding_books, recent_books)
+print(len(recent_coding_books))
+print('Duration: {} seconds'.format(time.time() - start)) # 0.96 sec
+
+# Strategy 2: set.intersection
+start = time.time()
+recent_coding_books = set(coding_books).intersection(set(recent_books))
+print(len(recent_coding_books))
+print('Duration: {} seconds'.format(time.time() - start))
+```
+
+### Notebook: `./lab/common_books/optimizing_code_common_books.ipynb`
