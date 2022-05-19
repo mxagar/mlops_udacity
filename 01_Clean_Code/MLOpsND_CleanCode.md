@@ -44,6 +44,8 @@ conda activate ds
 
 1. Lesson 1: Introduction
 2. Lesson 2: Coding Best Practices
+	- Clean and Modular Code
+	- PEP 8 Summary (My Notes)
 3. Lesson 3: Working with Others Using Version Control
 4. Lesson 4: Production Ready Code
 5. Project: Predict Customer Churn with Clean Code
@@ -241,7 +243,7 @@ When we are at the research stage, it's easy to write messy and repetitive code.
 
 Refactoring: when we finish, we come back to the code and re-structure it to improve its structure without changing the internal functionality. We clean and modularize. That way, we can develop for the long run: we can more easily understand it in the future and re-use it.
 
-### Notebook: `./lab/wine_quality/refactor_whine_quality.ipynb`
+### Refactoring Code - Notebook: `./lab/wine_quality/refactor_whine_quality.ipynb`
 
 Very easy example. Learnings:
 
@@ -278,7 +280,7 @@ for feature in df.columns:
 
 Efficiency is related to speed and memory. Of course, we need to optimize when the code is run frequently and in live events.
 
-### Notebook: `./lab/common_books/optimizing_code_common_books.ipynb`
+### Efficient Code - Notebook: `./lab/common_books/optimizing_code_common_books.ipynb`
 
 Nice notebook in which two lists are comapred to find common elements in both; `numpy.intersect1d` and `set.intersection` are compared.
 
@@ -314,4 +316,243 @@ print(len(recent_coding_books))
 print('Duration: {} seconds'.format(time.time() - start))
 ```
 
-### Notebook: `./lab/common_books/optimizing_code_common_books.ipynb`
+### Efficient Code - Notebook: `./lab/holiay_gifts/optimizing_code_holiday_gifts.ipynb`
+
+From 1M cost values, the sum of the costs that are below 25 needs to be computed.
+
+Learning: Whenever possible, use `numpy` and its vector operations, e.g., `v[v < 10]`.
+
+```python
+import numpy as np
+
+with open('gift_costs.txt') as f:
+    gift_costs = f.read().split('\n')
+    
+gift_costs = np.array(gift_costs).astype(int)  # convert string to int
+
+# Medium speed
+total_price = np.array([cost for cost in gift_costs if cost < 25]).sum()*1.08
+# Much faster
+total_price = gift_costs[gift_costs < 25].sum()*1.08
+
+```
+
+### Documentation
+
+Types of documentation
+
+- Inline comments: in code lines: `# ... `
+- Docstrings: function and module level: `""" .... """`
+- Project: `README.md` files
+
+### Documentation: Inline Comments
+
+Typicall uses
+
+- Major steps of complex code, for each block; however, some argue that this would be an example of bad code that needs to be refactored.
+- Explanation of arbitrary choices, variables that cause problems, etc.
+
+### Documentation: Docstrings
+
+All functions and modules should have them! One line docstrings are fine, but if more explanations are needed, add notes on arguments, processing and returns.
+
+Notes:
+
+- Use **tripe double quotes**: `"""`
+- Docstrings become the `__doc__` attribute of objects
+- Module docstrings should go in `__init__.py`
+
+
+See also:
+
+- [PEP 257 - Docstring conventions](https://peps.python.org/pep-0257/)
+- [Numpy Docstring guide](https://numpydoc.readthedocs.io/en/latest/format.html)
+
+Example: look at the spacing.
+
+```python
+""" Module for computing population density.
+
+Author: Mikel
+Date: May 2022
+"""
+
+def population_density(population, area):
+	"""Calculate population' density of area.
+	
+	Args:
+		population: (int) The population of the area.
+		area: (int, float) Area in km^2 or any other unit.
+
+	Returns:
+		population_density: (float) population/area. Population density expressed according to the units of the arguments.
+	"""
+	return population / area
+
+```
+
+### Documentation: `README.md`
+
+Anatomy of a `README.md` (not all parts are necessary):
+
+- Title
+	- Short description
+- Installation / Getting Started
+	- Dependencies
+	- Installation commands
+- Usage
+	- Commands
+	- Known bugs
+- Contributing
+	- Guidelines if people wantto contribute
+- Code Status
+	- are all tests passing?
+	- shields: build/passing
+	- if necessary
+- FAQs (if necessary)
+- License / Copyright
+	- By default, I have the intelectual property, but it's not bad stating it explicitly if necessary
+	- Choose appropriate license
+
+Examples of READMEs:
+
+- [Bootstrap](https://github.com/twbs/bootstrap)
+- [Scikit Learn](https://github.com/scikit-learn/scikit-learn)
+- [Stackoverflow blog](https://github.com/jjrunner/stackoverflow)
+
+Observations:
+
+- Files should appear as links: `[File](file.md)`
+- README sections should appear as anchor links: `[My Heading](#my-heading)`
+- If we have a section/part which is long and could be collapsed, do it! Use `<details>` and `<summary>`; see below.
+- Provide all links possible in text
+- Big projects have
+	- Documentation links
+	- Shields as Status
+	- How to contribute
+	- Community
+	- Sponsors
+	- Authors / Creators
+	- Thanks
+	- Backers
+
+Example of **callapsable text**:
+
+```Markdown
+For some amazing info, you can checkout the [below](#amazing-info) section.
+
+<details><summary>Click to expand</summary>
+
+## Amazing Info
+It would be great if a hyperlink could directly show this title.
+
+</details>
+```
+
+### Auto-PEP8 and Linting
+
+First, we transform our notebook to a python file, follwoing these steps:
+
+- We modularize everything in functions.
+- We take the most efficient approach.
+- We add a `if __name__ == "__main__"` section where the our main function(s) are used. If the file/module is imported, the section is ignored; if the file is executed, the section is executed - so it works like for testing!
+
+Example with the notebook `./lab/common_books/optimizing_code_common_books.ipynb`. First version:
+
+`./lab/comon_books/recent_coding_books.py`
+
+```python
+import numpy as np
+import time
+
+def find_recent_coding_books(recent_books_path, coding_books_path):
+	with open(recent_books_path) as f:
+	    recent_books = f.read().split('\n')
+	    
+	with open(coding_books_path) as f:
+	    coding_books = f.read().split('\n')
+
+
+	recent_coding_books = set(coding_books).intersection(set(recent_books))
+	return recent_coding_books
+
+if __name__ == "__main__":
+
+	recent_coding_books = find_recent_coding_books('books_published_last_two_years.txt', 'all_coding_books.txt')
+```
+
+There are several formatting and convention mistakes in that first version. To detect them, we need to install the following tools:
+
+```bash
+conda activate ds
+pip install pylint
+pip install autopep8
+```
+
+Then, we proceed as follows:
+
+```bash
+cd lab/comon_books/
+# After we've done our best, run pylint
+pylint recent_coding_books.py
+# Make all major changes suggested
+# Leave things like: whitespaces, line lengths, etc.
+# Then, run autopep8 with
+# --in-place: file changed
+# --aggressive twice, to make all changes necessary
+autopep8 --in-place --aggressive --aggressive recent_coding_books.py
+# Run pylint again to check we get a 10/10 score!
+pylint recent_coding_books.py
+```
+
+Final version:
+
+```python
+"""Module for find_recent_coding_books function.
+
+Author: Mikel
+Date: May 2022
+"""
+
+
+def find_recent_coding_books(recent_books_path, coding_books_path):
+    """Finds common book ids that appear in the lists contained in the passed files.
+
+    Args:
+        recent_books_path: (str) path for file containing all recent book records
+        coding_books_path: (str) path for file containing all coding book records
+    Returns:
+        recent_coding_books: (set) all commoon book records: recent and coding
+    """
+    with open(recent_books_path, encoding="utf-8") as recent_books_file:
+        recent_books = recent_books_file.read().split('\n')
+
+    with open(coding_books_path, encoding="utf-8") as coding_books_file:
+        coding_books = coding_books_file.read().split('\n')
+
+    recent_coding_books = set(coding_books).intersection(set(recent_books))
+    return recent_coding_books
+
+
+if __name__ == "__main__":
+
+    RECENT_CODING_BOOKS = find_recent_coding_books(
+        'books_published_last_two_years.txt', 'all_coding_books.txt')
+
+```
+
+Conclusion: Always follow this procedure:
+
+- Transoform to modularized python file, as clean as possible and with a `if __name__ == "__main__"` block.
+- Run `pylint`.
+- Correct errors detected by `pylint`.
+- Run `autopep8` and let it make the spacing and minor rest changes.
+- Run `pylint` again to check we get a 10/10 score.
+- We have the file!
+
+## 3. Lesson 3: Working with Others Using Version Control
+
+### Basic Git
+
+- Create a Github repository
+- Basic commands: `git clone`, `git add`, `git commit`, `git push`
