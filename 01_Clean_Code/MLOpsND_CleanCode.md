@@ -559,6 +559,7 @@ Nothing new.
 - Create a Github repository
 - Basic commands: `git clone`, `git add`, `git commit`, `git pull`, `git push`
 - Reviewing commands: `git status`, `git log`
+- Branching: `git checkout`, `git branch`, `git merge`
 
 Have a look at my git cheatsheet:
 
@@ -582,7 +583,7 @@ Usual workflow explained with an example: we are working on a recommendation eng
 	- The `feature_` branch is merged to the `develop` branch
 - After the team reviews the changes in `develop`, they merge them locally to `master`, and the local `master` is pushed to the cloud `master`, which should be production-ready.
 
-![Git Branches: Use Case](./pics/git_branches_use_case.png)
+![Git Branches: Use Case 1](./pics/git_branches_use_case.png)
 
 #### A successful Git branching model
 
@@ -624,6 +625,9 @@ git checkout -b feature-demographic
 # work on this local repo
 git add ...
 git commit -m "..." # always commit before changing branches!
+# optionally, we can push to the cloud repo if we want other to see it
+git push # we'll get an error with the right command: copy & paste
+git push ... # git push --set-upstream origin feature-demographic
 
 ## 2) now, we are requested to work on a second feature
 
@@ -636,6 +640,9 @@ git checkout -b feature-friends
 # work on this local repo
 git add ...
 git commit -m "..." # always commit before changing branches!
+# optionally, we can push to the cloud repo if we want other to see it
+git push # we'll get an error with the right command: copy & paste
+git push ... # git push --set-upstream origin friends
 
 ## 3) we finish the second feature
 
@@ -672,4 +679,97 @@ git checkout main
 git branch -d branch_name
 ```
 
-#### Scenario 2: 
+#### Scenario 2: Another colleague merges to `develop`
+
+Nothing new here, except that the other developer needs to `pull` from `develop` our merge.
+
+![Git Branches: Use Case 2](./pics/git_branches_use_case_2.png)
+
+```bash
+git checkout develop
+git pull
+git checkout -b feature-documentation
+git add ...
+git commit -m "..." # always commit before changing branches!
+git checkout develop
+git merge --no-ff feature-friends
+git push origin develop # if in teams with branches, specify where to 
+```
+
+#### Merge Conflicts
+
+Merge conflicts appear when we have modified the same part in the file. Thus, we should have a ticket system to see which features are being implemented and avoid changes in the same place!
+
+However, when a merge conflict appears, we select the part we want to keep and erase the conflict manually.
+
+```bash
+# Go to local repo
+cd ~/git_repositories/my_repo
+
+# Get conflicts, in red;
+# We need to go one by one, and for each file either:
+# - git rm the file
+# - modify the file and git add
+git status
+```
+
+Conflicts have this appearance:
+
+```
+	If you have questions, please
+	<<<<<<< HEAD
+	open an issue
+	=======
+	ask your question in IRC.
+	>>>>>>> branch-a
+```
+
+This is the part of the HEAD:
+
+```
+	<<<<<<< HEAD
+	...
+	=======
+```
+
+This is the part of the merging branch:
+
+```
+	The part
+		=======
+		...
+		>>>>>>> branch-a
+```
+
+Which part part do we want? Select the desired one and remove the other together with the `>>>, <<<, ===` separators.
+
+Then:
+
+```bash
+git add .
+git commit -m "Resolved merge conflict."
+```
+
+#### Pull Requests (PR)
+
+Before merging our feature branch to `develop`, or the `develop` branch to `master`, we often want others to review it. For that, we need to `push` the feature branch to the cloud repo and open a **pull request**.
+
+These are the steps:
+
+- We push our feature branch to the cloud repo.
+- We open a pull quest: Two options, in GitHub.com:
+	1. Go to freshly uploaded repo branch `feature.*`: Compare & pull request
+	2. Menu, Pull Requests, New Pull Request
+- Choose: from (compare) `feature-*` to `develop` / `main` (base)
+	- Add title
+	- Add comments, if we want
+	- ...
+- The owners of the `develop` / `main` branch gets the pull request
+	- They can review each file and line, e.g., add comments
+	- They can approve the PR or request changes
+	- They can also merge the Pull Request
+
+See detailed steps in:
+
+`./git_howto.txt` / `## Social Coding: Fork, Change on Branch, Pull Request`
+
