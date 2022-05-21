@@ -554,5 +554,122 @@ Conclusion: Always follow this procedure:
 
 ### Basic Git
 
+Nothing new.
+
 - Create a Github repository
-- Basic commands: `git clone`, `git add`, `git commit`, `git push`
+- Basic commands: `git clone`, `git add`, `git commit`, `git pull`, `git push`
+- Reviewing commands: `git status`, `git log`
+
+Have a look at my git cheatsheet:
+
+`./git_howto.txt`
+
+### Working on Teams
+
+Usual workflow explained with an example: we are working on a recommendation engine; first we want to improve the recommenddations with demographics data; then, we are asked whether we can improve it with information about friends groups.
+
+- There should be always two major branches up in the cloud: `master` or `main` and `develop`.
+- `develop` should contain the latest stable version from which we check out to work.
+- For each new feature we are creating, we create a local branch, say `feature_demographic`
+	- We commit our work related to that feature to our local branch
+- If we are requested to work on a new feature, we check out from the `develop` in the cloud and create a new local branch, say: `feature_friends`
+	- We commit our work related to that feature to our local branch
+- When we finish a feature:
+	- If we don't have W permissions for the cloud/remote `develop`
+		- We make a pull request
+		- A code review is done
+		- We modify our code according to the reviews
+	- The `feature_` branch is merged to the `develop` branch
+- After the team reviews the changes in `develop`, they merge them locally to `master`, and the local `master` is pushed to the cloud `master`, which should be production-ready.
+
+![Git Branches: Use Case](./pics/git_branches_use_case.png)
+
+#### A successful Git branching model
+
+A very interesting article on how to work with branches on teams: [A successful Git branching model](https://nvie.com/posts/a-successful-git-branching-model/). My notes on it:
+
+- `origin/master` should be always production-ready
+- When `develop` is steady, it's merged to `origin/master`
+- Besides `master` and `develop`, we have other branches with limited lifetime, ie., unlike `master` and `develop`, they'll be removed eventually:
+	- Feature branches: `feature-*`
+		- To work on new features
+		- They are branched from `develop`
+		- When development finished, they are merged to `develop`; then deleted!
+	- Release branches: `release-*`
+		- To support releases: few new things implemented, since these are done in the feature branches
+		- They are branched from `develop`
+		- When development finished, they are merged to `develop` and then to `master`
+		- After merging to the `master`, a `tag` is created with the release version with the major minor notation, e.g., `1.2`
+	- Hotfix branches: `hotfix-*`
+		- Like release branches, but done to fix unplanned bugs; thus, the workflow is similar
+		- They are branched from `develop`
+		- When development finished, they are merged to `develop` and then to `master`
+		- After merging to the `master`, a `tag` is created with the last release version + the hotfix patch number, e.g., `1.2.1`
+
+#### Scenario 1: We Develop Features Locally on Branches and Merge Them to `develop`
+
+Workflow in Git, using the exmaple explained before:
+
+```bash
+
+## 1) we start to work on a first feature
+
+# switch to develop branch
+git checkout develop
+# pull latest changes
+git pull
+
+# create and switch to a new local branch
+git checkout -b feature-demographic
+# work on this local repo
+git add ...
+git commit -m "..." # always commit before changing branches!
+
+## 2) now, we are requested to work on a second feature
+
+# switch to develop branch again to create a new local branch!
+git checkout develop
+git pull # always pull changes from develop!
+
+# create and switch to yet another new local branch
+git checkout -b feature-friends
+# work on this local repo
+git add ...
+git commit -m "..." # always commit before changing branches!
+
+## 3) we finish the second feature
+
+# switch to develop
+git checkout develop
+# merge our second feature to develop locally
+# --no-ff = no fast forward, create a new commit and preserve history
+git merge --no-ff feature-friends
+# push local develop to cloud
+git push origin develop # if in teams with branches, specify where to push!
+
+# 4) we continue with our first feature
+
+# switch to branch
+git checkout feature-demographic
+
+```
+
+#### More on Branches
+
+Anything new we do, do it on a branch!
+
+```bash
+# See all branches; hit Q to exit
+git branch
+# Create a branch and switch to it
+git checkout -b branch_name
+# Switch from current branch to branch branch_name
+git checkout branch_name
+
+# To remove a branch, go to master/main
+# and use -d option
+git checkout main
+git branch -d branch_name
+```
+
+#### Scenario 2: 
