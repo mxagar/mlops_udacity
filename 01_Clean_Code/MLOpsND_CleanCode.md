@@ -756,7 +756,7 @@ Before merging our feature branch to `develop`, or the `develop` branch to `mast
 
 These are the steps:
 
-- We push our feature branch to the cloud repo.
+- We push our feature branch to the cloud repo; if we do `git push` in our local `feature-branch`, it results in an error and the correct command we should use is displayed: `git push --set-upstream origin feature-branch`
 - We open a pull quest: Two options, in GitHub.com:
 	1. Go to freshly uploaded repo branch `feature.*`: Compare & pull request
 	2. Menu, Pull Requests, New Pull Request
@@ -768,8 +768,59 @@ These are the steps:
 	- They can review each file and line, e.g., add comments
 	- They can approve the PR or request changes
 	- They can also merge the Pull Request
+- After the merge is done, it's a good practice to delete the feature branch, both on the cloud repo as well as locally. Note that deleted branches can be restored, too.
+	- To remove on the cloud repo: do it through the GUI, after the merge.
+	- To remove it locally: `git checkout master; git branch -d feature-banch`
 
 See detailed steps in:
 
 `./git_howto.txt` / `## Social Coding: Fork, Change on Branch, Pull Request`
+
+#### Example Fork-Branch-Pull-Request Workflow
+
+I found the following interesting article:
+
+[The Git Fork-Branch-Pull Workflow](https://www.tomasbeuzen.com/post/git-fork-branch-pull/)
+
+To properly understand and test the workflow, I tried it. It covers:
+
+- Forking foreign repos
+- The Branching & Pull-Request Workflow introduced so far
+
+But it is more complex, since I'm working on a fork.
+
+First steps:
+
+- I created an organization (free): GitHub, +, New Organization: `machine-vision-academy`.  
+- I created a repo in it: `mv_toolkit`: [https://github.com/machine-vision-academy/mv_toolkit](https://github.com/machine-vision-academy/mv_toolkit)
+- I forked it to [https://github.com/mxagar/mv_toolkit](https://github.com/mxagar/mv_toolkit)
+
+Note that the remote repo URLs are:
+
+```
+git@github.com:machine-vision-academy/mv_toolkit.git
+git@github.com:mxagar/mv_toolkit.git
+```
+
+Both repos have `master` and `develop`. Recall that when we fork, there are two remote repos: OURS (aka origin) an THEIRS (aka upstream). If we want to pull a branch from THEIRs to OURs, we can do it in two steps: first we pull to our local repo, then we push it to OUR cloud repo.
+
+```bash
+# Go to local repo
+cd ~/git_repositories/my_repo
+
+# Checkout the branch we'd like to merge to
+git checkout BRANCH_NAME # git checkout -b BRANCH_NAME
+
+# Pull from the upstream repo we forked
+# Note: select the branch we'd like from that upstream repo: 
+git pull https://github.com/ORIGINAL_OWNER/ORIGINAL_REPOSITORY.git BRANCH_NAME
+git pull git@github.com:ORIGINAL_OWNER/ORIGINAL_REPOSITORY.git BRANCH_NAME
+
+# Push to OUR remote repo branch we'd like
+git push --set-upstream origin BRANCH_NAME
+```
+
+
+
+
 
