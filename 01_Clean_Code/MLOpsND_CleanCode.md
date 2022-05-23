@@ -46,7 +46,31 @@ conda activate ds
 2. Lesson 2: Coding Best Practices
 	- Clean and Modular Code
 	- PEP 8 Summary (My Notes)
+	- Conventions (DLR)
+	- Writing Modular Code
+	- Refactoring Code
+	- Refactoring Code - Notebook: `./lab/wine_quality/refactor_whine_quality.ipynb`
+	- Efficient Code
+	- Efficient Code - Notebook: `./lab/common_books/optimizing_code_common_books.ipynb`
+	- Efficient Code - Notebook: `./lab/holiay_gifts/optimizing_code_holiday_gifts.ipynb`
+	- Documentation
+	- Documentation: Inline Comments
+	- Documentation: Docstrings
+	- Documentation: `README.md`
+	- Auto-PEP8 and Linting
 3. Lesson 3: Working with Others Using Version Control
+	- Basic Git
+	- Notes on `pull` and `push` and Remote/Cloud Repos
+	- Working on Teams
+		- A successful Git branching model
+		- Scenario 1: We Develop Features Locally on Branches and Merge Them to `develop`
+		- More on Branches
+		- Scenario 2: Another colleague merges to `develop`
+		- Merge Conflicts
+		- Pull Request (PR) Workflow
+		- Fork-Branch-Pull-Request Workflow
+	- Model and Dataset Versioning
+	- Code Reviews
 4. Lesson 4: Production Ready Code
 5. Project: Predict Customer Churn with Clean Code
 
@@ -565,22 +589,45 @@ Have a look at my git cheatsheet:
 
 `./git_howto.txt`
 
+### Notes on `pull` and `push` and Remote/Cloud Repos
+
+We `pull` / `push` from the remote/cloud repo. Usually, that remote repo is called `origin`, and often there is only one. If we have several remote repos and several branches, we need to specify them in the `pull` / `push` command!
+
+```bash
+# Check current remote/cloud repos
+git remote -v
+
+# Add a remote/cloud repo with its URL and name it "upstream"
+git remote add upstream URL
+
+# Push (upload) to default remote/cloud repo called "origin"
+# from current local branch to remote branch called BRANCH_NAME
+git push origin BRANCH_NAME
+
+# Pull from remote/cloud repo called "upstream",
+# from its branch BRANCH_NAME to current local branch
+# We can also use the URL is we haven't linked the remote/cloud repo yet
+git pull upstream BRANCH_NAME
+git pull URL BRANCH_NAME
+
+```
+
 ### Working on Teams
 
 Usual workflow explained with an example: we are working on a recommendation engine; first we want to improve the recommenddations with demographics data; then, we are asked whether we can improve it with information about friends groups.
 
-- There should be always two major branches up in the cloud: `master` or `main` and `develop`.
+- There should be always two major branches up in the cloud or remote: `master` or `main` and `develop`.
 - `develop` should contain the latest stable version from which we check out to work.
-- For each new feature we are creating, we create a local branch, say `feature_demographic`
+- For each new feature we are creating, we create a local branch, say `feature-demographic`
 	- We commit our work related to that feature to our local branch
-- If we are requested to work on a new feature, we check out from the `develop` in the cloud and create a new local branch, say: `feature_friends`
+- If we are requested to work on a new feature, we check out from the `develop` in the cloud/remote and create a new local branch, say: `feature-friends`
 	- We commit our work related to that feature to our local branch
 - When we finish a feature:
 	- If we don't have W permissions for the cloud/remote `develop`
 		- We make a pull request
 		- A code review is done
 		- We modify our code according to the reviews
-	- The `feature_` branch is merged to the `develop` branch
+	- The `feature-` branch is merged to the `develop` branch
 - After the team reviews the changes in `develop`, they merge them locally to `master`, and the local `master` is pushed to the cloud `master`, which should be production-ready.
 
 ![Git Branches: Use Case 1](./pics/git_branches_use_case.png)
@@ -625,7 +672,7 @@ git checkout -b feature-demographic
 # work on this local repo
 git add ...
 git commit -m "..." # always commit before changing branches!
-# optionally, we can push to the cloud repo if we want other to see it
+# optionally, we can push to the cloud/remote repo if we want other to see it
 git push # we'll get an error with the right command: copy & paste
 git push ... # git push --set-upstream origin feature-demographic
 
@@ -640,7 +687,7 @@ git checkout -b feature-friends
 # work on this local repo
 git add ...
 git commit -m "..." # always commit before changing branches!
-# optionally, we can push to the cloud repo if we want other to see it
+# optionally, we can push to the cloud/remote repo if we want other to see it
 git push # we'll get an error with the right command: copy & paste
 git push ... # git push --set-upstream origin friends
 
@@ -651,7 +698,7 @@ git checkout develop
 # merge our second feature to develop locally
 # --no-ff = no fast forward, create a new commit and preserve history
 git merge --no-ff feature-friends
-# push local develop to cloud
+# push local develop to cloud/remote; origin is by ddefault the name of the remote repo
 git push origin develop # if in teams with branches, specify where to push!
 
 # 4) we continue with our first feature
@@ -750,33 +797,36 @@ git add .
 git commit -m "Resolved merge conflict."
 ```
 
-#### Pull Requests (PR)
+#### Pull Request (PR) Workflow
 
-Before merging our feature branch to `develop`, or the `develop` branch to `master`, we often want others to review it. For that, we need to `push` the feature branch to the cloud repo and open a **pull request**.
+Before merging our feature branch to `develop`, or the `develop` branch to `master`, we often want others to review it. For that, we need to `push` the feature branch to the cloud/remote repo and open a **pull request**.
 
-These are the steps:
+Note that merges between branches can be done via the web GUI. Additionally, Pull Requests are a construct defined in GitHub, and thus, are done in the web GUI; however, for the complete workflow to be executed, we need to use `git`.
 
-- We push our feature branch to the cloud repo; if we do `git push` in our local `feature-branch`, it results in an error and the correct command we should use is displayed: `git push --set-upstream origin feature-branch`
-- We open a pull quest: Two options, in GitHub.com:
-	1. Go to freshly uploaded repo branch `feature.*`: Compare & pull request
-	2. Menu, Pull Requests, New Pull Request
-- Choose: from (compare) `feature-*` to `develop` / `main` (base)
+This is the Pull_request Workflow:
+
+- We push our feature branch to the cloud/remote repo; if we do `git push` in our local `feature-branch`, it results in an error and the correct command we should use is displayed: `git push --set-upstream origin feature-branch`
+- We open a **Pull Request**. Pull Requests are done always on GitHub.com; we have several options:
+	1. Go to freshly uploaded repo branch `feature.*`: "Compare & pull request"
+	2. Menu, "Pull Requests", "New Pull Request"
+	3. There is a "Contribute" option in our GitHub repo page
+- Choose: from ("compare") `feature-*` to `develop` / `main` ("base"); in case of forks, choose if the source/destination repos are ours (forked) or the original. We can additionally:
 	- Add title
 	- Add comments, if we want
 	- ...
-- The owners of the `develop` / `main` branch gets the pull request
+- The owners of the `develop` / `main` branch get the pull request
 	- They can review each file and line, e.g., add comments
 	- They can approve the PR or request changes
-	- They can also merge the Pull Request
-- After the merge is done, it's a good practice to delete the feature branch, both on the cloud repo as well as locally. Note that deleted branches can be restored, too.
-	- To remove on the cloud repo: do it through the GUI, after the merge.
+	- They can also merge the Pull Request if there are no conflicts; everything on the web
+- After the merge is done, it's a good practice to delete the feature branch, both on the cloud/remote repo as well as locally. Note that deleted branches can be restored, too.
+	- To remove on the cloud/remote repo: do it through the GUI; this option is offered after the merge.
 	- To remove it locally: `git checkout master; git branch -d feature-banch`
 
 See detailed steps in:
 
 `./git_howto.txt` / `## Social Coding: Fork, Change on Branch, Pull Request`
 
-#### Example Fork-Branch-Pull-Request Workflow
+#### Fork-Branch-Pull-Request Workflow
 
 I found the following interesting article:
 
@@ -785,9 +835,9 @@ I found the following interesting article:
 To properly understand and test the workflow, I tried it. It covers:
 
 - Forking foreign repos
-- The Branching & Pull-Request Workflow introduced so far
+- The Branching & Pull-Request Workflow introduced so far above, but applied to the forked repo.
 
-But it is more complex, since I'm working on a fork.
+![Fork-Branch-Pull Workflow](fork-branch-pull-worrkflow_tomas_beuzen.png)
 
 First steps:
 
@@ -802,7 +852,7 @@ git@github.com:machine-vision-academy/mv_toolkit.git
 git@github.com:mxagar/mv_toolkit.git
 ```
 
-Both repos have `master` and `develop`. Recall that when we fork, there are two remote repos: OURS (aka origin) an THEIRS (aka upstream). If we want to pull a branch from THEIRs to OURs, we can do it in two steps: first we pull to our local repo, then we push it to OUR cloud repo.
+Both repos have `master` and `develop`. Recall that when we fork, there are two remote repos: OURS (aka **origin**) an THEIRS (aka **upstream**). If we want to pull a branch from THEIRs to OURs, we can do it in two steps: first we pull to our local repo, then we push it to OUR cloud/remote repo:
 
 ```bash
 # Go to local repo
@@ -820,7 +870,175 @@ git pull git@github.com:ORIGINAL_OWNER/ORIGINAL_REPOSITORY.git BRANCH_NAME
 git push --set-upstream origin BRANCH_NAME
 ```
 
+Note: however, we'll see a button in the GitHub.com web GUI, too: "Fetch upstream"; so this can be done by clicking on the GUI.
 
 
+##### Step by Step Workflow
 
+Summary of cloud/remote repos and branches:
 
+```
+git@github.com:machine-vision-academy/mv_toolkit.git (original, THEIRS)
+	machine-vision-academy:mv_toolkit - master
+	machine-vision-academy:mv_toolkit - develop
+git@github.com:mxagar/mv_toolkit.git (forked, OURS)
+	mxagar:mv_toolkit - master
+	mxagar:mv_toolkit - develop	
+```
+
+I carried out these steps, following the [link](https://www.tomasbeuzen.com/post/git-fork-branch-pull/) form above:
+
+```bash
+# Go to local repo, which points to OUR cloud/remote repo
+cd ~/git_repositories/mv_toolkit
+
+# Check the cloud/remote repo
+git remote -v # origin: git@github.com:mxagar/mv_toolkit.git (fetch/pull, push)
+
+# Add remote called "upstream" pointing to the original repository (THEIRS)
+# Now we'll have 2 remote/cloud repos: origin (OURS) and upstream (THEIRS)
+git remote add upstream git@github.com:machine-vision-academy/mv_toolkit.git
+git remote -v
+
+# Create and checkout a new branch called "feature-test":
+git checkout -b feature-test
+
+# Make the desired changes to the local repository on this branch
+vim README.md
+# Edit, ESC :wq
+git add .
+git commit -m "Minor changes in README"
+
+# Pull changes from the original remote branch we want to merge to
+git checkout develop
+git pull upstream develop
+
+# Merge locally our feature-test (where we are) to develop
+git checkout feature-test
+git merge --no-ff develop
+
+# Push changes to remote/cloud origin (OURS)
+git push origin feature-test
+
+# Open a Pull Request on upstream remote:
+# (base) upstream:develop <- (head, compare) origin:feature-test
+# Steps:
+# - Go to GitHub, OUR remote repo (origin)
+# - Navigate to "feature-test" branch
+# - "Compare & pull request"
+# - "Create Pull Request"
+# Then, the OTHERS would accept the PR
+# In this case, I'm the OTHERS, too, with the MVA organization.
+# Typically, they:
+# - Review
+# - Wait for checks in the web GUI, then "Merge" and "Confirm"
+# However, we can get change requests back.
+
+# After Pull Request has been accepted and merge by the OTHERS
+# Update our local repos with the remote/cloud ones
+git checkout develop
+git pull upstream develop
+
+# Since I use a double master-develop structure in MVA
+# I create a PR and merge in the upstream remote develop->master
+# via the web GUI: upstream web > branch: master/develop > "Commpare & PR", ...
+# Thus, I need to update the local master branch accordingly
+git checkout master
+git pull upstream master
+
+# Finally, it's good practice to delete the feature branch
+# if not done via GitHub web
+git branch -d feature-test
+git push origin --delete feature-test
+
+```
+
+### Model and Dataset Versioning
+
+First and foremost: **Always add in the commit message the metrics of the train and cross-validation/test splits for the given model!** That way, we can always revert to the best version just by looking at `git log`
+
+Addiitonally, a link to an interestting article is provided:
+
+[Version Control ML Model](https://towardsdatascience.com/version-control-ml-model-4adb2db5f87c)
+
+Datasets and machine learning models (or other artefacts) are large files that cannot be stored in git repostories. One solution for dealing with them is `dvc`, as explained in the article linked above:
+
+[Data Version Control: `dvc`](https://dvc.org/)
+
+After installing `dvc`, we can use similarly to `git` and in conjunction with it.
+
+Basically, metadata files are created with each model or file version; then, these files are uploaded to large file storage and the metadata file pointing to the concrete file location is tracked with git.
+
+More detailed steps or workflow:
+
+- Create a `git` repo and add some ML code + dataset to it
+- Connect to a remote `dvc` bucket, e.g. Amazon S3: `dvc remote add -d s3remote s3://my-test-bucket-dvc/myproject`
+- Train the model: we get a `model.h5`
+- Add the model to the `dvc` bucket: `dvc add model.h5`
+	- The file is moved to `.dvc/`
+	- A metadata file `model.h5.dvc` is created, which records where the model file is
+- Upload the real model to the bucket: `dvc push model.h5.dvc`
+- Add the metadata file to the git repo and tag it: 
+
+	```bash
+	git add .gitignore model.h5.dvc data.dvc metrics.json
+	git commit -m "model first version, 1000 images"
+	git tag -a "v1.0" -m "model v1.0, 1000 images"
+	```
+
+- Now, if we want to use it a concrete tagged version of the model:
+
+	```bash
+	git checkout tags/<tag_name> -b <branch_name>
+	dvc pull model.h5.dvc
+	```
+
+### Code Reviews
+
+Benefits of code reviews:
+
+- Prevent errors
+- Improve readability
+- Check standards are met
+- Share knowledge in team
+
+Interesting links on guidelines:
+
+- [Guidelines for code reviews](https://github.com/lyst/MakingLyst/tree/master/code-reviews)
+- [Code Review Best Practices, by Kevin London](https://www.kevinlondon.com/2015/05/05/code-review-best-practices)
+
+Questions we should ask ourselves: clean & modular, effficient, documentation, testing, logging?
+
+1. Is the code **clean and modular**?
+	- Can I understand the code easily?
+	- Does it use meaningful names and whitespace?
+	- Is there duplicated code?
+	- Can I provide another layer of abstraction?
+	- Is each function and module necessary?
+	- Is each function or module too long?
+2. Is the code **efficient**?
+	- Are there loops or other steps I can vectorize?
+	- Can I use better data structures to optimize any steps?
+	- Can I shorten the number of calculations needed for any steps?
+	- Can I use generators or multiprocessing to optimize any steps?
+3. Is the **documentation** effective?
+	- Are inline comments concise and meaningful?
+	- Is there complex code that's missing documentation?
+	- Do functions use effective docstrings?
+	- Is the necessary project documentation provided?
+4. Is the code **well tested**?
+	- Does the code high test coverage?
+	- Do tests check for interesting cases?
+	- Are the tests readable?
+	- Can the tests be made more efficient?
+5. Is the **logging** effective?
+	- Are log messages clear, concise, and professional?
+	- Do they include all relevant and useful information?
+	- Do they use the appropriate logging level?
+
+Tips:
+
+- Use `pylint` or [`cpplint`](https://github.com/cpplint/cpplint)
+- Explain issues and make suggestions with rationale, don't command
+- Try inclusive style, prefer "we" to "I" or "you"
+- If necessary, make code suggestions to explain what you mean
