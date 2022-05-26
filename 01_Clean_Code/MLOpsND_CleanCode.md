@@ -1042,3 +1042,239 @@ Tips:
 - Explain issues and make suggestions with rationale, don't command
 - Try inclusive style, prefer "we" to "I" or "you"
 - If necessary, make code suggestions to explain what you mean
+
+## 4. Lesson 4: Production Ready Code
+
+Topics:
+
+- Handling errors
+- Writing tests and logs
+- Model drift
+- Automated vs. non-automated retraining
+
+### Catching Errors
+
+General good practices:
+
+- Use `try-except` whenever we know the code could fail.
+- Catch the type of errors we know would happen!
+
+```python
+import pandas as pd
+
+def read_data(path):
+	try:
+		df = pd.read_csv(path)
+		print(df.head())
+		return df
+	except (FileNotFoundError, NameError):
+		# See error type given by python
+		# by causing the error;
+		# Use tuples is several error types grouped
+		print("File not found!")
+	except IsADirectoryError:
+		print("File is a directory!")
+	except:
+		# Avoid exept without any error type
+		# In this case all the rest of errors would land here
+		print("Something went wrong with the file...")
+
+df = read_data(".../my_file.csv")
+```
+
+Some error types from the [python documentation](https://docs.python.org/3/tutorial/errors.html):
+
+```
+NameError,
+ValueError,
+ZeroDivisionError,
+SyntaxError,
+TypeError,
+RuntimeError,
+OSError,
+BaseException (all inherit from it),
+ConnectionError,
+AssertionError,
+...
+```
+
+We can also `return` an error string instead of `printing` it:
+
+```python
+def divide_vals(numerator, denominator):
+    try:
+        fraction_val = numerator/denominator
+        return fraction_val
+    except ZeroDivisionError:
+        return "denominator cannot be zero"
+```
+
+### `assert` and `raise`
+
+These tokens are not covered
+
+### Testing
+
+Problems that can occur in data science ar not always detectable; therefore, we need to apply **test-driven development** (TDD): we write the tests even before writing the code.
+
+**Unit tests** are tests that cover one piece of a code, usually a single function, independently from teh rest of the program.
+
+[Getting Started Testing, by Ned Batchelder](https://speakerdeck.com/pycon2014/getting-started-testing-by-ned-batchelder)
+
+
+
+### Pytest
+
+We should write and integrate tests into our deployment, for instance with [pytest](https://docs.pytest.org/en/7.1.x/) or [unittest](https://docs.python.org/3/library/unittest.html). We use pytest because it is more powerful:
+
+- much simpler to use: just use the keyword `assert`
+- it finds test files and functions automatically: they need to start witg `test_`
+- backwards compatible with the standard `unittest`: we can easily migrate projects
+- it has **fixtures**, explained below
+
+#### Installation and Basic Usage
+
+```bash
+conda activate ds
+pip install -U pytest
+```
+
+Unless we define in the python file pytest decorators (e.g., fitures and parametrization, explained below), we don't need to import anything: we just need to:
+
+- **name testing files and functions with preceding** `test_*`; if we repeat the name for functions, pytest doesn't complain...
+- use use in the test functions `assert`, `isinstance(value, type)` or the like to check values
+- run `pytest` in the terminal: all tests are automatically found and executed!
+
+It is a good practice to for testing functions to a `Given-When-Then` structure inside:
+- `Given` sets variable values, if necessary
+- `When` executes the functionality, which can return a value
+- `Then` checks whether the returned value is correct
+
+Example: `./02_Production_Model_Package/sandbox_tests`
+- file `my_module.py`
+- file `test_my_module.py`
+
+```python
+###### my_module.py
+def square(value):
+    return value ** 2
+
+###### test_my_module.py
+from my_module import square
+
+def test_square_gives_correct_value():
+    # When
+    subject = square(2)
+
+    # Then
+    assert subject == 4
+
+def test_square_return_value_type_is_int():
+    # When
+    subject = square(2)
+
+    # Then
+    assert isinstance(subject, int)
+
+```
+
+Now, we run on the Terminal
+
+```bash
+cd .../02_Production_Model_Package/sandbox_tests
+pytest
+# 2 successful tests
+```
+
+#### Pytest Fixtures
+
+Fixtures are functions defined as decorators which return objects used in tests. The idea is that test functions take as arguments these fixture functions, which return variables used in the test functions. By convention, fixtures are defined in a `conftest.py` file
+
+Example: `./02_Production_Model_Package/sandbox_tests`; all the above files, plus:
+- file `conftest.py`
+- file `test_my_module_with_fitures.pwy`
+
+```python
+###### my_module.py
+def square(value):
+    return value ** 2
+
+###### conftest.py
+
+# With fictures, we need to import pytest
+# By convention, all fuxtures defined in conftest.py
+# are made available to all detected test files and functions!
+import pytest
+
+@pytest.fixture
+def input_value():
+	return 4
+
+###### test_my_module_with_fixtures.py
+from my_module import square
+
+# input_value is defined as a fixture in conftest.py
+# but we could've had defined it in this file, too - just cut & paste code piece
+def test_square_gives_correct_value(input_value):
+    # When
+    subject = square(input_value)
+
+    # Then
+    assert subject == 16
+
+```
+
+Now, we run on the Terminal:
+
+```bash
+cd .../02_Production_Model_Package/sandbox_tests
+pytest
+# 3 successful tests: 2 regular, 1 with fixtures
+```
+
+#### Pytest Parametrization
+
+Parametrization is achieved with decorartors, too. Instead of using fixtures, we can parametrize the test function, i.e., we define different values to be used by it; that parameter is passed as argument. As an effect, instead of running the test once, we run it so many times are number of parameter values. That is helpful to test edge cases, such as values like `0, NA, null`, etc.
+
+Example: `./02_Production_Model_Package/sandbox_tests`; all the above files, plus:
+- file `test_my_module_parametrized.py`
+
+```python
+###### my_module.py
+def square(value):
+    return value ** 2
+
+###### test_my_module_parametrized.py
+
+from my_module import square
+
+# We need to import pytest
+# because we're using one of its decorators
+import pytest
+
+# We define the variable input to be a parameter of the test
+# passed to the testing function.
+# The test function is executed so many times as the number of values
+# defined in the parameter list
+@pytest.mark.parametrize(
+    'inputs',
+    [2, 3, 4]
+)
+
+def test_square_return_value_type_is_int(inputs):
+    # When
+    subject = square(inputs)
+
+    # Then
+    assert isinstance(subject, int)
+
+```
+
+Now, we run on the Terminal:
+
+```bash
+cd .../02_Production_Model_Package/sandbox_tests
+pytest
+# 6 successful tests: 2 regular, 1 with fixtures, 3 parametrized
+```
+
