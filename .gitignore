@@ -6,3 +6,4 @@ sklearn_scipy_sympy_stat_guide.txt
 __pycache__
 .DS_Store
 .ipynb_checkpoints
+.pytest_cache

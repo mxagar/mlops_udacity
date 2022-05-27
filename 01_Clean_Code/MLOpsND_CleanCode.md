@@ -1111,7 +1111,24 @@ def divide_vals(numerator, denominator):
 
 ### `assert` and `raise`
 
-These tokens are not covered
+These tokens are not covered, but I briefly explain them, since they are used in testing libraries under the hood. Note that both can stop the program execution if the exception they launch is not catched. Stopping the program execution is not desirable when testing, we want to perform all the tests.
+
+```python
+# When the assertion condition is violated, AssertionError is raised
+# with a custom message, if we want
+# and the program stops if we don't catch the AssertionError
+numer = -42
+assert number > 0, f"number greater than 0 expected, got: {number}"
+# Traceback (most recent call last):
+#     ...
+# AssertionError: number greater than 0 expected, got: -42
+
+# We can raise any type of Exception when we detect a condition which is not met
+# We can 'raise Exception('blah')', too
+radius = -1
+if radius < 0:
+    raise ValueError("positive radius expected")
+```
 
 ### Testing
 
@@ -1119,11 +1136,16 @@ Problems that can occur in data science ar not always detectable; therefore, we 
 
 **Unit tests** are tests that cover one piece of a code, usually a single function, independently from teh rest of the program.
 
-[Getting Started Testing, by Ned Batchelder](https://speakerdeck.com/pycon2014/getting-started-testing-by-ned-batchelder)
+Very interesting presentation: [Getting Started Testing, by Ned Batchelder](https://speakerdeck.com/pycon2014/getting-started-testing-by-ned-batchelder)
 
+Tests should be:
 
+- Repeatable
+- Informative: Report information of what went ok/wrong? (eg., expected results vs. current)
+- Automatized
+- Should not stop when a test fails
 
-### Pytest
+### Pytest: Unit Testing Tool
 
 We should write and integrate tests into our deployment, for instance with [pytest](https://docs.pytest.org/en/7.1.x/) or [unittest](https://docs.python.org/3/library/unittest.html). We use pytest because it is more powerful:
 
@@ -1139,10 +1161,10 @@ conda activate ds
 pip install -U pytest
 ```
 
-Unless we define in the python file pytest decorators (e.g., fitures and parametrization, explained below), we don't need to import anything: we just need to:
+Unless we define in the python file pytest decorators (e.g., fixtures and parametrization, explained below), we don't need to import anything: we just need to:
 
-- **name testing files and functions with preceding** `test_*`; if we repeat the name for functions, pytest doesn't complain...
-- use use in the test functions `assert`, `isinstance(value, type)` or the like to check values
+- **name testing files and functions with preceding** `test_*`; that's the dafault, we can change that in the [configuration](https://docs.pytest.org/en/latest/example/pythoncollection.html); if we repeat the name for functions, pytest doesn't complain
+- use in the test functions `assert`, `isinstance(value, type)` or the like to check values
 - run `pytest` in the terminal: all tests are automatically found and executed!
 
 It is a good practice to for testing functions to a `Given-When-Then` structure inside:
@@ -1150,7 +1172,7 @@ It is a good practice to for testing functions to a `Given-When-Then` structure 
 - `When` executes the functionality, which can return a value
 - `Then` checks whether the returned value is correct
 
-Example: `./02_Production_Model_Package/sandbox_tests`
+Example: `./01_Clean_Code/lab/tests_example`
 - file `my_module.py`
 - file `test_my_module.py`
 
@@ -1181,18 +1203,29 @@ def test_square_return_value_type_is_int():
 Now, we run on the Terminal
 
 ```bash
-cd .../02_Production_Model_Package/sandbox_tests
+cd .../01_Clean_Code/lab/tests_example
 pytest
-# 2 successful tests
+# 2 successful tests: ..
+# each successful test is a dot
+# if one fails, it doesn't stop, it continues: F.
 ```
 
-#### Pytest Fixtures
+#### Pytest Fixtures 1
 
-Fixtures are functions defined as decorators which return objects used in tests. The idea is that test functions take as arguments these fixture functions, which return variables used in the test functions. By convention, fixtures are defined in a `conftest.py` file
+Fixtures are functions defined as decorators which return objects used in tests. The idea is that test functions take as arguments these fixture functions, which return variables used in the test functions. By convention, fixtures are defined in a `conftest.py` file, but we can define them in the `test_` file.
 
-Example: `./02_Production_Model_Package/sandbox_tests`; all the above files, plus:
+Some notes:
+
+- Fixture functions are reusable as many times as we want
+- We can define scopes where they are valid: classes, modules, packages or session
+- We can define setup and teardown statements in the fixtures
+- More on [pytest fixtures](https://docs.pytest.org/en/7.1.x/how-to/fixtures.html)
+- The `conftest.py` file is visible for the whole directory; in it, we can define parameters, fixtures, or variable; however, we can also work without it.
+
+Example: `./01_Clean_Code/lab/tests_example`; all the above files, plus:
+
 - file `conftest.py`
-- file `test_my_module_with_fitures.pwy`
+- file `test_my_module_with_fixtures.py`
 
 ```python
 ###### my_module.py
@@ -1227,17 +1260,95 @@ def test_square_gives_correct_value(input_value):
 Now, we run on the Terminal:
 
 ```bash
-cd .../02_Production_Model_Package/sandbox_tests
+cd .../01_Clean_Code/lab/tests_example
 pytest
-# 3 successful tests: 2 regular, 1 with fixtures
+# 3 successful tests: 
+# test_my_module.py ..   
+# test_my_module_with_fixtures.py .
+```
+
+#### Pytest Fixtures 2
+
+Now, the case in which the fixtures are defined in the `test_` file itself: `test_my_function_with_fixtures.py`.
+
+However, note that using `conftest.py` has the advantage that the fixtures and the parameters are defined for all `test_` files.
+
+```python
+# File: test_my_function_with_fixtures.py
+# Pytest filename starts with "test_...."
+# Whereever we define fixtures, pytest must be imported!
+import pytest
+
+##################################
+"""
+Function to test (usually, this is on another file!)
+"""
+import pandas as pd
+def import_data(pth):
+    df = pd.read_csv(pth)
+    return df
+
+##################################
+"""
+Fixture - The test function test_import_data() will 
+use the return of path() as an argument
+"""
+@pytest.fixture(scope="module")
+def path():
+    #return "./data/bank_data.csv"
+    return "../wine_quality/winequality-red.csv"
+
+##################################
+"""
+Test method
+"""
+def test_import_data(path):
+    try:
+        df = import_data(path)
+
+    except FileNotFoundError as err:
+        logging.error("File not found")
+        raise err
+
+    # Check the df shape
+    try:
+        assert df.shape[0] > 0
+        assert df.shape[1] > 0
+
+    except AssertionError as err:
+        logging.error(
+            "Testing import_data: The file doesn't appear to have rows and columns")
+        raise err
+    return df
+##################################
+```
+
+```bash
+cd .../01_Clean_Code/lab/tests_example
+pytest
+# 4 successful tests: 
+# test_my_module.py ..   
+# test_my_module_with_fixtures.py .
+# test_my_function_with_fixtures.py .
+```
+
+#### Pytest Fixture Parametrization
+
+We can pass `params` to each fixture; then we catch them with `request.param` inside and the fixture is executed as many times as the number of params. Notice that `params` is plural, while `request.param` is singular.
+
+```python
+@pytest.fixture(scope="module", params=["./data/bank_data.csv",
+	"./data/hospital_data.csv"])
+def path():
+  value = request.param
+  return value
 ```
 
 #### Pytest Parametrization
 
-Parametrization is achieved with decorartors, too. Instead of using fixtures, we can parametrize the test function, i.e., we define different values to be used by it; that parameter is passed as argument. As an effect, instead of running the test once, we run it so many times are number of parameter values. That is helpful to test edge cases, such as values like `0, NA, null`, etc.
+Parametrization can be achieved with other decorartors, too. Instead of using fixtures, we can parametrize the test function, i.e., we define different values to be used by it; that parameter is passed as argument. As an effect, instead of running the test once, we run it so many times are number of parameter values. That is helpful to test edge cases, such as values like `0, NA, null`, etc.
 
-Example: `./02_Production_Model_Package/sandbox_tests`; all the above files, plus:
-- file `test_my_module_parametrized.py`
+Example: `./01_Clean_Code/lab/tests_example`; all the above files, plus: `test_my_module_parametrized.py`
 
 ```python
 ###### my_module.py
@@ -1273,8 +1384,179 @@ def test_square_return_value_type_is_int(inputs):
 Now, we run on the Terminal:
 
 ```bash
-cd .../02_Production_Model_Package/sandbox_tests
+cd .../01_Clean_Code/lab/tests_example
 pytest
-# 6 successful tests: 2 regular, 1 with fixtures, 3 parametrized
+# 7 successful tests: 
+# test_my_function_with_fixtures.py .                                           
+# test_my_module.py ..
+# test_my_module_parametrized.py ...
+# test_my_module_with_fitures.py .
 ```
 
+Note: that each parameter value is a test! Thus, `test_my_module_parametrized.py` is run 3x.
+
+#### Pytest Shared Namespace with `conftest.py`
+
+We can define an object in `conftest.py` which can be accessed by all test functions.
+
+This is useful when an output from a test function is used in another test function.
+
+Example:
+
+```python
+
+### -- conftest.py
+import pytest
+
+# Initialize as None
+def df_plugin():
+	return None
+
+# Creating a Dataframe object 'pytest.df' in Namespace
+def pytest_configure():
+	pytest.df = df_plugin() # we can access & modify pytest.df in test functions!
+
+### -- test_function.py
+
+# Test function 1
+# See the `pytest.df = df` statement to store the variable in Namespace
+def test_import_data():
+	try:
+	    df = import_data("./data/bank_data.csv")
+	except FileNotFoundError as err:
+	    logging.error("File not found")
+	    raise err
+	'''
+	Some assertion statements per your requirement.
+	'''
+	pytest.df = df
+	return df
+
+# Test function 2
+# See the `df = pytest.df` statement accessing the Dataframe object from Namespace
+def test_function_two():
+    df = pytest.df
+    '''
+    Some assertion statements per your requirement.
+    '''
+
+```
+
+#### Pytest Shared Namespace with Cache
+
+It is also possible to share objects between functions without using `conftest.py`.
+
+To that end, we need to use the cache, which can be accessed via:
+
+```
+request.config.cache.set()
+request.config.cache.get()
+```
+
+Example (same as before, but without `conftest.py` definitions):
+
+```python
+### -- test_function.py
+
+# Test function 1
+# See the `pytest.df = df` statement to store the variable in Namespace
+def test_import_data():
+	try:
+	    df = import_data("./data/bank_data.csv")
+	except FileNotFoundError as err:
+	    logging.error("File not found")
+	    raise err
+	'''
+	Some assertion statements per your requirement.
+	'''
+	#pytest.df = df
+	request.config.cache.set('cache_df', df)
+	return df
+
+# Test function 2
+# See the `df = pytest.df` statement accessing the Dataframe object from Namespace
+def test_function_two():
+    #df = pytest.df
+    df = request.config.cache.get('cache_df', None)
+    '''
+    Some assertion statements per your requirement.
+    '''
+```
+
+### Test-Drivem Development (TDD)
+
+Test-Driven Development (TDD) consists in writing tests before even programming: we write tests for test or edge cases, which will fail, but as we write our code, they all should end up working.
+
+Example: write a function that checks whether an email is valid; instead of writing the function, first, we write the tests:
+
+```python
+def email_validator(email):
+	pass
+
+def test_email_validator():
+	assert email_validator("mikel@gmail.com") == True
+	assert email_validator("mikel@.com") == False
+	# ...
+```
+
+We basically define all the edge cases we come up with and implement out function based on them.
+When all tests pass, we know we are done.
+At the end, we produce two things: (1) the function and (2) its test. The nice thing is that if we change (e.g., refactor) the function, the test is still a valid method to checked whether the new version works!
+
+```python
+def email_validator(email):
+	valid = True
+	if email.count("@") == 0:
+		valid = False
+	if email.count(".") == 0:
+		valid = False
+	# ...
+	return valid
+```
+
+### Logging
+
+Significant events in our code need to be logged; that way, when the code crashes, we can trace back what happened.
+
+Logging messages need to
+
+- Be professional and clear.
+- Be concise and well written (punctuation, capitalization, etc.)
+- Choose the appropriate level for logging (NOTSET < DEBUG < INFO < WARNING < ERROR < CRITICAL)
+- Provide any useful information (ids, etc.)
+
+In python, there is a built-in logger: [logging](https://docs.python.org/3/library/logging.html)
+
+Basically, we do the following:
+
+- We configure the logger
+- In every place we would have printed a message, we log it
+
+At the end, the logged messages are dumped to a file.
+
+```python
+import logging
+import pandas as pd
+
+# Configuration
+logging.basicConfig(
+    filename='./results.log', # filename, where it's dumped
+    level=logging.INFO, # minimum level I log
+    filemode='w',
+    # https://docs.python.org/3/library/logging.html
+    # logger - time - level - our message
+    format='%(name)s - %(asctime)s - %(levelname)s - %(message)s')
+
+# Code, with logging.<level>() instead of print()
+def read_data(file_path):
+	try:
+		df = pd.read_csv(file_path)
+		logging.info(f"SUCCESS: File loaded. There are {df.shape[0]} entries in the dataset.")
+		return df
+	except FileNotFoundError:
+		logging.error(f"ERROR: File not found: {file_path}")
+
+read_data("some_path")
+```
+
+When we execute the code and it finishes, the file `./results.log` will be created with all the messages.
