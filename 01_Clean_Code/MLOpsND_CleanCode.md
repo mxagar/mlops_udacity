@@ -15,7 +15,7 @@ Note that:
 - `TODO`
 - `TODO`
 
-Mikel Sagardia, 2022.
+Mikel Sagardia, 2022.  
 No guarantees.
 
 ## Practical Installation Notes
@@ -1118,10 +1118,14 @@ These tokens are not covered, but I briefly explain them, since they are used in
 # with a custom message, if we want
 # and the program stops if we don't catch the AssertionError
 numer = -42
-assert number > 0, f"number greater than 0 expected, got: {number}"
+assert number > 0 and number < 50, f"number in (0,50) expected, got: {number}"
 # Traceback (most recent call last):
 #     ...
 # AssertionError: number greater than 0 expected, got: -42
+
+# We can also check types!
+value = "hello"
+assert isinstance(value, int)
 
 # We can raise any type of Exception when we detect a condition which is not met
 # We can 'raise Exception('blah')', too
@@ -1129,6 +1133,27 @@ radius = -1
 if radius < 0:
     raise ValueError("positive radius expected")
 ```
+
+`assert` and `raise` are not limited to testing only; we can use them in the regular program to check that everything works properly:
+
+```python
+def sum_vals(value_a, value_b):
+    '''
+    Args:
+        value_a: (int)
+        value_b: (int)
+    Return:
+        value_a + value_b (int)
+    '''
+    try:
+        assert isinstance(value_a, int) and isinstance(value_b, int)
+        return value_a+value_b
+    except AssertionError:
+        # We would replace print by logging.error(); see below
+        print(f"ERROR: input arguments need to be integers: {a}, {b}")
+        return None
+```
+
 
 ### Testing
 
@@ -1534,6 +1559,8 @@ Basically, we do the following:
 
 At the end, the logged messages are dumped to a file.
 
+Note: be generous when logging, i.e., log also successful steps with used values, so that everything is tracked!
+
 ```python
 import logging
 import pandas as pd
@@ -1551,12 +1578,39 @@ logging.basicConfig(
 def read_data(file_path):
 	try:
 		df = pd.read_csv(file_path)
-		logging.info(f"SUCCESS: File loaded. There are {df.shape[0]} entries in the dataset.")
+		logging.info("SUCCESS: File loaded. There are %i entries in the dataset.", df.shape[0])
 		return df
 	except FileNotFoundError:
-		logging.error(f"ERROR: File not found: {file_path}")
+		logging.error("ERROR: File not found: %s", file_path)
 
 read_data("some_path")
 ```
 
 When we execute the code and it finishes, the file `./results.log` will be created with all the messages.
+
+Note that the logging messages must be in the C-style or lazy-logging style; the other styles work, but they might lead to problems:
+
+```python
+# CORRECT
+logging.info("Integer %i, Float %f, String %s", 5, 6.0, "hello")
+# If we are unsure of which type was introduced, add two loggings, or arguments as %s
+logging.info("Inserted values: ")
+logging.info(a, b)
+logging.info("Inserted values: %s, %s", a, b)
+# NOT CORRECT
+logging.info(f"Integer {my_int}, Float {my_float}, String {my_string}") 
+logging.info("Integer {}, Float {}, String {}".format(5, 6.0, "hello"))
+```
+
+List of most common types in lazy-formattting:
+
+```
+%s - String
+%d - Integer
+%f - Float
+%.3f - Float with 3 decimal points
+```
+
+### Model Drift
+
+
