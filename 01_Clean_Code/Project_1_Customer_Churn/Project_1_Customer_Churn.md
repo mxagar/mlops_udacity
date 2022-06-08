@@ -20,7 +20,7 @@ Refactor the model in `churn_notebook.ipynb` to create the following files:
 2. `churn_script_logging_and_tests.py`
 3. `README.md`
 
-The notebook `Guide.ipynb` is a guide.
+The notebook `Guide.ipynb` is a guide; this document you are reading contains a summary of its contents and more information.
 
 The file `churn_library.py` should complete a typical data science process, which is displayed in the sequence diagram shown below, and which includes the following steps:
 
@@ -98,3 +98,28 @@ Suggestions to stand out:
 - Add dependencies and libraries (or dockerfile) to README.md
 - Add requirements.txt with needed dependencies and libraries for simple install.
 
+## Environment installation
+
+```bash
+conda create -n dev-nd python=3.6.3
+conda activate dev-nd
+conda install pip
+# I had to modify the matplotlib version: 2.10 -> 2.2.0
+~/opt/anaconda3/envs/dev-nd/bin/pip install -r requirements_py3.6.txt
+conda install jupyter jupyterlab
+```
+
+## Notes on the analysis done in `churn_notebook.ipynb`
+
+- Binary classification: churn (0), no churn (1)
+- The dataset is very clean: no missing values
+- 14 numerical values, 5 qualitative
+- Qualitative values are encoded as the churn ratio mean associated to their category; thus, they are converted into numerical ratios
+- Some EDA plots are done: histograms, correlations heat maps, bar plots
+- Two models are trained: a random forest with grid search and a logistic regression
+- ROC curves for both models are obtained, as well as classification reports (accuracy, F1, etc. for each class); the random forest is unbeatable with 0.99 AOC, vs 0.89 AOC for the logistic regression.
+- Models are stored as pickles.
+- Feature importances are plotted.
+- Classification reports are printed as images.
+
+Libraries to look at: `shap`
