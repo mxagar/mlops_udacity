@@ -107,6 +107,7 @@ conda install pip
 # I had to modify the matplotlib version: 2.10 -> 2.2.0
 ~/opt/anaconda3/envs/dev-nd/bin/pip install -r requirements_py3.6.txt
 conda install jupyter jupyterlab
+~/opt/anaconda3/envs/dev-nd/bin/pip install -U pytest
 ```
 
 ## Notes on the analysis done in `churn_notebook.ipynb`

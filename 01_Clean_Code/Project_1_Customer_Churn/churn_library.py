@@ -16,12 +16,11 @@ Clean code principles are guaranteed:
 - PEP8 conventions
 - Error handling
 - Testing is carried in the companion file: churn_script_logging_and_test.py
-- Logging
 
 PEP8 conventions checked with:
 
->> pylint recent_coding_books.py # 8.25/10
->> autopep8 recent_coding_books.py
+>> pylint churn_library.py # 8.30/10
+>> autopep8 churn_library.py
 
 The file can be run stand-alone:
 
@@ -38,7 +37,6 @@ Author: Mikel Sagardia
 Date: 2022-06-08
 '''
 
-# import libraries
 import os
 #os.environ['QT_QPA_PLATFORM']='offscreen'
 import joblib
@@ -99,8 +97,8 @@ def perform_eda(data):
     rootpath = './images/eda'
 
     # New Churn variable: 1 Yes, 0 No
-    data['Churn'] = df['Attrition_Flag'].apply(lambda val:
-                                             0 if val == "Existing Customer" else 1)
+    data['Churn'] = data['Attrition_Flag'].apply(lambda val:
+                                                 0 if val == "Existing Customer" else 1)
     # Figure 1: Churn distribution (ratio)
     fig = plt.figure(figsize=figsize)
     data['Churn'].hist()
@@ -187,32 +185,55 @@ def perform_feature_engineering(data, response="Churn"):
         assert 'Attrition_Flag' in data.columns
         data[response] = data['Attrition_Flag'].apply(
             lambda val: 0 if val == "Existing Customer" else 1)
-    except AssertionError:
+    except AssertionError as err:
         print("The df must contain the column 'Attrition_Flag'.")
-    except KeyError:
+        raise err
+    except KeyError as err:
         print("Response key must be a string!")
+        raise err
 
     # Traget variable
     y = data[response]
 
     # Drop unnecessary columns
     try:
+        data.drop('Attrition_Flag', axis=1, inplace=True)
         data.drop('Unnamed: 0', axis=1, inplace=True)
         data.drop('CLIENTNUM', axis=1, inplace=True)
-    except KeyError:
-        print("The df must contain the columns 'Unnamed: 0' and 'CLIENTNUM'.")
+        #data.drop(response, axis=1, inplace=True)
+    except KeyError as err:
+        print("Missing columns in the dataframe.")
+        raise err
 
-    # Automatically detect categorical and numerical columns
+    # Automatically detect categorical columns
     category_lst = list(data.select_dtypes(['object']).columns)
-    quant_columns = list(data.select_dtypes(['int64','float64']).columns)
 
     # Encode categorcial variables as category ratios
+    cat_columns_encoded = []
     data, cat_columns_encoded = encoder_helper(data, category_lst, response)
 
-    # Features
-    keep_cols = quant_columns + cat_columns_encoded
-    X = pd.DataFrame()
-    X[keep_cols] = data[keep_cols]
+    # Drop target 
+    data.drop(response, axis=1, inplace=True)
+
+    # Automatically detect numerical columns    
+    quant_columns = list(data.select_dtypes(['int64','float64']).columns)
+    # Features: categorcial + numerical
+    # but all identified as numerical now, because we encoded them so!
+    # So, WRONG: keep_cols = quant_columns + cat_columns_encoded
+    for col in cat_columns_encoded:
+        try:
+            assert col in quant_columns
+        except AssertionError as err:
+            print(f"Column {col} not found in set of numerical columns.")
+            raise err
+    keep_cols = quant_columns
+    X = data[keep_cols]
+
+    try:
+        assert X.shape[1] == 19
+    except AssertionError as err:
+        print(f"Wrong number of columns: {X.shape[1]} != 19")
+        raise err
 
     # Train/Test split
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state=42)
