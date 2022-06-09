@@ -57,8 +57,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 
-#from sklearn.metrics import plot_roc_curve, classification_report
-from sklearn.metrics import classification_report
+from sklearn.metrics import plot_roc_curve, classification_report
 
 # Set library/module options
 os.environ['QT_QPA_PLATFORM']='offscreen'
@@ -244,7 +243,8 @@ def perform_feature_engineering(data, response="Churn"):
 def classification_report_image(y_train,
                                 y_test,
                                 y_train_preds,
-                                y_test_preds):
+                                y_test_preds,
+                                outputpath):
     '''
     produces classification report for training and testing results and stores report as image
     in images folder
@@ -261,7 +261,6 @@ def classification_report_image(y_train,
              None
     '''
     # General parameters
-    rootpath = './images/results'
     dpi = 200
     figsize = (15, 15)
 
@@ -281,7 +280,7 @@ def classification_report_image(y_train,
     plt.text(0.01, 0.7, str(classification_report(y_train, y_train_preds_rf)), {
              'fontsize': 10}, fontproperties='monospace')  # approach improved by OP -> monospace!
     plt.axis('off')
-    fig.savefig(rootpath+'/rf_classification_report.png', dpi=dpi)
+    fig.savefig(outputpath+'/rf_classification_report.png', dpi=dpi)
 
     # Logistic regression model: Classification report
     fig = plt.figure(figsize=figsize)
@@ -294,9 +293,33 @@ def classification_report_image(y_train,
     plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds_lr)), {
              'fontsize': 10}, fontproperties='monospace')  # approach improved by OP -> monospace!
     plt.axis('off')
-    fig.savefig(rootpath+'/lr_classification_report.png', dpi=dpi)
+    fig.savefig(outputpath+'/lr_classification_report.png', dpi=dpi)
 
+def roc_curve_plot(models, X_test, y_test, outputpath):
+    '''
+    creates and stores the feature importances in pth
+    input:
+            models (objects): trained models
+            X_test (numpy.array): test split features to compute ROC curves
+            y_test (numpy.array): test split target to compute ROC curves
 
+    output:
+             None
+    '''
+    # General parameters
+    dpi = 200
+    figsize = (15, 8)
+
+    # Unpack models
+    lrc, rfc = models # lrc, cv_rfc.best_estimator_
+
+    # ROC Plots
+    fig = plt.figure(figsize=figsize)
+    ax = plt.gca()
+    lrc_plot = plot_roc_curve(lrc, X_test, y_test)
+    rfc_plot = plot_roc_curve(rfc, X_test, y_test, ax=ax, alpha=0.8)
+    lrc_plot.plot(ax=ax, alpha=0.8)
+    fig.savefig(outputpath+'/roc_plots.png', dpi=dpi)
 
 def feature_importance_plot(model, X_data, output_pth):
     '''
@@ -381,14 +404,27 @@ def train_models(X_train, X_test, y_train, y_test):
     #except FileNotFoundError:
     #    print("Models could not be saved!")
 
+    # Define image output path
+    image_output_path = "./images/results"
+
     # Save classification report plots
     classification_report_image(y_train,
                                 y_test,
                                 (y_train_preds_lr,y_train_preds_rf),
-                                (y_test_preds_lr,y_test_preds_rf))
+                                (y_test_preds_lr,y_test_preds_rf),
+                                image_output_path)
+
+    # Pack models for the ROC curve computation
+    models = (lrc, cv_rfc.best_estimator_)
+
+    # Save ROC curve plots
+    roc_curve_plot(models,
+                   X_test,
+                   y_test,
+                   image_output_path)
 
     # Save plot of feature importance
-    feature_importance_plot(cv_rfc, X_train, "./images/results")
+    feature_importance_plot(cv_rfc, X_train, image_output_path)
 
 if __name__ == "__main__":
 

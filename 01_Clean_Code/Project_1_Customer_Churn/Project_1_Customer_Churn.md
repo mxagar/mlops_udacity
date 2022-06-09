@@ -123,4 +123,15 @@ conda install jupyter jupyterlab
 - Feature importances are plotted.
 - Classification reports are printed as images.
 
-Libraries to look at: `shap`
+Libraries to look at: `shap`.
+
+## Links provided by the reviewer
+
+Interesting links provided by the reviewer:
+
+- [Logging Wisdom: How to Log](https://medium.com/unomaly/logging-wisdom-how-to-log-5a19145e35ec)
+- [How to write a good README for your GitHub project?](https://bulldogjob.com/readme/how-to-write-a-good-readme-for-your-github-project)
+- [The Best of the Best Practices (BOBP) Guide for Python](https://gist.github.com/sloria/7001839)
+- [Logging Best Practices: The 13 You Should Know](https://www.dataset.com/blog/the-10-commandments-of-logging/)
+- [How to Publish an Open-Source Python Package to PyPI](https://realpython.com/pypi-publish-python-package/)
+

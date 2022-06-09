@@ -148,7 +148,9 @@ def expected_models():
 def expected_result_images():
     '''List of saved result images'''
     return ['rf_classification_report.png',
-            'lr_classification_report.png']
+            'lr_classification_report.png',
+            'feature_importance.png',
+            'roc_plots.png']
 
 @pytest.fixture
 def train_models():

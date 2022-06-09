@@ -43,6 +43,7 @@ conda activate ds
 ## Overview of Contents
 
 1. Lesson 1: Introduction
+
 2. Lesson 2: Coding Best Practices
 	- Clean and Modular Code
 	- PEP 8 Summary (My Notes)
@@ -58,6 +59,7 @@ conda activate ds
 	- Documentation: Docstrings
 	- Documentation: `README.md`
 	- Auto-PEP8 and Linting
+
 3. Lesson 3: Working with Others Using Version Control
 	- Basic Git
 	- Notes on `pull` and `push` and Remote/Cloud Repos
@@ -71,7 +73,23 @@ conda activate ds
 		- Fork-Branch-Pull-Request Workflow
 	- Model and Dataset Versioning
 	- Code Reviews
+
 4. Lesson 4: Production Ready Code
+    - Catching Errors
+    - `assert` and `raise`
+    - Testing
+    - Pytest: Unit Testing Tool
+        - Installation and Basic Usage
+        - Pytest Fixtures 1
+        - Pytest Fixtures 2
+        - Pytest Fixture Parametrization
+        - Pytest Parametrization
+        - Pytest Shared Namespace with `conftest.py`
+        - Pytest Shared Namespace with Cache
+    - Test-Drivem Development (TDD)
+    - Logging
+    - Model Drift
+
 5. Project: Predict Customer Churn with Clean Code
 
 ## 1. Lesson 1: Introduction
@@ -1072,8 +1090,9 @@ def read_data(path):
 		# by causing the error;
 		# Use tuples is several error types grouped
 		print("File not found!")
-	except IsADirectoryError:
+	except IsADirectoryError as err:
 		print("File is a directory!")
+        raise err
 	except:
 		# Avoid exept without any error type
 		# In this case all the rest of errors would land here
@@ -1191,6 +1210,7 @@ Unless we define in the python file pytest decorators (e.g., fixtures and parame
 - **name testing files and functions with preceding** `test_*`; that's the dafault, we can change that in the [configuration](https://docs.pytest.org/en/latest/example/pythoncollection.html); if we repeat the name for functions, pytest doesn't complain
 - use in the test functions `assert`, `isinstance(value, type)` or the like to check values
 - run `pytest` in the terminal: all tests are automatically found and executed!
+- NOTE: if we don't name the file `test_*`, we need to run `pytest filename.py`
 
 It is a good practice to for testing functions to a `Given-When-Then` structure inside:
 - `Given` sets variable values, if necessary
@@ -1246,6 +1266,7 @@ Some notes:
 - We can define setup and teardown statements in the fixtures
 - More on [pytest fixtures](https://docs.pytest.org/en/7.1.x/how-to/fixtures.html)
 - The `conftest.py` file is visible for the whole directory; in it, we can define parameters, fixtures, or variable; however, we can also work without it.
+- The fixtures can return functions, for instance the functions we'd like to test!
 
 Example: `./01_Clean_Code/lab/tests_example`; all the above files, plus:
 
@@ -1259,7 +1280,7 @@ def square(value):
 
 ###### conftest.py
 
-# With fictures, we need to import pytest
+# With fixtures, we need to import pytest
 # By convention, all fuxtures defined in conftest.py
 # are made available to all detected test files and functions!
 import pytest
@@ -1580,8 +1601,9 @@ def read_data(file_path):
 		df = pd.read_csv(file_path)
 		logging.info("SUCCESS: File loaded. There are %i entries in the dataset.", df.shape[0])
 		return df
-	except FileNotFoundError:
+	except FileNotFoundError as err:
 		logging.error("ERROR: File not found: %s", file_path)
+        raise err
 
 read_data("some_path")
 ```
@@ -1612,5 +1634,42 @@ List of most common types in lazy-formattting:
 ```
 
 ### Model Drift
+
+Model drift is quite characteristic of machine learning.
+
+Models are built on offline data; as new data is introduced in live situations, the properties of these data might be shifted from the model or the original traning dataset.
+
+In these case, we might need to:
+
+- Train the model again.
+- Find new features.
+- Tune the hyperparameters.
+
+Typical ways to measure and detect model drift:
+
+- Change in distributions of business metrics: revenue, clicks, impressions, etc.
+- Change in distributions of model metrics (accuracy, recall, precision, etc.)
+- Changes in distirbutions of input features.
+
+We can use mainly two types of ratraining:
+
+1. Automated: when frequent and small updates are needed; e.g., fraud detection.
+2. Non-automated: more common for models that predict company metrics & Co.
+
+Automated re-training is usually applied usually for simple models; the model is simply retrained no new arquitecture is defined.
+
+The rest of there-tranings is usually done manually, i.e., non-automated.
+
+## 5. Project: Predict Customer Churn with Clean Code
+
+See `./Project_1_Customer_Churn`.
+
+Interesting links provided by the reviewer:
+
+- [Logging Wisdom: How to Log](https://medium.com/unomaly/logging-wisdom-how-to-log-5a19145e35ec)
+- [How to write a good README for your GitHub project?](https://bulldogjob.com/readme/how-to-write-a-good-readme-for-your-github-project)
+- [The Best of the Best Practices (BOBP) Guide for Python](https://gist.github.com/sloria/7001839)
+- [Logging Best Practices: The 13 You Should Know](https://www.dataset.com/blog/the-10-commandments-of-logging/)
+- [How to Publish an Open-Source Python Package to PyPI](https://realpython.com/pypi-publish-python-package/)
 
 
