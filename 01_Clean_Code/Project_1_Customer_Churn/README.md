@@ -144,7 +144,6 @@ pylint churn_script_logging_and_tests.py # should yield 7.86/10
 
 - [x] Add dependencies and libraries to `README.md`.
 - [ ] Re-organize each script to work as a class.
-- [ ] Update functions to move constants to their own `constants.py` file, which can then be passed to the necessary functions, rather than being created as variables within functions.
-- [ ] Work towards `pylint` score of 10/10.
+- [ ] Update functions to move constants to their own `constants.py` or `conftest.py` file.
+- [ ] Work towards `pylint` score of 10/10. However, note that some variable names were chosen to be non-PEP8-conform due to their popular use in the field (e.g., `X_train`).
 - [ ] Create Dockerfile.
-
