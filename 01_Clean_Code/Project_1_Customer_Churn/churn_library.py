@@ -31,7 +31,7 @@ The script expects the proper dataset to be located in `./data`
 Additionally:
 
 - The produced models are stored in `./models`
-- The plots of the EDA and the classification results are stored in `./images/`
+- The plots of the EDA and the classification results are stored in `./images`
 
 Author: Mikel Sagardia
 Date: 2022-06-08
