@@ -5,6 +5,10 @@ This repository contains the project **Predict Customer Churn** from the [Udacit
 Overview of contents:
 
 - Project Description
+- Files Description
+- Installation
+- Running Files
+- How to Improve This?
 
 
 ## Project Description
@@ -138,9 +142,9 @@ pylint churn_script_logging_and_tests.py # should yield 7.86/10
 
 ## How to Improve This?
 
-- [x] Add dependencies and libraries to `README.md`.
-- [] Re-organize each script to work as a class.
-- [] Update functions to move constants to their own `constants.py` file, which can then be passed to the necessary functions, rather than being created as variables within functions.
-- [] Work towards `pylint` score of 10/10.
-- [] Create Dockerfile.
+[x] Add dependencies and libraries to `README.md`.
+[] Re-organize each script to work as a class.
+[] Update functions to move constants to their own `constants.py` file, which can then be passed to the necessary functions, rather than being created as variables within functions.
+[] Work towards `pylint` score of 10/10.
+[] Create Dockerfile.
 
