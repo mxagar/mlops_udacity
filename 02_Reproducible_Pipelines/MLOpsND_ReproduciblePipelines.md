@@ -161,12 +161,46 @@ Tools used:
 - Github
 - Weights & Biases
 - MLflow + Hydra
-- Anaconda
+- Anaconda (as oposed to Docker?)
 - scikit-learn & pytorch
 
 #### Installation of Weights & Biases
 
+Create an account: I used my Github account: [https://wandb.ai/mxagar](https://wandb.ai/mxagar).
 
+Create/activate a conda environment and install the following packages:
+
+```bash
+# Create an environment
+# conda create --name udacity-mlops python=3.8 mlflow jupyter pandas matplotlib requests -c conda-forge
+# ... or activate an existing one:
+conda activate ds
+# Install missing packages
+conda install mlflow requests -c conda-forge
+# Make sure pip is pointing to the pip in the conda environment
+which pip
+# Install Weights and Biases through pip
+pip install wandb
+# Log in to wandb
+wandb login
+# Log in on browser if not done
+# Go to provided URL: https://wandb.ai/authorize
+# Copy and paste API key on Terminal, as requested
+# Done!
+```
+
+Test `wandb` and `mlflow`:
+
+```bash
+wandb --help
+mlflow --help
+```
+
+### 1.5 Module Project: Rental Price Prediction in New York
+
+> A property management company is renting rooms and properties in New York for short periods on various rental platforms. They need to estimate the typical price for a given property based on the price of similar properties. The company receives new data in bulk every week, so the model needs to be retrained with the same cadence, necessitating a reusable pipeline.
+
+![ML project pipeline](./pics/mlops-project-pipeline.png)
 
 ## 2. Machine Learning Pipelines
 
