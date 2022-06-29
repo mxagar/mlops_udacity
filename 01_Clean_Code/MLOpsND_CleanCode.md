@@ -59,6 +59,7 @@ conda activate ds
 	- Documentation: Docstrings
 	- Documentation: `README.md`
 	- Auto-PEP8 and Linting
+    - Psycodestyle
 
 3. Lesson 3: Working with Others Using Version Control
 	- Basic Git
@@ -591,6 +592,31 @@ Conclusion: Always follow this procedure:
 - Run `autopep8` and let it make the spacing and minor rest changes.
 - Run `pylint` again to check we get a 10/10 score.
 - We have the file!
+
+### Pycodestyle
+
+Look at these interesting links:
+
+- [Jupyter Notebook Best Practices](https://towardsdatascience.com/jupyter-notebook-best-practices-f430a6ba8c69)
+- [Jupyter Notebook Shortcuts](https://towardsdatascience.com/jypyter-notebook-shortcuts-bf0101a98330)
+- [Pycodestyle](https://pypi.org/project/pycodestyle/)
+
+We can use `pycodestyle` to guarantee PEP-8 standards in Jupyter notebooks.
+
+```python
+## Cell 1
+!pip install pycodestyle pycodestyle_magic
+!pip install flake8
+%load_ext pycodestyle_magic
+
+## Cell 2
+%%pycodestyle
+
+# Now, any code we write in the cell will be checked by pycodestyle
+# and warnings displayed!
+
+```
+
 
 ## 3. Lesson 3: Working with Others Using Version Control
 

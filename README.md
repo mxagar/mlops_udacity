@@ -11,10 +11,6 @@ The nanodegree is composed of four modules:
 
 Each module has a folder with its respective notes.
 
-Additionally, note that:
-- `TODO`
-- `TODO`
-
 ## Practical Installation Notes
 
 I basically followed the installation & setup guide from `TODO`.
