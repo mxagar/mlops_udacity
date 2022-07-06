@@ -204,5 +204,49 @@ mlflow --help
 
 ## 2. Machine Learning Pipelines
 
+A machine learning pipeline is a sequence of independent, modular and reusable components. It can be represented as a Direct Acyclic Graph (DAG) in which the output artifact of a component is the input for the next one or another component.
+
+Artifacts are ouput files of objects that need to be
+
+- tracked (who did what when),
+- versioned,
+- stored.
+
+Example 1: **ETL pipeline** = Extract, Transform, Load: it ingests the data from varois sources, aggregates and cleans it and stores it in a database.
+
+![ETL pipeline](./pics/etl-pipeline.png)
+
+Example 2: **Training Pipeline** = It takes the raw dataset and produces an inference artifact, which is more than the model, rather the pipeline. The ETL pipeline is part of it. The artifact is stored in a registry.
+
+![ETL pipeline](./pics/ml-pipeline.png)
+
+### 2.1 The Three Levels of MLOps
+
+**Level 0**: no production, proofs of concept, competitions; often just monolithic scripts/notebooks and no pipelines.
+
+**Level 1**: Pipelines, not models.
+
+- The target is not just a model, but an entire pipeline; thus, we can regenerate the model with the pipeline (easy to retrain).
+- The pipeline has reusable components.
+- The code, artifacts, experiments are tracked.
+- The model is monitored in production to avoid the model drift.
+- We can learn in production.
+- Everything is standardized, thus, it's easier to hand over th epipeline between teams or to try new things just by changing small parts of the modularized components.
+
+**Level 2**: Continuous Integration, Continuous Development.
+
+- The development and deployment of pipeline components is automatized.
+    - Changes in components are tested; if they pass, they're merged automatically and deployed into production.
+- Continuous training.
+- It requires larger teams and infrastructure, but it is very fast and efficient.
+- It is often used in A/B testing, because rapid interations are possible only when we have high automation.
+- Customers see continuous improvements: pipelines are iterated very quickly.
+- This level appears in large companies with mature ML infrastructures; they are very serious players.
+
+![Levels of MLOps](./pics/level-comparison.png)
+
+### 2.2 Argparse
+
+
 
 
