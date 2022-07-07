@@ -1,0 +1,153 @@
+2022-07-07 11:31:43,948 INFO    MainThread:25413 [internal.py:wandb_internal():93] W&B internal server running at pid: 25413, started at: 2022-07-07 11:31:43.948488
+2022-07-07 11:31:43,949 INFO    WriterThread:25413 [datastore.py:open_for_write():75] open: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/run-xlcmu86l.wandb
+2022-07-07 11:31:43,952 DEBUG   SenderThread:25413 [sender.py:send():235] send: header
+2022-07-07 11:31:43,952 DEBUG   SenderThread:25413 [sender.py:send():235] send: run
+2022-07-07 11:31:44,218 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: check_version
+2022-07-07 11:31:44,227 INFO    SenderThread:25413 [dir_watcher.py:__init__():205] watching files in: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files
+2022-07-07 11:31:44,227 INFO    SenderThread:25413 [sender.py:_start_run_threads():815] run started: xlcmu86l with start time 1657186303
+2022-07-07 11:31:44,227 DEBUG   SenderThread:25413 [sender.py:send():235] send: summary
+2022-07-07 11:31:44,228 INFO    SenderThread:25413 [sender.py:_save_file():949] saving file wandb-summary.json with policy end
+2022-07-07 11:31:44,228 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: check_version
+2022-07-07 11:31:44,353 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: run_start
+2022-07-07 11:31:44,356 DEBUG   HandlerThread:25413 [meta.py:__init__():35] meta init
+2022-07-07 11:31:44,356 DEBUG   HandlerThread:25413 [meta.py:__init__():49] meta init done
+2022-07-07 11:31:44,356 DEBUG   HandlerThread:25413 [meta.py:probe():209] probe
+2022-07-07 11:31:44,358 DEBUG   HandlerThread:25413 [meta.py:_setup_git():199] setup git
+2022-07-07 11:31:44,429 DEBUG   HandlerThread:25413 [meta.py:_setup_git():206] setup git done
+2022-07-07 11:31:44,429 DEBUG   HandlerThread:25413 [meta.py:_save_pip():53] save pip
+2022-07-07 11:31:44,430 DEBUG   HandlerThread:25413 [meta.py:_save_pip():67] save pip done
+2022-07-07 11:31:44,430 DEBUG   HandlerThread:25413 [meta.py:_save_conda():74] save conda
+2022-07-07 11:31:45,235 INFO    Thread-7  :25413 [dir_watcher.py:_on_file_created():256] file/dir created: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/conda-environment.yaml
+2022-07-07 11:31:45,235 INFO    Thread-7  :25413 [dir_watcher.py:_on_file_created():256] file/dir created: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/wandb-summary.json
+2022-07-07 11:31:45,235 INFO    Thread-7  :25413 [dir_watcher.py:_on_file_created():256] file/dir created: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/requirements.txt
+2022-07-07 11:31:50,258 INFO    Thread-7  :25413 [dir_watcher.py:_on_file_created():256] file/dir created: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/output.log
+2022-07-07 11:31:50,877 DEBUG   HandlerThread:25413 [meta.py:_save_conda():84] save conda done
+2022-07-07 11:31:50,877 DEBUG   HandlerThread:25413 [meta.py:probe():247] probe done
+2022-07-07 11:31:50,926 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: stop_status
+2022-07-07 11:31:50,926 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: stop_status
+2022-07-07 11:31:50,928 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:51,161 DEBUG   SenderThread:25413 [sender.py:send():235] send: telemetry
+2022-07-07 11:31:51,162 DEBUG   SenderThread:25413 [sender.py:send():235] send: telemetry
+2022-07-07 11:31:51,162 DEBUG   SenderThread:25413 [sender.py:send():235] send: telemetry
+2022-07-07 11:31:51,162 DEBUG   SenderThread:25413 [sender.py:send():235] send: exit
+2022-07-07 11:31:51,163 INFO    SenderThread:25413 [sender.py:send_exit():371] handling exit code: 0
+2022-07-07 11:31:51,163 INFO    SenderThread:25413 [sender.py:send_exit():373] handling runtime: 6
+2022-07-07 11:31:51,167 INFO    SenderThread:25413 [sender.py:_save_file():949] saving file wandb-summary.json with policy end
+2022-07-07 11:31:51,167 INFO    SenderThread:25413 [sender.py:send_exit():379] send defer
+2022-07-07 11:31:51,168 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:51,168 DEBUG   SenderThread:25413 [sender.py:send():235] send: files
+2022-07-07 11:31:51,170 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: defer
+2022-07-07 11:31:51,170 INFO    SenderThread:25413 [sender.py:_save_file():949] saving file wandb-metadata.json with policy now
+2022-07-07 11:31:51,171 INFO    HandlerThread:25413 [handler.py:handle_request_defer():164] handle defer: 0
+2022-07-07 11:31:51,172 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: defer
+2022-07-07 11:31:51,173 INFO    SenderThread:25413 [sender.py:send_request_defer():388] handle sender defer: 0
+2022-07-07 11:31:51,173 INFO    SenderThread:25413 [sender.py:transition_state():392] send defer: 1
+2022-07-07 11:31:51,174 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: defer
+2022-07-07 11:31:51,174 INFO    HandlerThread:25413 [handler.py:handle_request_defer():164] handle defer: 1
+2022-07-07 11:31:51,265 INFO    Thread-7  :25413 [dir_watcher.py:_on_file_modified():269] file/dir modified: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/conda-environment.yaml
+2022-07-07 11:31:51,265 INFO    Thread-7  :25413 [dir_watcher.py:_on_file_modified():269] file/dir modified: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/wandb-summary.json
+2022-07-07 11:31:51,266 INFO    Thread-7  :25413 [dir_watcher.py:_on_file_created():256] file/dir created: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/wandb-metadata.json
+2022-07-07 11:31:51,271 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: defer
+2022-07-07 11:31:51,271 INFO    SenderThread:25413 [sender.py:send_request_defer():388] handle sender defer: 1
+2022-07-07 11:31:51,272 INFO    SenderThread:25413 [sender.py:transition_state():392] send defer: 2
+2022-07-07 11:31:51,272 DEBUG   SenderThread:25413 [sender.py:send():235] send: stats
+2022-07-07 11:31:51,273 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: defer
+2022-07-07 11:31:51,273 INFO    HandlerThread:25413 [handler.py:handle_request_defer():164] handle defer: 2
+2022-07-07 11:31:51,273 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: defer
+2022-07-07 11:31:51,274 INFO    SenderThread:25413 [sender.py:send_request_defer():388] handle sender defer: 2
+2022-07-07 11:31:51,274 INFO    SenderThread:25413 [sender.py:transition_state():392] send defer: 3
+2022-07-07 11:31:51,274 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: defer
+2022-07-07 11:31:51,274 INFO    HandlerThread:25413 [handler.py:handle_request_defer():164] handle defer: 3
+2022-07-07 11:31:51,274 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: defer
+2022-07-07 11:31:51,274 INFO    SenderThread:25413 [sender.py:send_request_defer():388] handle sender defer: 3
+2022-07-07 11:31:51,275 INFO    SenderThread:25413 [sender.py:transition_state():392] send defer: 4
+2022-07-07 11:31:51,275 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: defer
+2022-07-07 11:31:51,275 INFO    HandlerThread:25413 [handler.py:handle_request_defer():164] handle defer: 4
+2022-07-07 11:31:51,275 DEBUG   SenderThread:25413 [sender.py:send():235] send: summary
+2022-07-07 11:31:51,276 INFO    SenderThread:25413 [sender.py:_save_file():949] saving file wandb-summary.json with policy end
+2022-07-07 11:31:51,276 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: defer
+2022-07-07 11:31:51,277 INFO    SenderThread:25413 [sender.py:send_request_defer():388] handle sender defer: 4
+2022-07-07 11:31:51,277 INFO    SenderThread:25413 [sender.py:transition_state():392] send defer: 5
+2022-07-07 11:31:51,277 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: defer
+2022-07-07 11:31:51,277 INFO    HandlerThread:25413 [handler.py:handle_request_defer():164] handle defer: 5
+2022-07-07 11:31:51,277 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: defer
+2022-07-07 11:31:51,277 INFO    SenderThread:25413 [sender.py:send_request_defer():388] handle sender defer: 5
+2022-07-07 11:31:51,287 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:51,928 INFO    Thread-11 :25413 [upload_job.py:push():132] Uploaded file /var/folders/06/wdqtkk796gjfxfq9063zphx40000gn/T/tmp9dx7gpnswandb/cuagqcsp-wandb-metadata.json
+2022-07-07 11:31:52,271 INFO    Thread-7  :25413 [dir_watcher.py:_on_file_modified():269] file/dir modified: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/wandb-summary.json
+2022-07-07 11:31:55,537 INFO    SenderThread:25413 [sender.py:transition_state():392] send defer: 6
+2022-07-07 11:31:55,538 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:55,539 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: defer
+2022-07-07 11:31:55,540 INFO    HandlerThread:25413 [handler.py:handle_request_defer():164] handle defer: 6
+2022-07-07 11:31:55,540 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: defer
+2022-07-07 11:31:55,540 INFO    SenderThread:25413 [sender.py:send_request_defer():388] handle sender defer: 6
+2022-07-07 11:31:55,540 INFO    SenderThread:25413 [dir_watcher.py:finish():336] shutting down directory watcher
+2022-07-07 11:31:55,648 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:56,289 INFO    SenderThread:25413 [dir_watcher.py:_on_file_modified():269] file/dir modified: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/config.yaml
+2022-07-07 11:31:56,291 INFO    SenderThread:25413 [dir_watcher.py:finish():366] scan: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files
+2022-07-07 11:31:56,296 INFO    SenderThread:25413 [dir_watcher.py:finish():380] scan save: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/requirements.txt requirements.txt
+2022-07-07 11:31:56,296 INFO    SenderThread:25413 [dir_watcher.py:finish():380] scan save: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/output.log output.log
+2022-07-07 11:31:56,297 INFO    SenderThread:25413 [dir_watcher.py:finish():380] scan save: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/config.yaml config.yaml
+2022-07-07 11:31:56,308 INFO    SenderThread:25413 [dir_watcher.py:finish():380] scan save: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/wandb-summary.json wandb-summary.json
+2022-07-07 11:31:56,308 INFO    SenderThread:25413 [dir_watcher.py:finish():380] scan save: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/conda-environment.yaml conda-environment.yaml
+2022-07-07 11:31:56,316 INFO    SenderThread:25413 [dir_watcher.py:finish():380] scan save: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/wandb-metadata.json wandb-metadata.json
+2022-07-07 11:31:56,322 INFO    SenderThread:25413 [sender.py:transition_state():392] send defer: 7
+2022-07-07 11:31:56,323 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:56,329 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: defer
+2022-07-07 11:31:56,330 INFO    HandlerThread:25413 [handler.py:handle_request_defer():164] handle defer: 7
+2022-07-07 11:31:56,331 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: defer
+2022-07-07 11:31:56,332 INFO    SenderThread:25413 [sender.py:send_request_defer():388] handle sender defer: 7
+2022-07-07 11:31:56,332 INFO    SenderThread:25413 [file_pusher.py:finish():145] shutting down file pusher
+2022-07-07 11:31:56,438 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:56,438 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:56,546 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:56,546 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:56,650 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:56,651 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:56,758 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:56,759 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:56,866 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:56,866 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:56,971 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:56,972 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:57,088 INFO    Thread-13 :25413 [upload_job.py:push():132] Uploaded file /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/config.yaml
+2022-07-07 11:31:57,088 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:57,089 INFO    Thread-15 :25413 [upload_job.py:push():132] Uploaded file /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/conda-environment.yaml
+2022-07-07 11:31:57,089 INFO    Thread-14 :25413 [upload_job.py:push():132] Uploaded file /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/wandb-summary.json
+2022-07-07 11:31:57,089 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:57,117 INFO    Thread-12 :25413 [upload_job.py:push():132] Uploaded file /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/files/requirements.txt
+2022-07-07 11:31:57,197 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:57,198 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:57,304 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:57,304 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:57,319 INFO    Thread-6  :25413 [sender.py:transition_state():392] send defer: 8
+2022-07-07 11:31:57,320 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: defer
+2022-07-07 11:31:57,320 INFO    HandlerThread:25413 [handler.py:handle_request_defer():164] handle defer: 8
+2022-07-07 11:31:57,320 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: defer
+2022-07-07 11:31:57,320 INFO    SenderThread:25413 [sender.py:send_request_defer():388] handle sender defer: 8
+2022-07-07 11:31:57,412 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:57,488 INFO    SenderThread:25413 [sender.py:transition_state():392] send defer: 9
+2022-07-07 11:31:57,489 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:57,490 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: defer
+2022-07-07 11:31:57,490 INFO    HandlerThread:25413 [handler.py:handle_request_defer():164] handle defer: 9
+2022-07-07 11:31:57,490 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: defer
+2022-07-07 11:31:57,491 INFO    SenderThread:25413 [sender.py:send_request_defer():388] handle sender defer: 9
+2022-07-07 11:31:57,491 INFO    SenderThread:25413 [sender.py:transition_state():392] send defer: 10
+2022-07-07 11:31:57,491 DEBUG   SenderThread:25413 [sender.py:send():235] send: final
+2022-07-07 11:31:57,492 DEBUG   SenderThread:25413 [sender.py:send():235] send: footer
+2022-07-07 11:31:57,492 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: defer
+2022-07-07 11:31:57,492 INFO    HandlerThread:25413 [handler.py:handle_request_defer():164] handle defer: 10
+2022-07-07 11:31:57,493 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: defer
+2022-07-07 11:31:57,493 INFO    SenderThread:25413 [sender.py:send_request_defer():388] handle sender defer: 10
+2022-07-07 11:31:57,593 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: poll_exit
+2022-07-07 11:31:57,594 DEBUG   SenderThread:25413 [sender.py:send_request():249] send_request: poll_exit
+2022-07-07 11:31:57,594 INFO    SenderThread:25413 [file_pusher.py:join():150] waiting for file pusher
+2022-07-07 11:31:58,178 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: sampled_history
+2022-07-07 11:31:58,179 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: get_summary
+2022-07-07 11:31:58,182 DEBUG   HandlerThread:25413 [handler.py:handle_request():141] handle_request: shutdown
+2022-07-07 11:31:58,182 INFO    HandlerThread:25413 [handler.py:finish():806] shutting down handler
+2022-07-07 11:31:58,497 INFO    WriterThread:25413 [datastore.py:close():279] close: /Users/mxagar/nexo/git_repositories/mlops_udacity/02_Reproducible_Pipelines/lab/WandB_examples/wandb/run-20220707_113143-xlcmu86l/run-xlcmu86l.wandb
+2022-07-07 11:31:59,077 INFO    SenderThread:25413 [sender.py:finish():1111] shutting down sender
+2022-07-07 11:31:59,077 INFO    SenderThread:25413 [file_pusher.py:finish():145] shutting down file pusher
+2022-07-07 11:31:59,078 INFO    SenderThread:25413 [file_pusher.py:join():150] waiting for file pusher
+2022-07-07 11:31:59,086 INFO    MainThread:25413 [internal.py:handle_exit():80] Internal process exited

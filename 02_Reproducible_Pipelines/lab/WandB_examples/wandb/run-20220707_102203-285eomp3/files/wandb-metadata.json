@@ -1,0 +1,21 @@
+{
+    "os": "Darwin-21.5.0-x86_64-i386-64bit",
+    "python": "3.7.13",
+    "heartbeatAt": "2022-07-07T08:22:04.881299",
+    "startedAt": "2022-07-07T08:22:03.194839",
+    "docker": null,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": null,
+    "state": "running",
+    "program": "WandB_examples/01_WandB_Upload_Artifact.ipynb",
+    "root": "/Users/mxagar/nexo/git_repositories/mlops_udacity",
+    "git": {
+        "remote": "git@github.com:mxagar/mlops_udacity.git",
+        "commit": "d6d086b1ae22de3de15a647ecc173aa574d5408c"
+    },
+    "email": "mxagar@gmail.com",
+    "host": "kasiopeia.local",
+    "username": "mxagar",
+    "executable": "/Users/mxagar/opt/anaconda3/envs/ds/bin/python"
+}

@@ -247,6 +247,247 @@ Example 2: **Training Pipeline** = It takes the raw dataset and produces an infe
 
 ### 2.2 Argparse
 
+Logging refresher:
+
+```python
+# Instantiate the logger at global scope of the script
+import logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
+logger = logging.getLogger()
+
+# We can log messages instead of printing in any scope
+# Mark the message as "debug" importance
+logger.debug("This is a debug message")
+# Mark the message as "info" importance
+logger.info("This is an info message")
+# Mark the message as "warning" importance
+logger.warning("This is a warning")
+# Mark the message as "error" importance
+logger.error("This is an error")
+```
+
+Argparse is a Python module which can be used to parse script arguments.
+In order to use it, we instantiate an `ArgumentParser` with a description and then simply `add_arguments` to it. Later, those arguments can be introduced to the script execution comman and they are parsed for use and stored in a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple).
+
+The following example shows how this works and provides a tpical script structure in which we factorize the functionality to a function called from the `main` scope.
+
+```python
+
+import argparse
+
+# The real code / functions
+def do_something(args):
+    pass
+
+if __name__ == "__main__":
+
+    # Instantiate parser
+    parser = argparse.ArgumentParser(description="This is a brief description of this script")
+
+    # Required argument
+    parser.add_argument("--number_1",
+        type=float, help="First number", required=True)
+    
+    # Optional argument: default value needed
+    parser.add_argument("--number_2",
+        type=int, help="Second number", required=False, default=3)
+
+    # Optional argument: default value needed
+    parser.add_argument("--artifact_name",
+        type=str, help="Name of the artifact", required=False, default="artifact:latest")
+
+    # Parse arguments
+    # args is a namedtuple
+    # https://docs.python.org/3/library/collections.html#collections.namedtuple
+    args = parser.parse_args()
+
+    # Now, we can access the arguments:
+    print(f"number_1: {args.number_1}")
+    print(f"number_2: {args.number_2}")
+    print(f"number_2: {args.artifact_name}")
+
+    do_something(args)
+
+# We can perfom these calls/script execution commands
+# Best practice: use "" for strings
+#   python my_script.py --number_1 1.2 --number_2 3 -- artifact_name "my_artifact:debug"
+#   python my_script.py --number_1 1.2
+#   python my_script.py --help
+
+```
+
+### 2.3 Versioning Data and Artifacts in Weights and Biases
+
+In Weights and Biases, we have
+
+- runs,
+- experiments,
+- artifacts,
+- and job types.
+
+A **run** is a basic unit of tracking, i.e., one/multiple script or notebook executions. We can attach to it:
+
+- Parameters
+- Metrics
+- Artifacts
+- Images, plots
+
+One run generates a row in the table of results; all rows can then be analyzed and visualized.
+
+An **experiment** is a grouping of runs. We collect runs that have the same configuration or are part of the same pipeline execution (e.g., the complete pipeline execution can be an experiment). This grouping is optional and can be undone. We can compare experiments. Experiments are defined with `group` in a run.
+
+A **project** is an heterogenous collection of runs, experiments and artifacts related to a goal. We look at one project at a time, and they can be public or private.
+
+An **artifact** is any file/directory produced during a run; they are all versioned and uploaded if anything changes in their content.
+
+We can also specify the `job_type`, which is a mere tag for filtering.
+
+This is how we define a **run**:
+
+```python
+import wandb
+
+# Defintion of a run
+run = wandb.init(
+        #name="my_run_name" usually left so that W&B chooses one
+        project="my_project", # project
+        group="experiment_1", # experiment
+        job_type="data_cleaning" # job type
+)
+```
+
+### 2.4 Weights & Biases: Example Notebook
+
+The notebook `02_Reproducible_Pipelines/lab/WandB_examples/01_WandB_Upload_Artifact.ipynb` showcases very basic but useful examples of how projects, runs and artifacts are created locally and registered/uploaded to the W&B registry.
+
+In order to use it, you need to have a Weight & Biases account; then run `wandb login` and log in via the web.
+
+The commands shown here have an effect in the projects on our W&B account, accessible via the web. Thus, always check interatcively the W&B web interface to see the changes.
+
+Whenever we execute `wandb.init()`, a `wandb` folder is created with W&B stuff; I add that folder to `.gitignore`.
+
+Note that in my W&B account I created a group `datamix-ai`, which appars in the package output; however, I'm logged as `mxagar`. As far as I know, that has no effect.
+
+**Overview of Contents**:
+
+1. Create a file to be an artifact and instantiate a run
+2. Instantiate an artifact, attach the file to it and attach the artifact to the run
+3. Change the file and re-attach to artifact & run
+4. Using runs with context managers
+
+```python
+### -- 1. Create a file to be an artifact and instantiate a run
+
+# We must be logged in: $ wandb login
+import wandb
+
+# Create a file
+with open("my_artifact.txt", "w+") as fp:
+    fp.write("This is an example of an artifact.")
+
+# Check that the file is in the local directory
+!ls
+
+# Instantiate a run
+run = wandb.init(project="demo_artifact",
+                 group="experiment_1")
+# Now, we go to the W&B page and look for the project: [https://wandb.ai/mxagar/projects](https://wandb.ai/mxagar/projects).
+# We will fin the project, from which hang the `experiment` and the `run` with the automatic name `eternal-planet-1`.
+# In Jupyter, we also get a link to the run when we execute a run with `wandb.init()`.
+
+# To check wand object and function options
+#wandb.init?
+#wandb.Artifact?
+
+### -- 2. Instantiate an artifact, attach the file to it and attach the artifact to the run
+
+# Instantiate an artifact
+artifact = wandb.Artifact(
+    name="my_artifact.txt", # does not need to be the name of the file
+    type="data", # this is to group artifacts together
+    description="This is an example of an artifact",
+    metadata={ # metadata is an optional dictionary; we can use it for searching later on
+        "key_1":"value_1"
+    }
+)
+
+# We attach a file to the artifact; we can attach several files!
+artifact.add_file("my_artifact.txt")
+
+# We attach the artifact to the run
+run.log_artifact(artifact)
+
+# The fact that we attached the artuufact to the run doesn't mean that it has been uploaded to the W&B registry. W&B uploads stuff whenever we close a run (e.g., when exiting the notebook) or every a certain amount of time (auto-upload).
+
+# We can manually finish the run to force W&B upload the artifacts
+# We cannot use the run object anymore after finish()
+run.finish()
 
 
+### -- 3. Change the file and re-attach to artifact & run
 
+# When we change and re-attach the file, we will have a new version in the W&B web interface. However, a new version is registered only if the file has changed!
+
+# Change the file
+with open("my_artifact.txt", "w+") as fp:
+    fp.write("This is an example of an artifact changed.")
+
+# Instantiate a run
+run = wandb.init(project="demo_artifact",
+                 group="experiment_1")
+
+# Instantiate an artifact
+artifact = wandb.Artifact(
+    name="my_artifact.txt", # does not need to be the name of the file
+    type="data", # this is to group artifacts together
+    description="This is an example of an artifact",
+    metadata={ # metadata is an optional dictionary; we can use it for searching later on
+        "key_1":"value_1"
+    }
+)
+
+# We attach a file to the artifact; we can attach several files!
+artifact.add_file("my_artifact.txt")
+run.log_artifact(artifact)
+
+# We can manually finish the run to force W&B upload the artifacts
+run.finish()
+
+
+### -- 4. Using runs with context managers
+
+# If we use contexts, it's easier to use several runs. Several runs make sense, for instance, when we're doing hyperparameter tuning. We don't need to do run.finish(), since that's handle by the context manager.
+
+with wandb.init(project="demo_artifact", group="experiment_1") as run:
+
+    with open("my_artifact.txt", "w+") as fp:
+        fp.write("This is an example of an artifact.")
+
+    artifact = wandb.Artifact(
+        name="my_artifact.txt", # does not need to be the name of the file
+        type="data", # this is to group artifacts together
+        description="This is an example of an artifact",
+        metadata={ # metadata is an optional dictionary; we can use it for searching later on
+            "key_1":"value_1"
+        }
+    )
+    
+    artifact.add_file("my_artifact.txt")
+
+with wandb.init(project="demo_artifact", group="experiment_1") as run:
+
+    with open("my_artifact.txt", "w+") as fp:
+        fp.write("This is an example of an artifact changed again.")
+
+    artifact = wandb.Artifact(
+        name="my_artifact.txt", # does not need to be the name of the file
+        type="data", # this is to group artifacts together
+        description="This is an example of an artifact",
+        metadata={ # metadata is an optional dictionary; we can use it for searching later on
+            "key_1":"value_1"
+        }
+    )
+    
+    artifact.add_file("my_artifact.txt")
+
+```
