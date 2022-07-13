@@ -1,0 +1,8 @@
+# Run default script from a local folder.
+# We need to pass all non-default arguments required by the command script.
+# We specify the folder where the procject file MLproject is.
+# The conda environment is created and the command/script are executed. That creates a run in W&B.
+mlflow run . \
+    -P file_url=https://raw.githubusercontent.com/scikit-learn/scikit-learn/4dfdfb4e1bb3719628753a4ece995a1b2fa5312a/sklearn/datasets/data/iris.csv \
+    -P artifact_name=iris \
+    -P artifact_description="This data sets consists of 3 different types of irises’ (Setosa, Versicolour, and Virginica) petal and sepal length"

@@ -506,6 +506,10 @@ Folder:
 
 `/lesson-1-machine-learning-pipelines/exercises/exercise_1`
 
+I also copied the files to
+
+`./lab/WandB_exercise_1_upload_use_artifact/`
+
 The exercise uses 3 files, 2 of which need to be completed:
 
 - `zen.txt`: text file used as artifact.
@@ -520,7 +524,6 @@ Basically, artifacts are registered, changed and re-registered. After that, diff
 - `artifacts/`
 
 File `upload_artifact.py`:
-
 
 ```python
 '''This file creates and registers a Weights & Biases run using arguments passed from the CLI.
@@ -669,6 +672,265 @@ if __name__ == "__main__":
 
 
 ```
+
+### 2.5 ML Pipeline Components in MLFlow
+
+We're going to use an MLflow component called **MLflow Project**. An **MLflow Project** is a package of data science code that is reusable and reproducible. It includes an API and CLI tools for running and chaining projects into workflows.
+
+An MLflow project has 3 components:
+
+1. The **code** we want to use. This is independent from the rest; it can be in any language! When putting together pipelines, we can even mix components written in different languages.
+2. The **environment definition**: runtime dependencies; we can use either conda or docker. Udacity focuses on conda.
+3. The **project definition**: contents of the project and how to interact.
+
+
+#### Conda: `conda.yaml`
+
+Conda is language agnostic, it handles also C++ packages. Also it's open source - we should not mix it with Anaconda.
+
+We define the conda environment in YAML file:
+
+```yaml
+name: download_data
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - requests=2.24.0
+  - pip=20.3.3
+  - mlflow=1.14.1
+  - hydra-core=1.0.6
+  - pip:
+      - wandb==0.10.21
+```
+
+In the `conda.yaml`:
+
+- We define the environment: `download_data`
+- Channels are distribution channels for packages; `conda-forge` contains many packages. By listing the channels this way, conda looks for the package in the specified order.
+- Dependencies: all code dependencies must be specified; if some dependencies are not in conda, we add a section with `pip`. We should specify the exact version used in the development environment. Note that the `pip` section uses `==` instead of `=`. If we don't specify the version, conda will always get the latest version, and our code might fail.
+
+More information on conda by the instructor Giacomo Vianello [Conda: Essential Concepts and Tips](https://towardsdatascience.com/conda-essential-concepts-and-tricks-e478ed53b5b). Concepts covered:
+
+- Why conda
+- Entry-level examples
+- What is conda
+- Conda and pip
+- Conda Vs Anaconda Vs Miniconda
+- How to install conda
+- Getting Miniconda
+- Installing packages, and environments
+- The base environment
+- Other environments
+- The best way to use Jupyter and conda
+- Removing environments
+- Sharing an environment
+- Channels
+- The conda-forge channel
+- Conda and pip
+- Conda is slow
+- Free up some disk space
+- Conda and docker
+- In-depth: RPATH and conda
+- Conclusions
+
+#### Project Definition: `MLproject`
+
+```
+name: download_data
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      file_url:
+        description: URL of the file to download
+        type: uri
+      artifact_name:
+        description: Name for the W&B artifact that will be created
+        type: str
+
+    command: >-
+      python download_data.py --file_url {file_url} \
+                              --artifact_name {artifact_name}
+  other_script:
+    parameters:
+        parameter_one:
+          description: First parameter
+          type: str
+    command: julia other_script.jl {parameter_one}
+```
+
+In the `MLproject` file:
+
+- Note that even though the `MLproject` file is a YAML file, it has no ending.
+- Note also that the filename needs to be `MLproject`.
+- We define the name of the project (can be any name) and the `conda_env` file defined above.
+- The section `entry_points` is very important: it defines all the commands that are available for our project. 
+    - We must have a `main` section: default script to run.
+    - The other sections are optional, they are other possible scripts.
+    - Every entry point has `command` and its `parameters`.
+    - A `parameter` has
+        - `description`: any string
+        - `type`: str, float, uri, path
+        - `default`: if the parameter is optional, default value
+
+#### Running the Project
+
+When running the `MLproject` file via CLI, we pass the parameters with the option `-P` and the parameter name. **Important**: the project file name needs to be `MLproject` and we pass the folder name to `mlflow`.
+
+```bash
+# Run default script from a local folder
+mlflow run ./my_project -P file_url=https://myurl.com \
+    -P artifact_name=my_data.csv
+
+# Run different entry point from a local folder
+mlflow run ./my_project -e other_script -P parameter_one=27
+
+# Run default script directly from Github (HEAD is used)
+mlflow run git@github.com/my_username/my_repo.git \
+    -P file_url=https://myurl.com \
+    -P artifact_name=my_data.csv
+
+# Run a specific release or tag from the repository (best practice, otherwise HEAD is used)
+mlflow run git@github.com/my_username/my_repo.git \
+    -v 2.5.3 \
+    -P file_url=https://myurl.com \
+    -P artifact_name=my_data.csv
+```
+
+However, note that it is also possible to use `mlflow` via its API. That makes sense if we want to define a pipeline consisting of several chained components. See Section 2.8 for that topic.
+
+### 2.6 Introduction to YAML
+
+In YAML we can define lists and dictionaries; we can also combine and nest them. List items are preceded by `-` and key-value pairs are signaled with `:`. Example with a nested dictionary and a nested list with it:
+
+```yaml
+a: a value
+b:
+  c: 1.2
+  d: 1
+  e: a string
+c:
+  - 1
+  - 2
+  - another string
+  - - 1
+    - 2
+    - a
+```
+
+Especial symbols:
+
+- `#`: comments
+- `>-`: line breaks allowed (but if command, we need to add `\`, too)
+
+If we want to parse YAML files: `pip install pyyaml`, then:
+
+```python
+import yaml
+with open("conda.yml") as fp:
+    d = yaml.safe_load(fp)
+print(d) # dictionary is printed
+```
+
+### 2.7 MLflow: Exercise 2, Defining and Running an MLflow pipeline
+
+Repository:
+
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
+
+Folder:
+
+`/lesson-1-machine-learning-pipelines/exercises/exercise_2`
+
+I also copied the files to
+
+`./lab/WandB_MLflow_exercise_2_download_upload_artifact/`
+
+The exercise comes with the python script `download_data.py`, which downloads a file and logs it into W&B.
+
+The script can be run as
+
+```bash
+python download_data.py \
+       --file_url https://raw.githubusercontent.com/scikit-learn/scikit-learn/4dfdfb4e1bb3719628753a4ece995a1b2fa5312a/sklearn/datasets/data/iris.csv \
+       --artifact_name iris \
+       --artifact_type raw_data \
+       --artifact_description "The sklearn IRIS dataset"
+```
+
+We need to transform it into an MLflow pipeline: `conda.yaml` + `MLproject`.
+
+#### Solution
+
+`conda.yaml`:
+
+```yaml
+name: download_data
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - requests=2.24.0
+  - pip=20.3.3
+  - mlflow=1.14.1
+  - hydra-core=1.0.6
+  - pip:
+      - wandb==0.10.21
+```
+
+`MLproject`:
+
+```yaml
+name: download_data
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      file_url:
+        description: URL of the file to download
+        type: uri
+      artifact_name:
+        description: Name for the W&B artifact that will be created
+        type: str
+      artifact_type:
+        description: Type of the W&B artifact that will be created
+        type: str
+        default: raw_data
+      artifact_description:
+        description: Description of the W&B artifact that will be created
+        type: str
+
+    command: >-
+      python download_data.py \
+       --file_url {file_url} \
+       --artifact_name {artifact_name} \
+       --artifact_type {artifact_type} \
+       --artifact_description {artifact_description}
+```
+
+Execution:
+
+```bash
+# Run default script from a local folder.
+# We need to pass all non-default arguments required by the command script.
+# We specify the folder where the procject file MLproject is.
+# The conda environment is created and the command/script are executed. That creates a run in W&B.
+mlflow run . \
+    -P file_url=https://raw.githubusercontent.com/scikit-learn/scikit-learn/4dfdfb4e1bb3719628753a4ece995a1b2fa5312a/sklearn/datasets/data/iris.csv \
+    -P artifact_name=iris \
+    -P artifact_description="This data sets consists of 3 different types of irises’ (Setosa, Versicolour, and Virginica) petal and sepal length"
+```
+
+Check: project and artifact appear in Weights & Biases.
+
+### 2.8 Linking Together the Components
+
+The ML is a graph of components or modules that produce artifacts; the output artifact of a component is the input of another. Thus, **artifacts are the glue** of the pipeline. Additionally, note that there is no limit in the number of inputs & outputs of a component.
+
+![MLflow pipeline](./pics/mlflow-pipeline.png)
 
 
 
