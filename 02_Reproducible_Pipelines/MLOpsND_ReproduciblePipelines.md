@@ -877,7 +877,7 @@ dependencies:
   - mlflow=1.14.1
   - hydra-core=1.0.6
   - pip:
-      - wandb==0.10.21
+    - wandb==0.10.21
 ```
 
 `MLproject`:
@@ -928,9 +928,696 @@ Check: project and artifact appear in Weights & Biases.
 
 ### 2.8 Linking Together the Components
 
-The ML is a graph of components or modules that produce artifacts; the output artifact of a component is the input of another. Thus, **artifacts are the glue** of the pipeline. Additionally, note that there is no limit in the number of inputs & outputs of a component.
+The ML pipeline is a graph of components or modules that produce artifacts; the output artifact of a component is the input of another. Thus, **artifacts are the glue** of the pipeline. Additionally, note that there is no limit in the number of inputs & outputs of a component.
 
 ![MLflow pipeline](./pics/mlflow-pipeline.png)
 
+We can use `mlflow` via its API; we call a main python script `mlflow.run(...)` several times: each `mlflow.run(...)` is equivalent to using the CLI `mlflow run ...`. That way, we can use several components or modules chained with their artifacts.
 
+Thus:
+
+- `mlflow` is used to call different components with their parameters in a sequence.
+- W&B is used to register the artifacts.
+
+The `mlflow.run()` command works as follows:
+
+```python
+import mlflow
+
+# Equivalent to 
+# mlflow run ./my_project -e main -P file_url="https://..." -P artifact_name="my_data.csv"
+mlflow.run(
+  # URI can be a local path or the URL to a git repository
+  # here we are going to use a local path.
+  # The MLproject file must be there.
+  uri="my_project",
+  # Entry point to call
+  entry_point="main",
+  # Parameters for that entry point
+  parameters={
+    "file_url": "https://...",
+    "artifact_name": "my_data.csv"
+  }
+)
+```
+
+That python snippet is equivalent to:
+
+```bash
+mlflow run ./my_project -e main \
+    -P file_url="https://..." \
+    -P artifact_name="my_data.csv"
+```
+
+Therefore, a typical ML pipeline has several components and has the following structure:
+
+```
+ml_pipeline/
+    download_data/
+        conda.yaml
+        MLproject
+        run.py
+    remove_duplicates/
+        conda.yaml
+        MLproject
+        run.py
+    conda.yaml
+    main.py
+    MLproject
+```
+
+The top directory contains all the components in folder, and additionally:
+
+- `main.py`, which executes all the `mlflow.run()`
+- `MLproject`, to define how to call `main.py`
+- `conda.yaml`, the environment configuration for `main.py`; the component dependencies DO NOT go here!
+
+In fact, each component directory is a MLflow project that can be run on its own.
+
+Example `main.py`:
+
+```python
+import mlflow
+
+mlflow.run(
+  uri="download_data",
+  entry_point="main",
+  parameters={
+    "file_url": "https://...",
+    "output_artifact": "raw_data.csv",
+    "output_artifact_type": "raw_data",
+    "output_artifact_description": "Raw data"
+  }
+)
+
+mlflow.run(
+  uri="remove_duplicates",
+  entry_point="main",
+  parameters={
+    "input_artifact": "raw_data.csv:latest",
+    "output_artifact": "clean_data.csv",
+    "output_artifact_type": "dedup_data",
+    "output_artifact_description": "De-duplicated data"
+  }
+)
+```
+
+Notes on `main.py`:
+
+- The output of a run is the input for the next run.
+- Note that the input artifact of the second component has a `:latest` tag! This is because we use W&B and we always need to provide the version. If we want a specific version and not the latest, we need to specify it, e.g., `:v2`.
+
+#### Pipeline Configuration: Hydra
+
+A complex ML project can have many parameters; they belong to specific components, yet they are all related. In order to track and handle them all together, another configuration layer is usually defined, for instance with [Hydra](https://hydra.cc/docs/intro/). Note that Hydra is not ML specific, it works for any complex project.
+
+We should always avoid hard-coding the parameters in the `main.py` script, because that makes difficult to re-use the code. Instead, we can have them in a `hydra` configuration YAML which is used by the rest of the project. That configuration file defines the parameters and their default values. We have these advantages:
+
+- All parameters are documented and can be versioned.
+- We can override the parameters if required.
+- We can genrate multiple runs from the same command; example: hyper-parameter optimization.
+
+The typical hydra YAML has sections that map each one to each of the components (in addition to the main script), but that's a convention -- we can organize it as we please.
+
+Example configuration YAML for hydra; the projects aims to train a random forest and has two components: (1) fetching the data and the (2) train random forest. Each section can have subsections.
+
+Hydra configuration `config.yaml`:
+
+```yaml
+main:
+  project_name: my_project
+  experiment_name: dev
+data:
+  train_data: "exercise_6/data_train.csv:latest"
+random_forest_pipeline:
+  random_forest:
+    n_estimators: 100
+    criterion: gini
+    max_depth: null
+```
+
+In the `main.py` file which calls `mlflow.run()` we just need to `import hydra` and add a decorator; with that, we have access to the configuration paramaters:
+
+File `main.py`:
+
+```python
+import os
+import mlflow
+import hydra
+
+@hydra.main(config_name="config") # config.yaml is read (not we DON't add .yaml)
+def go(config): # config object has teh contents of config.yaml
+    # Now here config is a dictionary with our configuration
+    # For example, to access the parameter project_name in the data
+    # section we can just do
+    project_name = config["main"]["project_name"]
+
+    # WandB run grouping
+    os.environ["WANDB_PROJECT"] = config["main"]["project_name"] # WandB project name
+    os.environ["WANDB_RUN_GROUP"] = config["main"]["experiment_name"] # WandB experiment name
+
+    mlflow.run(
+        uri="test_data",
+        parameters={
+            "input_artifact": config["data"]["train_data"],
+            "output_data": "raw_data.csv"
+            # ...
+        }
+    )
+    mlflow.run(
+        uri="train_random_forest",
+        parameters={
+            "input_artifact": "raw_data.csv:latest",
+            "n_estimators": config["random_forest_pipeline"]["random_forest"]["n_estimators"]
+            # ...
+        }
+    )
+
+
+if __name__=="__main__":
+    go() # we DON'T pass config
+```
+
+Notes:
+
+- Since we're using `hydra`, we don't need `argparse`.
+- `go()` is called without the `config` object.
+- The `config` object is created when using the `hydra` decorator, which loads the `config.yaml`, even though we pass the filename without extension.
+
+To use `hydra`, we need to change the `MLproject` file so that we can override the parameters written in the configuration file. That is done allowing only one option, `hydra_options`, which is echoed directly to the `main.py` script. If we don't explicitly override parameters, the default ones from the `hydra` `config.yaml` are going to be used.
+
+Top level `MLproject` file:
+
+```yaml
+name: main
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      hydra_options:
+        description: Hydra parameters to override
+        type: str
+        default: ''
+    command: >-
+      python main.py $(echo {hydra_options})
+```
+
+ML pipeline execution call with everything together:
+
+```bash
+# Run local pipeline
+mlflow run .
+
+# Run pipeline in path
+mlflow run /path/to/project
+
+# Run with an overidden parameter from config.yaml
+# The sections and their subsections are separated with .
+mlflow run . -P hydra_options="main.experiment_name=my_experiment"
+mlflow run . -P hydra_options="random_forest.random_forest_pipeline.n_estimators=50"
+
+# Run with several overidden parameters
+# Parameters are separated with white space
+mlflow run . \
+    -P hydra_options="main.experiment_name=my_experiment main.project_name=test"
+```
+
+#### Tracking Pipelines with Weights & Biases
+
+Each run in W&B is tracked; additionally, recall that we can group them together in experiments and projects. It is in fact a best practice. That is done by defining the environment variables `WANDB_PROJECT` and `WAND_RUN_GROUP`.
+
+```python
+import hydra
+import mlflow
+import os
+
+@hydra.main(config_name="config")
+def go(config):
+    # WandB run grouping
+    os.environ["WANDB_PROJECT"] = config["main"]["project_name"] # WandB project name
+    os.environ["WANDB_RUN_GROUP"] = config["main"]["experiment_name"] # WandB experiment name
+
+    mlflow.run(
+        # ...
+    )
+    # ...
+
+if __name__ == "__main__":
+    go()
+```
+
+However, note that:
+
+- This is set for the main script only.
+- Any component can iveride the project/experiment name in `wandb.init()`.
+
+### 2.9 MLflow and Hydra: Exercise 3, Parametrized Pipeline
+
+Repository:
+
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
+
+Folder:
+
+`/lesson-1-machine-learning-pipelines/exercises/exercise_3`
+
+I also copied the files to
+
+`./lab/WandB_MLflow_Hydra_exercise_3_parametrized_pipeline/`
+
+The exercise comes with the following file structure, which contains an ML pipeline with two components:
+
+```
+.
+├── MLproject # mlflow main
+├── conda.yml # mlflow main
+├── config.yaml # hydra
+├── main.py # mlflow main
+├── download_data # mlflow step/component
+│    ├── MLproject
+│    ├── conda.yml
+     └── download_data.py # download the data
+└── process_data # mlflow step/component
+    ├── MLproject
+    ├── conda.yml
+    └── run.py # t-SNE visualization + dataframe with t-SNE features
+```
+
+We need to stitch these two components together by finishing what's missing in each file. Then, we execute the pipeline and check everything is registered in the W&B web interface.
+
+#### Solution
+
+Main `MLproject`:
+
+```yaml
+name: download_data
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      hydra_options:
+        description: Hydra parameters to override
+        type: str
+        default: ''
+    command: >-
+      python main.py $(echo {hydra_options})
+```
+
+Main `conda.yaml`:
+
+```yaml
+name: download_data
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  #- python=3.8
+  - requests=2.24.0
+  - pip=20.3.3
+  - mlflow=1.14.1
+  - hydra-core=1.0.6
+  - pip:
+    - wandb==0.10.21
+```
+
+Main `config.yaml` (hydra):
+
+```yaml
+main:
+  project_name: experiment_3
+  experiment_name: dev
+data:
+  file_url: https://raw.githubusercontent.com/scikit-learn/scikit-learn/4dfdfb4e1bb3719628753a4ece995a1b2fa5312a/sklearn/datasets/data/iris.csv
+```
+
+File `main.py`:
+
+```python
+import mlflow
+import os
+import wandb
+import hydra
+from omegaconf import DictConfig
+
+# This automatically reads in the configuration
+@hydra.main(config_name='config')
+def go(config: DictConfig):
+
+    # Setup the wandb experiment. All runs will be grouped under this name
+    os.environ["WANDB_PROJECT"] = config["main"]["project_name"]
+    os.environ["WANDB_RUN_GROUP"] = config["main"]["experiment_name"]
+
+    # You can get the path at the root of the MLflow project with this:
+    root_path = hydra.utils.get_original_cwd()
+
+    _ = mlflow.run(
+        os.path.join(root_path, "download_data"),
+        "main",
+        parameters={
+            "file_url": config["data"]["file_url"],
+            "artifact_name": "iris.csv",
+            "artifact_type": "raw_data",
+            "artifact_description": "Input data"
+        }
+    )
+
+    _ = mlflow.run(
+        os.path.join(root_path, "process_data"),
+        "main",
+        parameters={
+            "input_artifact": "iris.csv:latest",
+            "artifact_name": "clean_data.csv",
+            "artifact_type": "processed_data",
+            "artifact_description": "Cleaned data"
+        }
+    )
+
+if __name__ == "__main__":
+    go()
+```
+
+File `download_data/MLproject`:
+
+```yaml
+name: download_data
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      file_url:
+        description: URL of the file to download
+        type: uri
+      artifact_name:
+        description: Name for the W&B artifact that will be created
+        type: str
+      artifact_type:
+        description: Type of the artifact to create
+        type: str
+        default: raw_data
+      artifact_description:
+        description: Description for the artifact
+        type: str
+
+    command: >-
+      python download_data.py --file_url {file_url} \
+                              --artifact_name {artifact_name} \
+                              --artifact_type {artifact_type} \
+                              --artifact_description {artifact_description}
+
+```
+
+File `download_data/conda.yaml`:
+
+```yaml
+name: download_data
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - requests=2.24.0
+  - pip=20.3.3
+  - mlflow=1.14.1
+  - hydra-core=1.0.6
+  - pip:
+    - wandb==0.10.21
+```
+
+File `download_data/download_data.py`
+
+```python
+#!/usr/bin/env python
+import argparse
+import logging
+import pathlib
+import wandb
+import requests
+import tempfile
+
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
+logger = logging.getLogger()
+
+def go(args):
+
+    # Derive the base name of the file from the URL
+    basename = pathlib.Path(args.file_url).name.split("?")[0].split("#")[0] # iris.csv
+
+    # Download file, streaming so we can download files larger than
+    # the available memory. We use a named temporary file that gets
+    # destroyed at the end of the context, so we don't leave anything
+    # behind and the file gets removed even in case of errors
+    logger.info(f"Downloading {args.file_url} ...")
+    with tempfile.NamedTemporaryFile(mode='wb+') as fp:
+        
+        logger.info("Creating run")
+        #with wandb.init(project="exercise_3", job_type="download_data") as run:
+        with wandb.init(job_type="download_data") as run:
+            
+            # Download the file streaming and write to open temp file
+            with requests.get(args.file_url, stream=True) as r:
+                for chunk in r.iter_content(chunk_size=8192):
+                    fp.write(chunk)
+
+            # Make sure the file has been written to disk before uploading
+            # to W&B
+            fp.flush()
+
+            logger.info("Creating artifact")
+            artifact = wandb.Artifact(
+                name=args.artifact_name,
+                type=args.artifact_type,
+                description=args.artifact_description,
+                metadata={'original_url': args.file_url}
+            )
+            artifact.add_file(fp.name, name=basename)
+
+            logger.info("Logging artifact")
+            run.log_artifact(artifact)
+
+            # This makes sure that the artifact is uploaded before the
+            # tempfile is destroyed
+            #artifact.wait()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Download a file and upload it as an artifact to W&B", fromfile_prefix_chars="@"
+    )
+
+    parser.add_argument(
+        "--file_url", type=str, help="URL to the input file", required=True
+    )
+
+    parser.add_argument(
+        "--artifact_name", type=str, help="Name for the artifact", required=True
+    )
+
+    parser.add_argument(
+        "--artifact_type", type=str, help="Type for the artifact", required=True
+    )
+
+    parser.add_argument(
+        "--artifact_description",
+        type=str,
+        help="Description for the artifact",
+        required=True,
+    )
+
+    args = parser.parse_args()
+    
+    go(args)
+```
+
+File `process_data/MLproject`:
+
+```yaml
+name: download_data
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      input_artifact:
+        description: Fully-qualified artifact name for the input artifact
+        type: uri
+      artifact_name:
+        description: Name for the W&B artifact that will be created
+        type: str
+      artifact_type:
+        description: Type of the artifact to create
+        type: str
+        default: raw_data
+      artifact_description:
+        description: Description for the artifact
+        type: str
+
+    command: >-
+      python run.py --input_artifact {input_artifact} \
+                    --artifact_name {artifact_name} \
+                    --artifact_type {artifact_type} \
+                    --artifact_description {artifact_description}
+```
+
+File `process_data/conda.yml`:
+
+```yaml
+name: download_data
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - requests=2.24.0
+  - pip=20.3.3
+  - seaborn=0.11.1
+  - pandas=1.2.3
+  - scikit-learn=0.24.1
+  - matplotlib=3.2.2
+  - pillow=8.1.2
+  - pip:
+    - wandb==0.10.21
+    - protobuf==3.20
+```
+
+File `process_data/run.py`:
+
+```python
+#!/usr/bin/env python
+import argparse
+import logging
+import seaborn as sns
+import pandas as pd
+import wandb
+
+from sklearn.manifold import TSNE
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
+logger = logging.getLogger()
+
+def go(args):
+
+    run = wandb.init(project="experiment_3", job_type="process_data")
+    #run = wandb.init(job_type="process_data")
+
+    logger.info("Downloading artifact")
+    artifact = run.use_artifact(args.input_artifact)
+    artifact_path = artifact.file()
+
+    iris = pd.read_csv(
+        artifact_path,
+        skiprows=1,
+        names=("sepal_length", "sepal_width", "petal_length", "petal_width", "target"),
+    )
+
+    target_names = "setosa,versicolor,virginica".split(",")
+    iris["target"] = [target_names[k] for k in iris["target"]]
+
+    logger.info("Performing t-SNE")
+    tsne = TSNE(n_components=2, init="pca", random_state=0)
+    transf = tsne.fit_transform(iris.iloc[:, :4])
+
+    iris["tsne_1"] = transf[:, 0]
+    iris["tsne_2"] = transf[:, 1]
+
+    g = sns.displot(iris, x="tsne_1", y="tsne_2", hue="target", kind="kde")
+
+    logger.info("Uploading image to W&B")
+    run.log({"t-SNE": wandb.Image(g.fig)})
+
+    logger.info("Creating artifact")
+
+    iris.to_csv("clean_data.csv")
+
+    artifact = wandb.Artifact(
+        name=args.artifact_name,
+        type=args.artifact_type,
+        description=args.artifact_description,
+    )
+    artifact.add_file("clean_data.csv")
+
+    logger.info("Logging artifact")
+    run.log_artifact(artifact)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Download a file and upload it as an artifact to W&B",
+        fromfile_prefix_chars="@",
+    )
+
+    parser.add_argument(
+        "--input_artifact",
+        type=str,
+        help="Fully-qualified name for the input artifact",
+        required=True,
+    )
+
+    parser.add_argument(
+        "--artifact_name", type=str, help="Name for the artifact", required=True
+    )
+
+    parser.add_argument(
+        "--artifact_type", type=str, help="Type for the artifact", required=True
+    )
+
+    parser.add_argument(
+        "--artifact_description",
+        type=str,
+        help="Description for the artifact",
+        required=True,
+    )
+
+    args = parser.parse_args()
+
+    go(args)
+```
+
+### 2.10 MLflow Project Development Recommendations
+
+These are tipcs and tricks I collected while following the course.
+
+#### Tips & Tricks
+
+- Make sure that teh indentation in zthe YAML files is correct.
+- Make sure that the requirements of the conda env are correctly typed: =, ==, etc.
+- Sometimes I needed to add protobuf as pip requirement for the environment.
+- The first time a run with an environment is executed, the conda environment is created; the next times, the environment is already there, so it's faster. See how to delete the `mlflow` `conda` environments below.
+
+#### Troubleshooting Pipelines
+
+If the MLflow ffproject has several steps and it doesn'z work, we can try each step separately. However, note that the project name for `wandb` needs to be set in the python script, because it is usually passed via the environment.
+
+```bash
+mlflow run . \
+-P input_artifact=iris.csv:latest \
+-P artifact_name=clean_data.csv \
+-P artifact_type=processed_data \
+-P artifact_description="Cleaned data"
+```
+
+```bash
+python run.py --input_artifact iris.csv:latest \
+       --artifact_name clean_data.csv \
+       --artifact_type processed_data \
+       --artifact_description "Cleaned data"
+```
+
+#### Remove all conda mlflow conda environments
+
+The first time a run with an environment is executed, the conda environment is created; the next times, the environment is already there, so it's faster. If we want to remove all `mlflow` `conda` environment, we can use this script.
+
+```bash
+ #!/bin/bash
+ 
+ echo "Removing all conda environments with prefix 'mlflow-'"
+ 
+ conda env list | cut -d " " -f1 | while read -r env ; do
+     echo "Processing $env"
+     if [[ $env == mlflow-* ]]; then
+         conda env remove -n $env
+     fi  
+ done
+```
 
