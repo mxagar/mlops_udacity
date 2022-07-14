@@ -1186,6 +1186,16 @@ I also copied the files to
 
 `./lab/WandB_MLflow_Hydra_exercise_3_parametrized_pipeline/`
 
+**This is a very interesting exercise, since a complete pipeline with 2 characteristic steps is realized. It's a nice blueprint for larger projects.** Things done:
+
+- Fetch data from an URL
+- Add/upload CSV artifact 
+- Download CSV artifact
+- Process data: t-SNE
+- Upload processed data + image (t-SNE)
+
+Everything is reflected in the W&B web interface.
+
 The exercise comes with the following file structure, which contains an ML pipeline with two components:
 
 ```
@@ -1574,11 +1584,20 @@ if __name__ == "__main__":
     go(args)
 ```
 
+Project execution:
+
+```bash
+# Local run with default parameters
+mlflow run .
+# Local run with overriden parameter
+mlflow run . -P hydra_options="main.experiment_name=prod"
+```
+
 ### 2.10 MLflow Project Development Recommendations
 
 These are tipcs and tricks I collected while following the course.
 
-#### Tips & Tricks
+#### Notes, Tips & Tricks
 
 - Make sure that teh indentation in zthe YAML files is correct.
 - Make sure that the requirements of the conda env are correctly typed: =, ==, etc.
@@ -1587,7 +1606,7 @@ These are tipcs and tricks I collected while following the course.
 
 #### Troubleshooting Pipelines
 
-If the MLflow ffproject has several steps and it doesn'z work, we can try each step separately. However, note that the project name for `wandb` needs to be set in the python script, because it is usually passed via the environment.
+If the MLflow project has several steps and it doesn't work, we can try each step separately. However, note that the project name for `wandb` needs to be set in the python script, because it is usually passed via the environment. Also note that if we execute the python script manually, we're outside from the desired environment with the required dependencies.
 
 ```bash
 mlflow run . \
@@ -1620,4 +1639,18 @@ The first time a run with an environment is executed, the conda environment is c
      fi  
  done
 ```
+
+### 2.11 Conda vs. Docker
+
+
+I will spare the [Docker overview](https://docs.docker.com/get-started/overview/) details, since I've worked already with docker.
+
+Mlflow offers the possibility of working with Docker instead of conda. For more details, look at: [Specifying an Environment: Docker](https://www.mlflow.org/docs/latest/projects.html#specifying-an-environment)
+
+Conda, in contrast to Docker, is/has:
+
+- Easier to use, no need of DevOps knowledge.
+- No need of a separate regstry for the images.
+- Self-contained, but not completely isolated: still OS libraries are used.
+- No integration with Kubernetes; that's only possible with Docker
 
