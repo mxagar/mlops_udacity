@@ -43,7 +43,32 @@ conda activate ds
 ## Overview of Contents
 
 1. [Lesson 1: Introduction to Reproducible Model Workflows](#1.-Introduction-to-Reproducible-Model-Workflows)
+    - 1.1 Machine Learning Operations (MLOps)
+        - What Are MLOps and Reproducible Workflows?
+    - 1.2 Business Stakeholders: Which Roles Are Important in MLOps?
+    - 1.3 When Should We Use MLOps?
+    - 1.4 MLOps Tools Used
+        - Installation of Weights & Biases and MLflow
+    - 1.5 Module Project: Rental Price Prediction in New York
 2. [Lesson 2: Machine Learning Pipelines](#2.-Machine-Learning-Pipelines)
+    - [2.1 The Three Levels of MLOps](#2.1-The-Three-Levels-of-MLOps)
+    - [2.2 Argparse](#2.2-Argparse)
+    - [2.3 Versioning Data and Artifacts in Weights and Biases](#2.3-Versioning-Data-and-Artifact-in-Weights-and-Biases)
+    - [2.4 Weights & Biases: Example Notebook](#2.4-Weights-&-Biases:-Example-Notebook)
+    - [2.5 Weights & Biases: Exercise 1, Versioning Data & Artifacts and Using Them](#2.5-Weights-&-Biases:-Exercise-1,-Versioning-Data-&-Artifacts-and-Using-Them)
+    - [2.6 ML Pipeline Components in MLFlow](#2.6-ML-Pipeline-Components-in-MLFlow)
+        - Conda: `conda.yaml`
+        - Project Definition: `MLproject`
+        - Running the Project
+    - [2.7 Introduction to YAML](#2.7-Introduction-to-YAML)
+    - [2.8 MLflow: Exercise 2, Defining and Running an MLflow pipeline](#2.8-MLflow:-Exercise-2,-Defining-and-Running-an-MLflow-pipeline)
+    - [2.9 Linking Together the Components](#2.9-Linking-Together-the-Components)
+        - Pipeline Configuration: Hydra
+        - Tracking Pipelines with Weights & Biases
+    - [2.10 MLflow and Hydra: Exercise 3, Parametrized Pipeline](#2.10-MLflow-and-Hydra:-Exercise-3,-Parametrized-Pipeline)
+    - [2.11 MLflow Project Development Recommendations](#2.11-MLflow-Project-Development-Recommendations)
+    - [2.12 Conda vs. Docker](#2.12-Conda-vs.-Docker)
+    - [2.13 Running in the Cloud](#2.13-Running-in-the-Cloud)
 3. Lesson 3: Data Exploration and Preparation
 4. Lesson 4: Data Validation
 5. Lesson 5: Training, Validation and Experiment Tracking
@@ -168,7 +193,7 @@ Tools used:
 - Anaconda (as oposed to Docker?)
 - scikit-learn & pytorch
 
-#### Installation of Weights & Biases
+#### Installation of Weights & Biases and MLflow
 
 Create an account: I used my Github account: [https://wandb.ai/mxagar](https://wandb.ai/mxagar).
 
@@ -223,6 +248,16 @@ Example 1: **ETL pipeline** = Extract, Transform, Load: it ingests the data from
 Example 2: **Training Pipeline** = It takes the raw dataset and produces an inference artifact, which is more than the model, rather the pipeline. The ETL pipeline is part of it. The artifact is stored in a registry.
 
 ![ETL pipeline](./pics/ml-pipeline.png)
+
+In this section, tools for creating machine learning pipelines are introduced, with examples.
+
+The tools are:
+
+- Weights and Biases, `wandb`: it tracks pipeline runs as wells as artifacts generated in the different steps. We can upload and download artifact versions.
+- MLflow, `mlflow`: each step in the pipeline is a mini-project with a well defined conda/docker environment which executes a script or code file in any language; example steps are: get the data, process the data, train, etc. With MLflow we can define sequences of steps with their parameters; additionally, in combination with `wandb` we can generate and track artifacts which glue the different steps of the pipeline.
+- Hydra: hydra offers an extra layer on top of MLFlow with which we can parametrize the pipeline with a configuration file. Hydra can do much more, but it's covered in the section.
+
+The examples are in the repository [udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises). However, I copied them to `./lab/`. In particular the exercise/example 3 is very interesting: `WandB_MLflow_Hydra_exercise_3_parametrized_pipeline`. It covers a 2-step pipeline which fetches data, uploads, downloads and processes artifacts, etc. It is like a blueprint for any large ML pipeline.
 
 ### 2.1 The Three Levels of MLOps
 
@@ -496,7 +531,7 @@ with wandb.init(project="demo_artifact", group="experiment_1") as run:
 
 ```
 
-### 2.4 Weights & Biases: Exercise 1, Versioning Data & Artifacts and Using Them
+### 2.5 Weights & Biases: Exercise 1, Versioning Data & Artifacts and Using Them
 
 Repository:
 
@@ -673,7 +708,7 @@ if __name__ == "__main__":
 
 ```
 
-### 2.5 ML Pipeline Components in MLFlow
+### 2.6 ML Pipeline Components in MLFlow
 
 We're going to use an MLflow component called **MLflow Project**. An **MLflow Project** is a package of data science code that is reusable and reproducible. It includes an API and CLI tools for running and chaining projects into workflows.
 
@@ -801,7 +836,7 @@ mlflow run git@github.com/my_username/my_repo.git \
 
 However, note that it is also possible to use `mlflow` via its API. That makes sense if we want to define a pipeline consisting of several chained components. See Section 2.8 for that topic.
 
-### 2.6 Introduction to YAML
+### 2.7 Introduction to YAML
 
 In YAML we can define lists and dictionaries; we can also combine and nest them. List items are preceded by `-` and key-value pairs are signaled with `:`. Example with a nested dictionary and a nested list with it:
 
@@ -834,7 +869,7 @@ with open("conda.yml") as fp:
 print(d) # dictionary is printed
 ```
 
-### 2.7 MLflow: Exercise 2, Defining and Running an MLflow pipeline
+### 2.8 MLflow: Exercise 2, Defining and Running an MLflow pipeline
 
 Repository:
 
@@ -926,7 +961,7 @@ mlflow run . \
 
 Check: project and artifact appear in Weights & Biases.
 
-### 2.8 Linking Together the Components
+### 2.9 Linking Together the Components
 
 The ML pipeline is a graph of components or modules that produce artifacts; the output artifact of a component is the input of another. Thus, **artifacts are the glue** of the pipeline. Additionally, note that there is no limit in the number of inputs & outputs of a component.
 
@@ -1172,7 +1207,7 @@ However, note that:
 - This is set for the main script only.
 - Any component can iveride the project/experiment name in `wandb.init()`.
 
-### 2.9 MLflow and Hydra: Exercise 3, Parametrized Pipeline
+### 2.10 MLflow and Hydra: Exercise 3, Parametrized Pipeline
 
 Repository:
 
@@ -1593,7 +1628,7 @@ mlflow run .
 mlflow run . -P hydra_options="main.experiment_name=prod"
 ```
 
-### 2.10 MLflow Project Development Recommendations
+### 2.11 MLflow Project Development Recommendations
 
 These are tipcs and tricks I collected while following the course.
 
@@ -1640,7 +1675,7 @@ The first time a run with an environment is executed, the conda environment is c
  done
 ```
 
-### 2.11 Conda vs. Docker
+### 2.12 Conda vs. Docker
 
 
 I will spare the [Docker overview](https://docs.docker.com/get-started/overview/) details, since I've worked already with docker.
@@ -1653,4 +1688,15 @@ Conda, in contrast to Docker, is/has:
 - No need of a separate regstry for the images.
 - Self-contained, but not completely isolated: still OS libraries are used.
 - No integration with Kubernetes; that's only possible with Docker
+
+### 2.13 Running in the Cloud
+
+MLflow is written by [Databricks](https://databricks.com/); hence, it has full support for deployment at Databricks.
+
+In summary, these are the options we have for running our pipelines in the cloud:
+
+- If we have Databricks enterprise, we can just add the option `-b` to the `mlflow run` command. More details: [Run MLflow Projects on Databricks](https://docs.databricks.com/applications/mlflow/projects.html#run-mlflow-projects-on-databricks).
+- We can upload the code to a repo, generate an AWS compute instance, clone the repo there and run it on the cloud. This is the manual way.
+- We can use hydra lanchers. These can distirbute the work in different cores, computers, clusters, etc. Hydra is very powerful, but not covered here.
+- Use Kubernetes with Kubeflow.
 
