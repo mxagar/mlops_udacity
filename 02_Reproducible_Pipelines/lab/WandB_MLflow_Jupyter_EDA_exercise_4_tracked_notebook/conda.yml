@@ -1,0 +1,19 @@
+name: simple_eda
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - jupyter=1.0.0
+  - jupyterlab=3.1.7
+  - seaborn=0.11.1
+  - pandas=1.2.3
+  - pip=20.3.3
+  #- pandas-profiling=2.11.0
+  - pandas-profiling=3.2.0
+  - pyarrow=2.0
+  #- flask=2.1.0
+  - ipywidgets=7.6.5
+  - pip:
+    - wandb==0.10.21
+    - protobuf==3.20

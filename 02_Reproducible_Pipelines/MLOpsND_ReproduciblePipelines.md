@@ -69,7 +69,7 @@ conda activate ds
     - [2.11 MLflow Project Development Recommendations](#2.11-MLflow-Project-Development-Recommendations)
     - [2.12 Conda vs. Docker](#2.12-Conda-vs.-Docker)
     - [2.13 Running in the Cloud](#2.13-Running-in-the-Cloud)
-3. Lesson 3: Data Exploration and Preparation
+3. [Lesson 3: Data Exploration and Preparation](#3.-Data-Exploration-and-Preparation)
 4. Lesson 4: Data Validation
 5. Lesson 5: Training, Validation and Experiment Tracking
 6. Lesson 6: Final Pipeline, Release and Deploy
@@ -736,7 +736,7 @@ dependencies:
   - mlflow=1.14.1
   - hydra-core=1.0.6
   - pip:
-      - wandb==0.10.21
+    - wandb==0.10.21
 ```
 
 In the `conda.yaml`:
@@ -744,6 +744,7 @@ In the `conda.yaml`:
 - We define the environment: `download_data`
 - Channels are distribution channels for packages; `conda-forge` contains many packages. By listing the channels this way, conda looks for the package in the specified order.
 - Dependencies: all code dependencies must be specified; if some dependencies are not in conda, we add a section with `pip`. We should specify the exact version used in the development environment. Note that the `pip` section uses `==` instead of `=`. If we don't specify the version, conda will always get the latest version, and our code might fail.
+- **IMPORTANT**: it seems I need to add `protobuf` as dependency sometimes (I haven't figured out the cause and when). See other `conda.yaml` that add `protobuf`.
 
 More information on conda by the instructor Giacomo Vianello [Conda: Essential Concepts and Tips](https://towardsdatascience.com/conda-essential-concepts-and-tricks-e478ed53b5b). Concepts covered:
 
@@ -1677,7 +1678,6 @@ The first time a run with an environment is executed, the conda environment is c
 
 ### 2.12 Conda vs. Docker
 
-
 I will spare the [Docker overview](https://docs.docker.com/get-started/overview/) details, since I've worked already with docker.
 
 Mlflow offers the possibility of working with Docker instead of conda. For more details, look at: [Specifying an Environment: Docker](https://www.mlflow.org/docs/latest/projects.html#specifying-an-environment)
@@ -1699,4 +1699,441 @@ In summary, these are the options we have for running our pipelines in the cloud
 - We can upload the code to a repo, generate an AWS compute instance, clone the repo there and run it on the cloud. This is the manual way.
 - We can use hydra lanchers. These can distirbute the work in different cores, computers, clusters, etc. Hydra is very powerful, but not covered here.
 - Use Kubernetes with Kubeflow.
+
+## 3. Data Exploration and Preparation
+
+### 3.1 Exploratory Data Analysis (EDA)
+
+Before developing any Machine Learning Pipeline, we need to perform our Exploratory Data Analysis (EDA). EDA helps us understand the dataset:
+
+- Learn data types, ranges, distributions, etc.
+- Plots: histograms, etc.
+- Identify missing values, outliers
+- Test assumptions
+- Uncover data biases
+
+EDA is quite an art, since it's specific for each dataset.
+
+Even though EDA is interactive and is usually done with Jupyter notebooks, we can track it with Weights & Biases and MLflow.
+
+To that end:
+
+- Write an MLflow component that installs Jupyter + libs, and execute the EDA as a notebook from within this component.
+- Track inputs and outputs of the notebook (artifacts) with Weights & Biases; for that we create a run and set `save_code=True`. This keeps the code in synch with the copy W&B. W&B tracks even the order in which the cells were run. BUT: please, write notebooks that can be run sequentially from top to bottom!
+
+```pyhon
+run = wandb.init(
+  project="my_exercise",
+  save_code=True
+)
+```
+
+### 3.2 Pandas Profiling
+
+[Pandas profiling](https://github.com/ydataai/pandas-profiling) is a tool which can help during EDA. A **profile** is an interactive visualization of the characteristics of a dataframe. It goes beyond `df.describe()`.
+
+```bash
+conda install -c conda-forge pandas-profiling
+```
+
+The [pandas-profiling](https://github.com/ydataai/pandas-profiling) repository has very nice quick-start commands.
+
+Here, an example with the Iris dataset is provided in a code snippet to be run on a Jupyter notebook.
+
+`./lab/pandas_profiling/Pandas_Profiling.ipynb`:
+
+```python
+import pandas_profiling
+import pandas as pd
+from sklearn import datasets
+
+# Load Iris dataset
+iris = datasets.load_iris()
+X = pd.DataFrame(iris['data'], columns=iris['feature_names'])
+y = pd.DataFrame(iris['target'], columns=['species'])
+y['species'].replace({0:iris['target_names'][0],
+                      1:iris['target_names'][1],
+                      2:iris['target_names'][2]},
+                      inplace=True)
+df = pd.concat([X,y],axis=0)
+
+# Pandas profiling report
+profile = pandas_profiling.ProfileReport(df, title="Pandas Profiling Report", explorative=True)
+profile.to_widgets()
+# Report with:
+# - Warnings
+# - Correlations
+# - Variable information: histogram, descriptives, etc.
+# - ...
+```
+
+### 3.3 Set Up EDA Notebook with WandB and MLflow: Exercise 4
+
+This exercise shows how to perform Jupyter notebook tracking with W&B and MLflow. The key idea is that the notebook runs as well as the code can be tracked by W&B. MLflow is used just to automate the environment generation and launching of Jupyter Notebook.
+
+Repository:
+
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
+
+Folder:
+
+`/lesson-2-data-exploration-and-preparation/exercises/exercise_4`
+
+I also copied the files to
+
+`./lab/WandB_MLflow_Jupyter_EDA_exercise_4_tracked_notebook/`
+
+The dataset used is a modified version of the [Spotify Songs](https://www.kaggle.com/datasets/mrmorj/dataset-of-songs-in-spotify).
+
+First, upload the dataset from the repo:
+
+```bash
+cd exercise_4/ # where genres_mod.parquet is located
+wandb artifact put \
+      --name exercise_4/genres_mod.parquet \
+      --type raw_data \
+      --description "A modified version of the songs dataset" genres_mod.parquet
+```
+
+Then, we carry out these steps (exercise instructions):
+
+- Upload the dataset to W&B with the command above.
+- Write the `MLproject` file: `main` step, no `parameters`, `command`: `jupyter notebook`.
+- Check & update the `conda.yaml` file.
+- Excute: `mlflow run .`
+- Wait for the environment to be created and the Jupyter to be opened.
+- Create a notebook called EDA.
+- Write code into the notebook:
+    - Imports
+    - `run = wandb.init(project="exercise_4", save_code=True)`
+    - `ProfileReport`
+    - Simple EDA.
+    - `run.finish()`
+- Shut down the notebook server manually clicking on the button.
+
+#### Solution
+
+`conda.yaml`:
+
+```yaml
+name: simple_eda
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - jupyter=1.0.0
+  - jupyterlab=3.1.7
+  - seaborn=0.11.1
+  - pandas=1.2.3
+  - pip=20.3.3
+  #- pandas-profiling=2.11.0
+  - pandas-profiling=3.2.0
+  - pyarrow=2.0
+  #- flask=2.1.0
+  - ipywidgets=7.6.5
+  - pip:
+    - wandb==0.10.21
+    - protobuf==3.20
+```
+
+`MLproject`:
+
+```yaml
+name: EDA
+conda_env: conda.yml
+
+entry_points:
+  main:
+    command: >-
+      jupyter notebook
+```
+
+`EDA.ipynb`:
+
+```python
+import wandb
+
+import pandas_profiling
+import pandas as pd
+import seaborn as sns
+
+# Create a run for our project; name automatically generated
+run = wandb.init(
+  project="exercise_4",
+  save_code=True
+)
+
+# Open the artifact: the name is not the filename,
+# but the name we used when registering it
+# To download the file we need to call .file()
+artifact = run.use_artifact("exercise_4/genres_mod.parquet:latest")
+df = pd.read_parquet(artifact.file())
+df.head()
+
+# Note: Jupyter Lab has sometimes issues; use Jupyter Notebook if you come up with them
+profile = pandas_profiling.ProfileReport(df, title="Pandas Profiling Report", explorative=True)
+profile.to_widgets()
+
+## Minimal EDA
+
+# Drop duplicates
+df = df.drop_duplicates().reset_index(drop=True)
+
+# New feature
+# This feature will have to go to the feature store.
+# If you do not have a feature store,
+# then you should not compute it here as part of the preprocessing step.
+# Instead, you should compute it within the inference pipeline.
+df['title'].fillna(value='', inplace=True)
+df['song_name'].fillna(value='', inplace=True)
+df['text_feature'] = df['title'] + ' ' + df['song_name']
+
+# Do Some plotting
+
+# Finish run to upload the results.
+# Close the notebook and stop the jupyter server
+# by clicking on Quit in the main Jupyter page (upper right or File Quit, etc.)
+# NOTE: DO NOT use Crtl+C to shutdown Jupyter.
+# That would also kill the mlflow job.
+run.finish()
+
+# Go to W&B web interface: select run.
+# You will see an option {} in the left panel.
+# Click on it to see the uploaded Jupyter notebook.
+```
+
+#### Important Issues
+
+- Pandas profiler sometimes doesn't work with Jupyter lab; JS library needs to be re-compiled locally. Or use Jupyter notebook.
+- I had several issues with dependencies I needed to install manually: protobuf, ipywidgets, newer version of pandas-profiling, jupyter, etc. All are reflected in the `conda.yaml`.
+- Artifacts and their naming:
+    - when we create an artifact with `wandb.Artifact()` we need an `artifact_name`, which doesn't need to be the `file_name`  
+    - when we `run.use_artifact()`, we need `project_name/artifact_name:version`
+    - when we ` artifact.add_file()` we need the real `file_name`
+    - when we `put` or `get` an artifact via CLI, we use the `project_name/artifact_name:version` identifier (if `put`, no version is added)
+
+### 3.4 Clean and Pre-Process the Data
+
+We perform EDA and conclude the pre-processing steps we require; typical steps are:
+
+- Imputation of missing values, if these will not be missing in production.
+- Duplicate removal.
+- Feature reduction: throw away features that are not available in production.
+
+However, the pre-processing is related to the training data; if the production data requires it, it should go to the **inference pipeline**. In other words, this pre-processing is usually quite small, since we are just shaping the data to the form the model will see it in production. If the data needs larger modifications which will be also done to the data in production, then, we need to implement the transformations in the inference pipeline, obviously
+
+![Pre-processing: Location](./pics/pre_processing_location.png)
+
+Examples of operations that should not be part of the pre-processing step:
+
+- Categorical encoding: if something needs to be carried out in inference and training, then it should go to the inference pipeline!
+- MIssing value imputation when this should also happen in production, too.
+- Dimensionality reduction (e.g., PCA), when this should happen in production, too.
+
+Key idea: keep in mind the type of data that the model should see in production: its collection, transformations, etc. The model must  be trained with a dataset which is representative of that!
+
+### 3.5 Pre-Processing Script with W&B and MLflow: Exercise 5
+
+In this exercise, the artifact from the previous exercise 4 is downloaded, pre-processed, and a new artifact is registered (pre-processed data). Really no skills are learnt.
+
+Repository:
+
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
+
+Folder:
+
+`/lesson-2-data-exploration-and-preparation/exercises/exercise_5`
+
+I also copied the files to
+
+`./lab/WandB_MLflow_Preprocessing_Script_exercise_5/`
+
+For the exercise, the following files needed to be done:
+
+- Complete `run.py` with instructions.
+- Create and fill in `conda.yaml`.
+- Create and fill in `MLproject`.
+
+#### Solution
+
+`conda.yaml`:
+
+```yaml
+name: clean_data
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - jupyter=1.0.0
+  - jupyterlab=3.1.7
+  - seaborn=0.11.1
+  - pandas=1.2.3
+  - pip=20.3.3
+  - pyarrow=2.0
+  - ipywidgets=7.6.5
+  - pip:
+    - wandb==0.10.21
+    - protobuf==3.20
+```
+
+`MLproject`:
+
+```yaml
+name: clean_data
+conda_env: conda.yaml
+
+entry_points:
+  main:
+    parameters:
+      input_artifact:
+        description: Fully-qualified artifact name for the input artifact
+        type: str
+        default: exercise_4/genres_mod.parquet:latest
+      artifact_name:
+        description: Name for the W&B artifact that will be created
+        type: str
+        default: preprocessed_data.csv
+      artifact_type:
+        description: Type of the artifact to create
+        type: str
+        default: clean_data
+      artifact_description:
+        description: Description for the artifact
+        type: str
+        default: Cleaned dataset
+
+    command: >-
+      python run.py --input_artifact {input_artifact} \
+                    --artifact_name {artifact_name} \
+                    --artifact_type {artifact_type} \
+                    --artifact_description {artifact_description}
+```
+
+`run.py`:
+
+```python
+#!/usr/bin/env python
+import argparse
+import logging
+import pandas as pd
+import wandb
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
+logger = logging.getLogger()
+
+def go(args):
+
+    run = wandb.init(project="exercise_5", job_type="process_data")
+
+    # Open the artifact: the name is not the filename,
+    # but the name we used when registering it
+    # To download the file we need to call .file()
+    logger.info("Downloading artifact")
+    artifact = run.use_artifact(args.input_artifact)
+    df = pd.read_parquet(artifact.file())
+    
+    logger.info("Performing pre-processing: duplicates + new data")
+    # Drop duplicates
+    df = df.drop_duplicates().reset_index(drop=True)
+    # New feature
+    # This feature will have to go to the feature store.
+    # If you do not have a feature store,
+    # then you should not compute it here as part of the preprocessing step.
+    # Instead, you should compute it within the inference pipeline.
+    df['title'].fillna(value='', inplace=True)
+    df['song_name'].fillna(value='', inplace=True)
+    df['text_feature'] = df['title'] + ' ' + df['song_name']
+
+    # Persist cleaned dataset
+    df.to_csv(args.artifact_name, sep=',', header=True, index=False)
+
+    logger.info("Creating artifact")
+    artifact = wandb.Artifact(
+        name=args.artifact_name,
+        type=args.artifact_type,
+        description=args.artifact_description,
+    )
+    artifact.add_file(args.artifact_name)
+
+    logger.info("Logging artifact")
+    run.log_artifact(artifact)
+
+    # Run finish is not necessary here
+    # because it finishes automatically
+    # when the script ends.
+    # In a Jupyter session it is necessary, though.
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Preprocess a dataset",
+        fromfile_prefix_chars="@",
+    )
+
+    parser.add_argument(
+        "--input_artifact",
+        type=str,
+        help="Fully-qualified name for the input artifact",
+        required=True,
+    )
+
+    parser.add_argument(
+        "--artifact_name", type=str, help="Name for the artifact", required=True
+    )
+
+    parser.add_argument(
+        "--artifact_type", type=str, help="Type for the artifact", required=True
+    )
+
+    parser.add_argument(
+        "--artifact_description",
+        type=str,
+        help="Description for the artifact",
+        required=True,
+    )
+
+    args = parser.parse_args()
+
+    go(args)
+
+```
+
+#### Running the Example
+
+Since the MLflow project has default arguments, we can just run
+
+```bash
+mlflow run .
+```
+
+If we didn't have default arguments, we'd need to run
+
+mlflow run . -P input_artifact="exercise_4/genres_mod.parquet:latest" \
+             -P artifact_name="preprocessed_data.csv" \
+             -P artifact_type=clean_data \
+```bash
+             -P artifact_description="Cleaned dataset"
+```
+
+### 3.6 Data Segregation
+
+Data segregation comes after the **data validation** step, covered later.
+
+![Data segregation](./pics/data_segregation.png)
+
+Data segregation consists in splitting the dataset into the **train, validation and test sub-sets**.
+
+![Data segregation: Train, Validation, Test](./pics/data_segregation_splits_simple.png)
+
+We should take into account the following points:
+
+- First split train/test, and then obtain the validation subset from within the train split.
+- We can also perform k-fold validation, for which we don't need to fix the validation sub-set, since it is chosen later.
+- The test split is used only to evaluate the model performance when we finish; never use the test split for anything else.
+- The validation split is used for model validation, prevent overfitting and hyperparameter tuning; the validation split should be always different to the stest split!
+
+We can also go beyond the simple train/validation/test split: this can happen by sub-dividing the validation and test splits in strata groups: male vs. female, low income vs. high income, etc. This is possible if we have enough data. It is called complex sub-sampling.
+
+![Data segregation: Multiple splits](./pics/data_segregation_splits_multiple.png)
 
