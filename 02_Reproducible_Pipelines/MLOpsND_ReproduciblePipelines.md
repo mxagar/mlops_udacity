@@ -2137,3 +2137,52 @@ We can also go beyond the simple train/validation/test split: this can happen by
 
 ![Data segregation: Multiple splits](./pics/data_segregation_splits_multiple.png)
 
+### 3.7 Data Segregation Script with W&B and MLflow: Exercise 6
+
+In this exercise, the artifact from the previous exercise 5 is downloaded: the pre-processed dataset; then, that dataset is segregated into train and test splits. Really no skills are learnt.
+
+Repository:
+
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
+
+Folder:
+
+`/lesson-2-data-exploration-and-preparation/exercises/exercise_6`
+
+I also copied the files to
+
+`./lab/WandB_MLflow_Segregation_Script_exercise_6/`
+
+For the exercise, the following files needed to be done:
+
+- Complete `run.py` with instructions.
+- Check the `conda.yaml` file.
+- Check the `MLproject` file.
+
+Run:
+
+```bash
+mlflow run . -P input_artifact="exercise_5/preprocessed_data.csv:latest" \
+             -P artifact_root="data" \
+             -P test_size=0.3 \
+             -P stratify="genre"
+```
+
+#### Solution
+
+`conda.yaml`:
+
+```yaml
+```
+
+`MLproject`:
+
+```yaml
+```
+
+`run.py`:
+
+```python
+```
+
+
