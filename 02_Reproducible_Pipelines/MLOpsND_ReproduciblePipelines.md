@@ -70,6 +70,15 @@ conda activate ds
     - [2.12 Conda vs. Docker](#2.12-Conda-vs.-Docker)
     - [2.13 Running in the Cloud](#2.13-Running-in-the-Cloud)
 3. [Lesson 3: Data Exploration and Preparation](#3.-Data-Exploration-and-Preparation)
+    - [3.1 Exploratory Data Analysis (EDA)](#3.1-Exploratory-Data-Analysis-(EDA))
+    - [3.2 Pandas Profiling](#3.2-Pandas-Profiling)
+    - [3.3 Set Up EDA Notebook with WandB and MLflow: Exercise 4](#3.3-Set-Up-EDA-Notebook-with-WandB-and-MLflow:-Exercise-4)
+        - **Important Issues**
+    - [3.4 Clean and Pre-Process the Data](#3.4-Clean-and-Pre-Process-the-Data)
+    - [3.5 Pre-Processing Script with W&B and MLflow: Exercise 5](#3.5-Pre-Processing-Script-with-W&B-and-MLflow:-Exercise-5)
+    - [3.6 Data Segregation](#3.6-Data-Segregation)
+    - [3.7 Data Segregation Script with W&B and MLflow: Exercise 6](#3.7-Data-Segregation-Script-with-W&B-and-MLflow:-Exercise-6)
+    - [3.8 Feature Stores](#3.8-Feature-Stores)
 4. Lesson 4: Data Validation
 5. Lesson 5: Training, Validation and Experiment Tracking
 6. Lesson 6: Final Pipeline, Release and Deploy
@@ -2109,10 +2118,10 @@ mlflow run .
 
 If we didn't have default arguments, we'd need to run
 
+```bash
 mlflow run . -P input_artifact="exercise_4/genres_mod.parquet:latest" \
              -P artifact_name="preprocessed_data.csv" \
              -P artifact_type=clean_data \
-```bash
              -P artifact_description="Cleaned dataset"
 ```
 
@@ -2173,16 +2182,209 @@ mlflow run . -P input_artifact="exercise_5/preprocessed_data.csv:latest" \
 `conda.yaml`:
 
 ```yaml
+name: download_data
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pandas=1.2.3
+  - pip=20.3.3
+  - scikit-learn=0.24.1
+  - pip:
+    - wandb==0.10.21
+    - protobuf==3.20
 ```
 
 `MLproject`:
 
 ```yaml
+name: split_data
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      input_artifact:
+        description: Fully qualified name for the artifact
+        type: str
+      artifact_root:
+        description: Name for the W&B artifact that will be created
+        type: str
+      artifact_type:
+        description: Type of the artifact to create
+        type: str
+        default: raw_data
+      test_size:
+        description: Description for the artifact
+        type: float
+      random_state:
+        description: Integer to use to seed the random number generator
+        type: str
+        default: 42
+      stratify:
+        description: If provided, it is considered a column name to be used for stratified splitting
+        type: str
+        default: "null"
+
+    command: >-
+      python run.py --input_artifact {input_artifact} \
+                    --artifact_root {artifact_root} \
+                    --artifact_type {artifact_type} \
+                    --test_size {test_size} \
+                    --random_state {random_state} \
+                    --stratify {stratify}
 ```
 
 `run.py`:
 
 ```python
+#!/usr/bin/env python
+import argparse
+import logging
+import os
+import tempfile
+
+import pandas as pd
+import wandb
+from sklearn.model_selection import train_test_split
+
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
+logger = logging.getLogger()
+
+
+def go(args):
+
+    run = wandb.init(project="exercise_6", job_type="split_data")
+
+    logger.info("Downloading and reading artifact")
+    artifact = run.use_artifact(args.input_artifact)
+    artifact_path = artifact.file()
+
+    df = pd.read_csv(artifact_path, low_memory=False)
+
+    # Split model_dev/test
+    logger.info("Splitting data into train and test")
+    splits = {}
+
+    splits["train"], splits["test"] = train_test_split(
+                                                       df, # entire dataset: X, y
+                                                       test_size=args.test_size,
+                                                       random_state=args.random_state,
+                                                       stratify=df[args.stratify] if arg.stratify != 'null' else None
+                                                       )
+
+    # Now we save the artifacts. We use a temporary directory so we do not leave
+    # any trace behind
+    with tempfile.TemporaryDirectory() as tmp_dir:
+
+        for split, df in splits.items():
+
+            # Make the artifact name from the provided root plus the name of the split
+            artifact_name = f"{args.artifact_root}_{split}.csv"
+
+            # Get the path on disk within the temp directory
+            temp_path = os.path.join(tmp_dir, artifact_name)
+
+            logger.info(f"Uploading the {split} dataset to {artifact_name}")
+
+            # Save then upload to W&B
+            df.to_csv(temp_path)
+
+            artifact = wandb.Artifact(
+                name=artifact_name,
+                type=args.artifact_type,
+                description=f"{split} split of dataset {args.input_artifact}",
+            )
+            artifact.add_file(temp_path)
+
+            logger.info("Logging artifact")
+            run.log_artifact(artifact)
+
+            # This waits for the artifact to be uploaded to W&B. If you
+            # do not add this, the temp directory might be removed before
+            # W&B had a chance to upload the datasets, and the upload
+            # might fail
+            artifact.wait()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Split a dataset into train and test",
+        fromfile_prefix_chars="@",
+    )
+
+    parser.add_argument(
+        "--input_artifact",
+        type=str,
+        help="Fully-qualified name for the input artifact",
+        required=True,
+    )
+
+    parser.add_argument(
+        "--artifact_root",
+        type=str,
+        help="Root for the names of the produced artifacts. The script will produce 2 artifacts: "
+             "{root}_train.csv and {root}_test.csv",
+        required=True,
+    )
+
+    parser.add_argument(
+        "--artifact_type", type=str, help="Type for the produced artifacts", required=True
+    )
+
+    parser.add_argument(
+        "--test_size",
+        help="Fraction of dataset or number of items to include in the test split",
+        type=float,
+        required=True
+    )
+
+    parser.add_argument(
+        "--random_state",
+        help="An integer number to use to init the random number generator. It ensures repeatibility in the"
+             "splitting",
+        type=int,
+        required=False,
+        default=42
+    )
+
+    parser.add_argument(
+        "--stratify",
+        help="If set, it is the name of a column to use for stratified splitting",
+        type=str,
+        required=False,
+        default='null'  # unfortunately mlflow does not support well optional parameters
+    )
+
+    args = parser.parse_args()
+
+    go(args)
 ```
 
+#### Run the Exercise
 
+```bash
+mlflow run . -P input_artifact="exercise_5/preprocessed_data.csv:latest" \
+             -P artifact_root="data" \
+             -P test_size=0.3 \
+             -P stratify="genre"
+```
+
+### 3.8 Feature Stores
+
+Feature engineering requires applying domain knowledge and it can make a huge difference in terms of model performance.
+
+For instance, if we have the `height` and `weight`, the `BMI = height/weight^2` is an engineered feature which best predicts whether the subject is overweight.
+
+Feature engineering cannot be in the pre-processing step, because if it were, we would not have those engineered features in the inference pipeline. Thus, one solution is to allocate it to the inference pipeline. However, this does not scale optimally: it's slow and changes stop the inference.
+
+Another solution consists in having **feature stores**: this a new concept which allows for development-production symmetric by using engineered features. The feature computation is centralized and automated:
+
+- Feature registry: Several data scientists can define formulas/rules to compute different features, available to everyone.
+- Features are computed automatically according to the feature computation definitions. If there is any update which affects the features, these are automatically modified.
+- Serving can be done for real-time applications (hot or fast serving - inference) or for high throughput applications (cold or batch serving - training).
+
+As far as I understand, it is like a parallel component which serves features given a dataset. The users commit the feature computation code and the store automatically can serve features in cold/hot for different steps in the pipeline, i.e., training of inference.
+
+However, note that the feature store deals more with the generation of new features. Encoding or scaling are not part of the feature store, but of the inference pipeline!
