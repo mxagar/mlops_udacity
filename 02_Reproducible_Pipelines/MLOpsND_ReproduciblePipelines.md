@@ -2388,3 +2388,76 @@ Another solution consists in having **feature stores**: this a new concept which
 As far as I understand, it is like a parallel component which serves features given a dataset. The users commit the feature computation code and the store automatically can serve features in cold/hot for different steps in the pipeline, i.e., training of inference.
 
 However, note that the feature store deals more with the generation of new features. Encoding or scaling are not part of the feature store, but of the inference pipeline!
+
+## 4. Data Validation
+
+If we want to automatically avoid bad data entering our system, data validation is fundamental.
+
+Data validation can be achieved with [pytest](https://docs.pytest.org/en/7.1.x/).
+
+Data validation is equivalent to unit testing in software, but it is applied on incoming data. Basically, our data assumptions are checked to avoid inputting garbage, which would lead to outputting garbage (Garbage In Garbage Out, GIGO).
+
+Examples of why data inconsistencies might appear:
+
+- Rating value changes from 5-stars system to 10-points system with floating point values. Thus, the range and the type are different, as well as the interpretation.
+- A value of a product can change from USD to 1,000 USD; thus, the range is different.
+- The world changes and previous assumptions don't hold; e.g., before the pandemic households close to workplaces were expensive and their neighborhood means were high, but after the pandemic, with remote work, that is not always true.
+
+Data checks or data validation is placed immediately before or after the data segregation (train/test split).
+
+![Data Checks in the ML Pipeline](./pics/data-checks-in-ml-pipeline.png)
+
+
+### 4.1 A Primer on Pytest
+
+This section explains how to use pytest in the context of data validations. Several concepts introduced in the first module (Clean Code: Lesson 4, Production Ready Code) are re-visited. Have a look at the notes of the second module.
+
+- Test files are typically stored in the `test/` folder, by convention; i.e., we can use another folder name.
+- Test files must start with `test_*`.
+- The test functions must start with `test_*`.
+- In a `test_` function, we can use `assert` and `isinstance()` to perform data validation.
+
+Typically, fixtures are used with pytest: decorators that can provide with input data.
+
+```python
+import pytest
+import wandb
+
+run = wandb.init()
+
+# Since we specify scope="session"
+# this fixture is run once for the complete session.
+# As an effect, the variable `data` triggers the function data() only once
+# and it yields the loaded dataframe.
+# Using `data` as an argument is equivalent to:
+# data_ = data()
+# test_data_length(data_)
+# Note that with scope="function"
+# every test_ function using data would load the complete dataset every time
+@pytest.fixture(scope="session")
+def data():
+
+    local_path = run.use_artifact("my_project/artifact").file()
+    df = pd.read_csv(local_path, low_memory=False)
+
+    return df
+
+
+def test_data_length(data):
+    """
+    We test that we have enough data to continue
+    """
+    assert len(data) > 1000
+```
+
+To run the code below, assuming the file is `test/test_dataset.py`:
+
+```bash
+# If the test_ files are not in ., we specify the path where they are
+# -vv: verbose
+pytest test/ -vv
+```
+
+### 4.2 Deterministic Tests
+
+
