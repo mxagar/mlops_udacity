@@ -1235,7 +1235,7 @@ Unless we define in the python file pytest decorators (e.g., fixtures and parame
 
 - **name testing files and functions with preceding** `test_*`; that's the dafault, we can change that in the [configuration](https://docs.pytest.org/en/latest/example/pythoncollection.html); if we repeat the name for functions, pytest doesn't complain
 - use in the test functions `assert`, `isinstance(value, type)` or the like to check values
-- run `pytest` in the terminal: all tests are automatically found and executed!
+- run `pytest` in the terminal: all tests are automatically found and executed! Optionally, use the `-vv` flag for verbose outputs
 - NOTE: if we don't name the file `test_*`, we need to run `pytest filename.py`
 
 It is a good practice to for testing functions to a `Given-When-Then` structure inside:
@@ -1279,6 +1279,7 @@ pytest
 # 2 successful tests: ..
 # each successful test is a dot
 # if one fails, it doesn't stop, it continues: F.
+# if we want more info, activate verbose flag: -vv
 ```
 
 #### Pytest Fixtures 1
@@ -1288,7 +1289,9 @@ Fixtures are functions defined as decorators which return objects used in tests.
 Some notes:
 
 - Fixture functions are reusable as many times as we want
-- We can define scopes where they are valid: classes, modules, packages or session
+- We can define scopes where they are valid: classes, modules, packages`, functions, or session.
+    - Session scope refers to the case in which the fixture is called once every session. This is practical to load a dataset at the beginning.
+    - Function scope refers to the case in which the fixture is called in every new function which uses the fixture function.
 - We can define setup and teardown statements in the fixtures
 - More on [pytest fixtures](https://docs.pytest.org/en/7.1.x/how-to/fixtures.html)
 - The `conftest.py` file is visible for the whole directory; in it, we can define parameters, fixtures, or variable; however, we can also work without it.
@@ -1585,6 +1588,10 @@ def email_validator(email):
 	# ...
 	return valid
 ```
+
+### More Notes on Testing
+
+The next module explains how to use pytest to perform data validation. Basically, no new techniques are introduced, but testing is applied to data checks.
 
 ### Logging
 
