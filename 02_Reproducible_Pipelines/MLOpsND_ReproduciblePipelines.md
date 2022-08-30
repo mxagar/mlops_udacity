@@ -2458,6 +2458,206 @@ To run the code below, assuming the file is `test/test_dataset.py`:
 pytest test/ -vv
 ```
 
-### 4.2 Deterministic Tests
+### 4.2 Deterministic Tests: Example / Exercise 7
+
+Deterministic tests check properties of the data without uncertainty; examples:
+
+- Number of features/columns.
+- Number of entries/rows.
+- Ranges of numerical features.
+- Possible categories in a categorical variable, or number of categories.
+
+#### Exercise 7
+
+In this exercise, the artifact from the previous exercise 5 is downloaded: the pre-processed dataset; then, that dataset is checked with pytest.
+
+Repository:
+
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
+
+Folder:
+
+`lesson-3-data-validation/exercises/exercise_7/`
+
+I also copied the files to
+
+`./lab/DataValidation_exercise_7_pytest_dataframe/`
+
+We have the following files:
+
+- `MLproject`
+- `conda.yaml`: in theory given, in practice I needed to add some dependencies (see issues section below).
+- `test_data.py`: file to be completed; two testing functions need to be defined: test categories are correct and some numerical column values are in their expected ranges.
+
+Run:
+
+```bash
+cd path-to-mlflow-file
+mlflow run . 
+```
+
+#### Solution
+
+`MLproject`:
+
+```yaml
+name: download_data
+conda_env: conda.yml
+
+entry_points:
+  main:
+    # NOTE: the -s flag is necessary, otherwise pytest will capture all the output and it
+    # will not be uploaded to W&B. Hence, the log in W&B will be empty.
+    command: >-
+      pytest -s -vv .
+
+```
+
+`conda.yaml`:
+
+```yaml
+name: download_data
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - pandas=1.2.3
+  - pip=20.3.3
+  - pytest=6.2.2
+  - pip:
+      - wandb==0.10.21
+      - protobuf==3.20
+```
+
+`test_data.py`:
+
+```python
+import pytest
+import wandb
+import pandas as pd
+
+# This is global so all tests are collected under the same
+# run
+run = wandb.init(project="exercise_7", job_type="data_tests")
 
 
+@pytest.fixture(scope="session")
+def data():
+
+    local_path = run.use_artifact("exercise_5/preprocessed_data.csv:latest").file()
+    df = pd.read_csv(local_path, low_memory=False)
+
+    return df
+
+
+def test_column_presence_and_type(data):
+    
+    # It is a nice practice to create dictionaries of values to check.
+    # `pandas.api.types` provides many type checking functions we can use!
+    required_columns = {
+        "time_signature": pd.api.types.is_integer_dtype,
+        "key": pd.api.types.is_integer_dtype,
+        "danceability": pd.api.types.is_float_dtype,
+        "energy": pd.api.types.is_float_dtype,
+        "loudness": pd.api.types.is_float_dtype,
+        "speechiness": pd.api.types.is_float_dtype,
+        "acousticness": pd.api.types.is_float_dtype,
+        "instrumentalness": pd.api.types.is_float_dtype,
+        "liveness": pd.api.types.is_float_dtype,
+        "valence": pd.api.types.is_float_dtype,
+        "tempo": pd.api.types.is_float_dtype,
+        "duration_ms": pd.api.types.is_integer_dtype,  # This is integer, not float as one might expect
+        "text_feature": pd.api.types.is_string_dtype,
+        "genre": pd.api.types.is_string_dtype
+    }
+
+    # Check column presence
+    assert set(data.columns.values).issuperset(set(required_columns.keys()))
+
+    for col_name, format_verification_funct in required_columns.items():
+
+        assert format_verification_funct(data[col_name]), f"Column {col_name} failed test {format_verification_funct}"
+
+
+def test_class_names(data):
+
+    # Check that only the known classes are present
+    known_classes = [
+        "Dark Trap",
+        "Underground Rap",
+        "Trap Metal",
+        "Emo",
+        "Rap",
+        "RnB",
+        "Pop",
+        "Hiphop",
+        "techhouse",
+        "techno",
+        "trance",
+        "psytrance",
+        "trap",
+        "dnb",
+        "hardstyle",
+    ]
+
+    assert data["genre"].isin(known_classes).all()
+
+
+def test_column_ranges(data):
+
+    ranges = {
+        "time_signature": (1, 5),
+        "key": (0, 11),
+        "danceability": (0, 1),
+        "energy": (0, 1),
+        "loudness": (-35, 5),
+        "speechiness": (0, 1),
+        "acousticness": (0, 1),
+        "instrumentalness": (0, 1),
+        "liveness": (0, 1),
+        "valence": (0, 1),
+        "tempo": (50, 250),
+        "duration_ms": (20000, 1000000),
+    }
+
+    for col_name, (minimum, maximum) in ranges.items():
+        # Do not forget .dropna() and .all()
+        assert data[col_name].dropna().between(minimum, maximum).all(), (
+            f"Column {col_name} failed the test. Should be between {minimum} and {maximum}, "
+            f"instead min={data[col_name].min()} and max={data[col_name].max()}"
+        )
+
+```
+
+#### Important Notes / Comments / Issues
+
+- `pandas.api.types` provides many type checking functions we can use!
+- It is a nice practice to create dictionaries of values to check.
+- I had to add these dependencies to `conda.yaml`: `python=3.8`, `protobuf==3.20`.
+- Get used to auxiliary function of sets: `isin()`, `issuperset()`, etc.
+- Get used to aggregate functions like `all()` instead of using loops!
+
+### 4.3 Non-Deterministic or Statistical Tests: Example / Exercise 8
+
+If we want to measure the correctness of a random variable, we perform non-deterministic or statistical tests; for instance, hypothesis tests.
+
+Typically, the current dataset is checked against the dataset used during the exploratory data analysis (EDA). Examples:
+
+- Mean and std. of columns. We can extend that with T-tests.
+- Distribution of values in a column.
+- Are there outliers?
+- Correlations between columns and columns with target. They will be different, but should not vary so much.
+
+In the frequentist hypothesis testing framework, we have:
+
+- A null hypothesis `H0`: assumption of the data; e.g., both two distributions have same means
+- An alternative hypothesis `H1`: violation of the assumption; e.g., distributions have different means
+
+If we use T-tests to compare means, we compute the T statistic and checks its p-value in the T distribution. Of course, we need to define the `alpha` significance level beforehand, depending on how many false positives/negatives we'd like to achieve.
+
+![T-Test Statistical Test](./pics/stat-test.png)
+
+#### Exercise 8
+
+#### Solution
