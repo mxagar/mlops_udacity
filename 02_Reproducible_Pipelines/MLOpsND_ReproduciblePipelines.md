@@ -2691,12 +2691,16 @@ Notes:
 - `alpha = 0.05` means that we get 5/100 false positives (i.e., no rejections) if we continue repeating the test with different samplings.
 - If we perform multiple tests between different groups we need to use a Bonferroni correction. That is usually the case when we check two datasets: multiple columns are tested against each other to state whether the datasets are different! Thus, the example above is not complete!
 - The T-test is a parametric test, with many assumptions; maybe we can opt for non-parametric versions, such as the Kolgomorov-Smirnov test with 2 samples.
+- A failing test does not imply the datasets are different; we need to understand we're using statistical tests which have an expected amount of error.
 - Instead of `scipy`, we can also use other packages, such as [statmodels](https://www.statsmodels.org/stable/stats.html)
+- Usually we perform such kind of tests when we compose a new training dataset; in that case, the new and the old training sets can be compared or the new training set and the old test set.
 
 
 #### Exercise 8: Non-Deterministic Data Tests
 
 In this exercise, the artifacts from the previous exercise 6 is downloaded: the pre-processed dataset split in train and test subsets; then, a statistical test is performed embedded in a pytest testing function. The statistical test is a Kolgomorov-Smirnov test with 2 samples, which is a non-parametric equivalent of the T-test with independent samples.
+
+Usually we perform such kind of tests when we compose a new training dataset, but here we don't have that.
 
 Repository:
 
@@ -2713,7 +2717,7 @@ I also copied the files to
 We have the following files:
 
 - `MLproject`
-- `conda.yaml`: in theory given, in practice I needed to add some dependencies (see issues section below).
+- `conda.yaml`: in theory given, in practice I needed to add some dependencies (see issues exercise 7).
 - `test_data.py`: file to be completed; a testing function needs to be written: a call to the Kolgomorov-Smirnov test with 2 samples.
 
 Run:
@@ -2837,5 +2841,210 @@ def test_kolmogorov_smirnov(data):
 
 ```
 
+### 4.4 Parameters in Pytest: Example / Exercise 9
+
+Pytest checks if we have a special file called `conftest.py` in our `tests/` directory. If so, all fixtures defined in that special file are shared in all `test_*` files. We can define CLI parameters passed to the `pytest` command and parsed within the `conftest.py` file. That way, we can define testing environments that are parametrized, i.e., they are reusable.
+
+Example:
+
+```python
+import pytest
+import pandas as pd
+
+# Special function with which we can define parameters passed via CLI
+def pytest_addoption(parser):
+    # Parameter input_artifact created: its value can be passed via CLI:
+    # pytest . --input_artifact dataset.csv
+    # parser is a special fixture from pytest which connects to the CLI input
+    parser.addoption("--input_artifact", action="store")
+
+# 
+@pytest.fixture(scope="session")
+def data(request):
+    # We access the parameters created with addoption via request.config.option
+    input_artifact = request.config.option.input_artifact
+    if input_artifact is None:
+        pytest.fail("--input_artifact missing on command line")
+    local_path = run.use_artifact(input_artifact).file()
+    return pd.read_csv(local_path)
+```
+
+Now, we can run a parametrized set of tests in which we pass which dataset to load!
+
+```bash
+pytest . -vv --input_artifact example/my_artifact:latest
+```
+
+Note that parsed parameters are strings, so we need to cast them if they are numbers!
+
+#### Exercise 9: Parametrized Test Functions
+
+In this exercise, the artifacts from the previous exercise 6 are downloaded: the pre-processed dataset split in train and test subsets; then, a statistical test is performed embedded in a pytest testing function. The statistical test is a Kolgomorov-Smirnov test with 2 samples, which is a non-parametric equivalent of the T-test with independent samples.
+
+In contrast to the previous exercise, we pass the names of the dataset splits and the significance level `alpha` as parameters in the CLI. Note that parsed parameters are strings, so we need to cast them if they are numbers!
+
+Repository:
+
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
+
+Folder:
+
+`lesson-3-data-validation/exercises/exercise_9/`
+
+I also copied the files to
+
+`./lab/DataValidation_exercise_9_pytest_parametrized/`
+
+We have the following files:
+
+- `MLproject`
+- `conda.yaml`: in theory given, in practice I needed to add some dependencies (see notes in exercise 7).
+- `test_data.py`: the test is performed here; we use the fixtures defined in `conftest.py`.
+- `conftest.py`: this file needs to be extended to define a `ks_alpha` fixture, along with parameters that are parsed from the CLI.
+
+Run:
+
+```bash
+cd path-to-mlflow-file
+mlflow run . -P reference_artifact="exercise_6/data_train.csv:latest" \
+             -P sample_artifact="exercise_6/data_test.csv:latest" \
+             -P ks_alpha="0.3"
+```
+
+#### Solution
+
+`MLproject`:
+
+```yaml
+name: exercise_9
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      reference_artifact:
+        description: Fully-qualitied name for the artifact to be used as reference dataset
+        type: str
+      sample_artifact:
+        description: Fully-qualitied name for the artifact to be used as new data sample
+        type: str
+      ks_alpha:
+        description: Threshold for the (pre-trial) p-value for the KS test
+        type: float
+    # NOTE: the -s flag is necessary, otherwise pytest will capture all the output and it
+    # will not be uploaded to W&B. Hence, the log in W&B will be empty.
+    command: >-
+      pytest -s -vv . --reference_artifact {reference_artifact} \
+                      --sample_artifact {sample_artifact} \
+                      --ks_alpha {ks_alpha}
+
+```
+
+`conda.yaml`:
+
+```yaml
+name: download_data
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - pandas=1.2.3
+  - pip=20.3.3
+  - pytest=6.2.2
+  - scipy=1.6.1
+  - pip:
+      - wandb==0.10.21
+      - protobuf==3.20
+
+```
+
+`test_data.py`:
+
+```python
+import scipy.stats
+
+# Note that we pass the fixtures as arguments!
+def test_kolmogorov_smirnov(data, ks_alpha):
+
+    sample1, sample2 = data
+
+    columns = [
+        "danceability",
+        "energy",
+        "loudness",
+        "speechiness",
+        "acousticness",
+        "instrumentalness",
+        "liveness",
+        "valence",
+        "tempo",
+        "duration_ms"
+    ]
+
+    # Bonferroni correction for multiple hypothesis testing
+    # (see my blog post on this topic to see where this comes from:
+    # https://towardsdatascience.com/precision-and-recall-trade-off-and-multiple-hypothesis-testing-family-wise-error-rate-vs-false-71a85057ca2b)
+    alpha_prime = 1 - (1 - ks_alpha)**(1 / len(columns))
+
+    for col in columns:
+
+        ts, p_value = scipy.stats.ks_2samp(sample1[col], sample2[col])
+
+        # NOTE: as always, the p-value should be interpreted as the probability of
+        # obtaining a test statistic (TS) equal or more extreme that the one we got
+        # by chance, when the null hypothesis is true. If this probability is not
+        # large enough, this dataset should be looked at carefully, hence we fail
+        assert p_value > alpha_prime
+
+```
+
+`conftest.py`:
+
+```python
+import pytest
+import pandas as pd
+import wandb
 
 
+run = wandb.init(project="exercise_9", job_type="data_tests")
+
+
+def pytest_addoption(parser):
+    parser.addoption("--reference_artifact", action="store")
+    parser.addoption("--sample_artifact", action="store")
+    parser.addoption("--ks_alpha", action="store")
+
+
+@pytest.fixture(scope="session")
+def data(request):
+
+    reference_artifact = request.config.option.reference_artifact
+
+    if reference_artifact is None:
+        pytest.fail("--reference_artifact missing on command line")
+
+    sample_artifact = request.config.option.sample_artifact
+
+    if sample_artifact is None:
+        pytest.fail("--sample_artifact missing on command line")
+
+    local_path = run.use_artifact(reference_artifact).file()
+    sample1 = pd.read_csv(local_path)
+
+    local_path = run.use_artifact(sample_artifact).file()
+    sample2 = pd.read_csv(local_path)
+
+    return sample1, sample2
+
+
+@pytest.fixture(scope='session')
+def ks_alpha(request):
+    ks_alpha = request.config.option.ks_alpha
+
+    if ks_alpha is None:
+        pytest.fail("--ks_threshold missing on command line")
+
+    return float(ks_alpha)
+
+```
