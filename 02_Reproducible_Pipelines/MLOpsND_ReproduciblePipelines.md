@@ -2467,7 +2467,7 @@ Deterministic tests check properties of the data without uncertainty; examples:
 - Ranges of numerical features.
 - Possible categories in a categorical variable, or number of categories.
 
-#### Exercise 7
+#### Exercise 7: Deterministic Data Tests
 
 In this exercise, the artifact from the previous exercise 5 is downloaded: the pre-processed dataset; then, that dataset is checked with pytest.
 
@@ -2656,8 +2656,186 @@ In the frequentist hypothesis testing framework, we have:
 
 If we use T-tests to compare means, we compute the T statistic and checks its p-value in the T distribution. Of course, we need to define the `alpha` significance level beforehand, depending on how many false positives/negatives we'd like to achieve.
 
+If the p-value is below the `alpha` threshold (e.g., 0.05 for 2-sigma), then the `H0` can be rejected; in our case that means that the distributions of the current dataset and the one in the EDA have significantly different means.
+
 ![T-Test Statistical Test](./pics/stat-test.png)
 
-#### Exercise 8
+A test function that accomplishes such a test would look like this:
+
+```python
+import scipy.stats
+
+
+def test_compatible_mean(sample1, sample2):
+    """
+    We check if the mean of the two samples is not
+    significantly different
+    """
+    ts, p_value = scipy.stats.ttest_ind(
+        sample1, sample2, equal_var=False, alternative="two-sided"
+    )
+
+    # Pre-determined threshold
+    # However, note that in a regular case in which we are performing a dataset-wise check
+    # we need to compare several columns, thus a Bonferroni correction of the alpha is required.
+    # alpha_prime = 1 - (1 - alpha)**(1 / len(tested_columns))
+    alpha = 0.05
+
+    assert p_value >= alpha, "T-test rejected the null hyp. at the 2 sigma level"
+
+    return ts, p_value
+```
+
+Notes:
+
+- `alpha = 0.05` means that we get 5/100 false positives (i.e., no rejections) if we continue repeating the test with different samplings.
+- If we perform multiple tests between different groups we need to use a Bonferroni correction. That is usually the case when we check two datasets: multiple columns are tested against each other to state whether the datasets are different! Thus, the example above is not complete!
+- The T-test is a parametric test, with many assumptions; maybe we can opt for non-parametric versions, such as the Kolgomorov-Smirnov test with 2 samples.
+- Instead of `scipy`, we can also use other packages, such as [statmodels](https://www.statsmodels.org/stable/stats.html)
+
+
+#### Exercise 8: Non-Deterministic Data Tests
+
+In this exercise, the artifacts from the previous exercise 6 is downloaded: the pre-processed dataset split in train and test subsets; then, a statistical test is performed embedded in a pytest testing function. The statistical test is a Kolgomorov-Smirnov test with 2 samples, which is a non-parametric equivalent of the T-test with independent samples.
+
+Repository:
+
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
+
+Folder:
+
+`lesson-3-data-validation/exercises/exercise_8/`
+
+I also copied the files to
+
+`./lab/DataValidation_exercise_8_pytest_statistical/`
+
+We have the following files:
+
+- `MLproject`
+- `conda.yaml`: in theory given, in practice I needed to add some dependencies (see issues section below).
+- `test_data.py`: file to be completed; a testing function needs to be written: a call to the Kolgomorov-Smirnov test with 2 samples.
+
+Run:
+
+```bash
+cd path-to-mlflow-file
+mlflow run . 
+```
 
 #### Solution
+
+
+`MLproject`:
+
+```yaml
+name: download_data
+conda_env: conda.yml
+
+entry_points:
+  main:
+    # NOTE: the -s flag is necessary, otherwise pytest will capture all the output and it
+    # will not be uploaded to W&B. Hence, the log in W&B will be empty.
+    command: >-
+      pytest -s -vv .
+
+```
+
+`conda.yaml`:
+
+```yaml
+name: download_data
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - protobuf==3.20
+  - pandas=1.2.3
+  - pip=20.3.3
+  - pytest=6.2.2
+  - scipy=1.6.1
+  - pip:
+      - wandb==0.10.21
+```
+
+`test_data.py`:
+
+```python
+import pytest
+import wandb
+import pandas as pd
+import scipy.stats
+
+# This is global so all tests are collected under the same
+# run
+run = wandb.init(project="exercise_8", job_type="data_tests")
+
+
+@pytest.fixture(scope="session")
+def data():
+    """Pytest fixture which provides the dataset in two separate dataframes (train and test splits).
+
+    Returns:
+        tuple of two dataframes: train and test splits of the dataset
+    """
+
+    local_path = run.use_artifact("exercise_6/data_train.csv:latest").file()
+    sample1 = pd.read_csv(local_path)
+
+    local_path = run.use_artifact("exercise_6/data_test.csv:latest").file()
+    sample2 = pd.read_csv(local_path)
+
+    return sample1, sample2
+
+
+def test_kolmogorov_smirnov(data):
+    """The statistical test Kolgomorov-Smirnov
+    is roughly the non-parametric equivalent of the T-test.
+
+    Args:
+        data (tuple of 2 dataframes): test and train splits automatically loaded in data() fixture.
+    """
+    
+    sample1, sample2 = data
+
+    numerical_columns = [
+        "danceability",
+        "energy",
+        "loudness",
+        "speechiness",
+        "acousticness",
+        "instrumentalness",
+        "liveness",
+        "valence",
+        "tempo",
+        "duration_ms"
+    ]
+
+    # Let's decide the Type I error probability (related to the False Positive Rate)
+    alpha = 0.05
+    # Bonferroni correction for multiple hypothesis testing.
+    # We are comparing 2 splits consisting of several columns; thus,
+    # several tests are carried out and we need Bonferroni.
+    # See blog post on this topic:
+    # https://towardsdatascience.com/precision-and-recall-trade-off-and-multiple-hypothesis-testing-family-wise-error-rate-vs-false-71a85057ca2b)
+    alpha_prime = 1 - (1 - alpha)**(1 / len(numerical_columns))
+
+    for col in numerical_columns:
+
+        ts, p_value = scipy.stats.ks_2samp(
+            sample1[col],
+            sample2[col],
+            alternative='two-sided'
+        )
+
+        # NOTE: as always, the p-value should be interpreted as the probability of
+        # obtaining a test statistic (TS) equal or more extreme that the one we got
+        # by chance, when the null hypothesis is true. If this probability is not
+        # large enough, this dataset should be looked at carefully, hence we fail
+        assert p_value > alpha_prime
+
+```
+
+
+
