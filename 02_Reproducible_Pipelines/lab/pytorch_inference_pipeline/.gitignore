@@ -1,0 +1,4 @@
+inference_artifact.pt
+.DS_Store
+.vscode
+__pycache__
