@@ -3710,7 +3710,7 @@ run.finish()
 
 ```
 
-### 5.5 Experiment Tracking and Hyperparameter Optimization with Weights and Biases: A Example with Scripts and Hydra
+### 5.5 Experiment Tracking and Hyperparameter Optimization with Weights and Biases and Hydra
 
 In the repository
 
@@ -3813,3 +3813,128 @@ early_terminate:
 We can play with the project to select the hyperparameter configuration that leads to the best desired metric, e.g. , the overall accuracy. Simply open the project in table mode and select the columns we want (id, accuracy) and sort all experiments according to the metric.
 
 More interesting examples: [https://github.com/wandb/examples](https://github.com/wandb/examples).
+
+#### Example / Exercise 11: Validate and Choose the Best Performing Model
+
+In this exercise, the artifacts from the previous exercise 6 are downloaded: the pre-processed dataset split in train and test subsets; then, a pipeline is defined and trained.
+
+The exercise is based on the previous exercise 10. However, here the hydra parameter configuration from `config.yaml` is more sophisticated: it includes many more definitions which are used in `random_forest/run.py`.
+
+The exercise/example is very interesting and could be used as a boilerplate.
+
+Repository:
+
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
+
+Folder:
+
+`lesson-4-training-validation-experiment-tracking/exercises/exercise_11/`
+
+I also copied the files to
+
+`./lab/InferencePipeline_exercise_11/`
+
+The file structure is the following:
+
+```
+.
+├── MLproject
+├── conda.yml
+├── config.yaml # hydra configuration
+├── main.py # main script that calls the component random_forest
+└── random_forest
+    ├── MLproject
+    ├── conda.yml
+    ├── run.py # the pipeline is defined here; file to be modified
+
+```
+
+`config.yaml`:
+
+```yaml
+main:
+  project_name: exercise_11
+  experiment_name: dev
+data:
+  train_data: "exercise_6/data_train.csv:latest"
+random_forest_pipeline:
+  random_forest:
+    n_estimators: 100
+    criterion: 'gini'
+    max_depth: null
+    min_samples_split: 2
+    min_samples_leaf: 1
+    min_weight_fraction_leaf: 0.0
+    max_features: 'auto'
+    max_leaf_nodes: null
+    min_impurity_decrease: 0.0
+    min_impurity_split: null
+    bootstrap: true
+    oob_score: false
+    n_jobs: null
+    random_state: null
+    verbose: 0
+    warm_start: false
+    class_weight: "balanced"
+    ccp_alpha: 0.0
+    max_samples: null
+  tfidf:
+    max_features: 100
+  features:
+    numerical:
+      - "danceability"
+      - "energy"
+      - "loudness"
+      - "speechiness"
+      - "acousticness"
+      - "instrumentalness"
+      - "liveness"
+      - "valence"
+      - "tempo"
+      - "duration_ms"
+    categorical:
+      - "time_signature"
+      - "key"
+    nlp:
+      - "text_feature"
+
+```
+
+To run the project:
+
+```bash
+cd path-to-mlflow-file
+mlflow run .
+```
+
+However, the exercise consists in running different experiments with different options.
+
+#### Solution to Exercise 11
+
+```bash
+## Experiment 1
+# We override max_depth
+mlflow run . -P hydra_options="random_forest_pipeline.random_forest.max_depth=5"
+
+## Experiment 2
+# We override n_estimators
+mlflow run . -P hydra_options="random_forest_pipeline.random_forest.n_estimators=10"
+
+## Experiment 3
+# Override max_depth with values 1,5,10
+mlflow run . -P hydra_options="-m random_forest_pipeline.random_forest.max_depth=1,5,10"
+# Override max_depth with values 1-10 increased by 2
+mlflow run . -P hydra_options="-m random_forest_pipeline.random_forest.max_depth=range(1,10,2)"
+
+## Experiment 4
+# Sweep multiple parameters
+mlflow run . -P hydra_options="hydra/launcher=joblib random_forest_pipeline.random_forest.max_depth=range(10,50,3) random_forest_pipeline.tfidf.max_features=range(50,200,50) -m"
+```
+
+At the end, we check the runs of the project in the table view: we hide all columns except the metric we want to optimize (AUC) and the hyperparameters we have varied (tfidf.max_features, random_forest.max_depth). We might decide not to choose the model with the best AUC, but the one with an AUC value close to the best but less complex (smaller depth and less features).
+
+### 5.6 Export the Inference Pipeline / Artifact
+
+
+
+
