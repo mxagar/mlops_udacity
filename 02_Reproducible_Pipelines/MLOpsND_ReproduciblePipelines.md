@@ -3555,3 +3555,162 @@ if __name__ == "__main__":
 ```
 
 ### 5.3 Machine Learning Experimentation
+
+Machine learning pipelines are difficult to build and often require many iterations and experimentations to solve issues that arise along the way, e.g.:
+
+- Errors in the data processing: unexpected columns, unexpected values, etc.
+- Failed data checks
+- Class imbalance
+- Hyperparameter optimization after the validation
+- etc.
+
+![ML Inference Pipeline Iterations](./pics/ml_inference_pipeline_iterations.png)
+
+Due to that extremely iterative nature of ML environments, we should:
+
+- Assume we are going to iterate a lot
+- Give ourselves the time to iterate, still keeping the deadlines
+- Be systematic: change one thing at the time to keep an intuition of causality
+- Learn from every trial.
+- Be clear on our objectives and stop once we reach them; in other words, don't strive for undefined perfectionism.
+
+In order to bring order to that chaos, we need to:
+
+- Version our data.
+- Version our code; also track very precisely the versions of our dependencies.
+- Track every experiment.
+
+Additionally, each experiment needs to be reproducible; to that end, we need to uses randomness seeds whenever randomness is applied.
+
+A typical experimentation loop or iteration sequence is the one done in **hyperparameter optimization**. 
+
+![Experiments](./pics/experiments.png)
+
+### 5.4 Experiment Tracking with Weights and Biases: A Example with Jupyter Notebook
+
+In the repository
+
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
+
+in the folder
+
+`lesson-4-training-validation-experiment-tracking/demo/wandb_tracking`
+
+there is a notebook `tracking_demo.ipynb` which shows how to track experiments with Weights and Biases.
+
+I also copied the demo files to
+
+`./lab/wandb_tracking`
+
+The notebook shows how to:
+
+- Create an experiment object in W&B
+- Store hyperparameters associated with the experiment
+- Log final score
+- Log time series associated with the experiment, e.g., loss along the iterations
+- Log an image
+
+If we run the notebook, an experiment is created in the web interface; if we run it again, we get a new experiment object.
+
+**Important note**: we should commit to our repository the code before running an experiment; that way, the code state is stored with a hash id and if we click on the **info button** of the run in the W&B web interface (left menu bar), we'll get the git checkout command that downloads the precise code status that was used for the experiment! For example:
+
+    git checkout -b "crisp-armadillo-2" c48420c28324e7b1b52aa84523b514f9944a21a0
+
+In that info panel, we can see also the configuration parameters we add to the run/experiment in the code.
+
+```python
+
+import wandb
+import matplotlib.pyplot as plt
+import numpy as np
+
+run = wandb.init(project="tracking_demo")
+# A new experiment/run is created with a random names
+
+# Storing hyper parameters
+# We store parameters in dictionaries which can be nested
+run.config.update({
+    "batch_size": 128,
+    "weight_decay": 0.01,
+    "augmentations": {
+        "rot_angle": 45,
+        "crop_size": 224
+    }
+})
+
+# NOTE: if we have arguments to argparse, we can do:
+# parser = argparse.ArgumentParser(description="Train a Random Forest")
+# parser.add_argument("--batch_size", type=int, ...)
+# parser.add_argument("--weight_decay", type=float, ...)
+# args = parser.parse_arguments()
+# run.config.update(args)
+
+# Log a final score, i.e., one value
+run.summary['accuracy'] = 0.9
+
+# Log a time-varying metric
+# The last value will also be reported in the table, unless
+# we override it with run.summary['loss']
+# Time varying metrics logged with log are plotted
+for i in range(10):
+    run.log(
+        {
+            "loss": 1.2 - i * 0.1
+        }
+    )
+
+# Log multiple time-varying metrics
+for i in range(10):
+    run.log(
+        {
+            "recall": 0.8 + i * 0.01,
+            "ROC": 0.1 + i**2 * 0.01
+        }
+    )
+
+# Explicit x-axis.
+# If we want to personalize the x-axis of the line plot,
+# we can just track the x value we want to associate with a certain y value.
+for i in range(10):
+    run.log(
+        {
+            "precision": 0.8 + i * 0.01,
+            "epoch": i
+        }
+    )
+
+from numpy import sqrt 
+
+# Credits: Trae Blain (https://gist.github.com/traeblain/1487795)
+x1 = np.arange(-7.25, 7.25, 0.012)
+y1 = np.arange(-5, 5, 0.012)
+x, y = np.meshgrid(x1, y1)
+
+eq1 = ((x/7)**2*sqrt(abs(abs(x)-3)/(abs(x)-3))+(y/3)**2*sqrt(abs(y+3/7*sqrt(33))/(y+3/7*sqrt(33)))-1)
+eq2 = (abs(x/2)-((3*sqrt(33)-7)/112)*x**2-3+sqrt(1-(abs(abs(x)-2)-1)**2)-y)
+eq3 = (9*sqrt(abs((abs(x)-1)*(abs(x)-.75))/((1-abs(x))*(abs(x)-.75)))-8*abs(x)-y)
+eq4 = (3*abs(x)+.75*sqrt(abs((abs(x)-.75)*(abs(x)-.5))/((.75-abs(x))*(abs(x)-.5)))-y)
+eq5 = (2.25*sqrt(abs((x-.5)*(x+.5))/((.5-x)*(.5+x)))-y)
+eq6 = (6*sqrt(10)/7+(1.5-.5*abs(x))*sqrt(abs(abs(x)-1)/(abs(x)-1))-(6*sqrt(10)/14)*sqrt(4-(abs(x)-1)**2)-y)
+equation=[eq1,eq2,eq3,eq4,eq5,eq6]
+
+fig, sub = plt.subplots()
+for f in equation:
+    sub.contour(x, y, f, [0])
+
+run.log({
+    "batman": wandb.Image(fig)
+})
+
+# Very important to finish the run/experiment
+# so that everything is uploaded correctly.
+# After finishing, go to the W&B web interface and have a look at the experiment:
+# metrics, plots, project experiments, 
+run.finish()
+
+```
+
+### 5.5 Experiment Tracking with Weights and Biases: A Example with Scripts and Hydra
+
+
+
