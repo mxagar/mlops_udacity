@@ -6,3 +6,4 @@ artifacts
 outputs
 mlruns
 *.csv
+multirun

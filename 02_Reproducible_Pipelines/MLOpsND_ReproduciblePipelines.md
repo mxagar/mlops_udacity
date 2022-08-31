@@ -3710,7 +3710,106 @@ run.finish()
 
 ```
 
-### 5.5 Experiment Tracking with Weights and Biases: A Example with Scripts and Hydra
+### 5.5 Experiment Tracking and Hyperparameter Optimization with Weights and Biases: A Example with Scripts and Hydra
 
+In the repository
 
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
 
+in the folder
+
+`lesson-4-training-validation-experiment-tracking/demo/hydra_sweeps`
+
+there is a project which shows how to track hyperparameter optimization experiments with Weights and Biases and Hydra. Basically, [hydra sweeps or multi-runs](https://hydra.cc/docs/tutorials/basic/running_your_app/multi-run/) are used; these allow to run the same application with multiple different configurations: we pass a grid of parameter values and hydra loops on the values and run an experiment with each combination.
+
+I also copied the demo files to
+
+`./lab/hydra_sweeps`
+
+The project has the following structure:
+
+```
+.
+├── MLproject
+├── component
+│   ├── MLproject
+│   ├── conda.yml
+│   └── noop.py # very simple component
+├── conda.yml
+├── config.yaml # parameters defined here: a, b
+└── main.py
+```
+
+The project component code is in `noop.py`, but it is a dummy module: it simply logs a sequence of numbers to W&B and creates and artifact.
+
+Note that we need to have some dependencies if hydra and hydra sweeps are used: `hydra-joblib-launcher==1.1.2`, `hydra-core=1.0.6`; additionally, I had to add the dependencies related to `python=3.8` and `protobuf`.
+
+Even though we define the parameter values in the `confg.yaml`, the grid can be manually passed via CLI:
+
+```bash
+cd path-to-mlflow-file
+
+# Default parameters from config.yaml used
+mlflow run .
+
+# We can overwrite default parameters with grids.
+# For that, we use the -m option: multi-run.
+# Example with 3 runs (i.e., on for a parameter value combination)
+mlflow run . -P hydra_options="-m parameters.a=3,4,5"
+
+# We can create a grid in which we have several values
+# for multiple parameters.
+# This will generate 6 runs: (a=3, b=2), (a=4, b=2), (a=3, b=3), (a=4, b=3), (a=3, b=4), (a=4, b=4)
+mlflow run . -P hydra_options="-m parameters.a=3,4 parameters.b=2,3,4"
+
+# Equivalent call to before, but with range()
+# Note: don't use spaces for range()
+mlflow run . -P hydra_options="-m parameters.a=3,4 parameters.b=range(2,4,1)"
+
+# Equivalent to before
+# BUT we run the experiments in parallel!
+# For that, we need joblib
+mlflow run . -P hydra_options="hydra/launcher=joblib parameters.a=3,4 parameters.b=range(2,4,1) -m"
+
+```
+
+Important notes:
+
+- Use this functionality to perform grid search or hyperparameter optimization. In the web interface of W&B we can visualize the table of metrics at the project level. If we activate the metric columns only, we see which hyperparameters lead to the best results.
+- The CLI length is limited to 250; if we need more characters for the definition of the parameter grids, we can define them in the `config.yaml` and then we run `mlflow` without parameter override!
+
+#### Choosing the Best Performing Model
+
+The following W&B link shows an open project in which a model was trained 183 times with different hyperparameter values, i.e., in a grid:
+
+[https://wandb.ai/example-team/sweep-demo](https://wandb.ai/example-team/sweep-demo)
+
+The associated Github repository is [pytorch-cnn-fashion](https://github.com/wandb/examples/tree/master/examples/pytorch/pytorch-cnn-fashion); the project is basically a FashionMNIST classification with a Pytorch CNN consisting of 2 convolutional layers. In the repository, we can see the grid defined in the configuration file:
+
+```yaml
+program: train.py
+method: grid
+metric:
+  goal: minimize
+  name: loss
+parameters:
+  dropout:
+    values: [0.1, 0.2, 0.4, 0.5, 0.7]
+  channels_one:
+    values: [10, 12, 14, 16, 18, 20]
+  channels_two:
+    values: [24, 28, 32, 36, 40, 44]
+  learning_rate:
+    values: [0.001, 0.005, 0.0005]
+  epochs:
+    value: 27
+early_terminate:
+  type: hyperband
+  s: 2
+  eta: 3
+  max_iter: 27
+```
+
+We can play with the project to select the hyperparameter configuration that leads to the best desired metric, e.g. , the overall accuracy. Simply open the project in table mode and select the columns we want (id, accuracy) and sort all experiments according to the metric.
+
+More interesting examples: [https://github.com/wandb/examples](https://github.com/wandb/examples).
