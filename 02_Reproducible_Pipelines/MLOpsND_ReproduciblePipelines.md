@@ -3048,3 +3048,510 @@ def ks_alpha(request):
     return float(ks_alpha)
 
 ```
+
+### 4.5 Alternative Tool for Data Validation: Great Expectations
+
+[Great Expectations](https://greatexpectations.io/) is another we can employ to perform data validation. Its features:
+
+- Tests are called expectations.
+- It has a rich set of pre-defined tests.
+- It has automatic profiling: we pass the dataset and automatic tests are generated; e.g., number of columns, etc. Then, we tweak the created tests.
+- It provides with awesome HTML reports, which can be published.
+- Unfortunately, it is a quite complex tool with a steep learning curve.
+
+## 5. Training, Validation and Experiment Tracking
+
+Contents of the section:
+
+- What is an **inference pipeline**, and how to create one
+- How to conduct experiments in an ordered and reproducible way
+- How to test our final inference artifact
+- Options for deployment of our inference artifact
+
+![ML Pipeline: Inference Pipeline](./pics/ml_pipeline_inference.png)
+
+### 5.1 The Inference Pipeline
+
+The **inference pipeline** is a static version of two things that produce an inference or score:
+
+- the data transformations
+- and the trained model.
+
+When we serialize and save to disk the inference pipeline, we call it **inference artifact**. The final inference pipeline is generated during the training and validation process, after the dataset has been split and the model type chosen. It's too simplistic to mix the inference pipeline with the model, because it's more than that (i.e., all data transformations necessary to feed the rows to the model and all the backward transformations necessary to interpret the output).
+
+One of the principles of MLOps is the development/production symmetry. Having an inference artifact helps with that. It is very important to use the same code for development and production! If we change something, it affects both environment and we avoid errors. Also, deploying the pipeline is much easier, because it's self-contained.
+
+Most ML frameworks offer tools to create inference pipelines that can be serialized:
+
+- Scikit-Learn has `Pipelines`.
+- Pytorch has `torch.script`, which can export scriptable transforms.
+
+Note that it makes sense to use a feature store if the feature engineering 
+
+- is considerable and slows down the inference more than desired,
+- or it is shared across models.
+
+### 5.2 Inference Pipelines with Scikit-Learn and Pytorch
+
+In a `Pipeline` object we concatenate the necessary data transformations and append the model at the end; then, we can train the resulting object and perform an inference with it.
+
+```python
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline, make_pipeline
+
+pipe = Pipeline(
+  steps=[
+    ("imputer", SimpleImputer()),
+    ("scaler", StandardScaler()),
+    ("model", LogisticRegression())
+  ]
+)
+
+# OR:
+# pipe = make_pipeline(SimpleImputer(), StandardScaler(), LogisticRegression())
+# make_pipeline is very practical to create easily sub-pipelines with steps that don't have a name
+
+# Fit the entire pipeline: transformers + model
+pipe.fit(X_train, y_train)
+
+# Inference
+pipe.predict(X_test)
+pipe.predict_proba(X_test)
+```
+
+However, note that we will have a much more complex data pre-processing than that. To that end, we can use the **column transformer**, which segregates the columns of a dataframe in such a way that we can define a pipeline for each subgroup; then, all columns are merged again. With `ColumnTransformer` we can achieve sub-pipelines.
+
+![Column Transformer](./pics/column-transformer.png)
+
+```python
+import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+
+
+# Example dataframe from the sklearn docs
+df = pd.DataFrame(
+    {'city': ['London', 'London', 'Paris', 'Sallisaw'],
+     'title': ["His Last Bow", "How Watson Learned the Trick",
+               "A Moveable Feast", "The Grapes of Wrath"],
+     'expert_rating': [5, 3, 4, 5],
+     'user_rating': [4, 5, 4, 3],
+     'click': ['yes', 'no', 'no', 'yes']})
+y = df.pop("click")
+X = df
+
+# Build a Column transformer
+categorical_preproc = OneHotEncoder()
+text_preproc = TfidfVectorizer()
+# We can define sub-pipelines
+numerical_preprocessing = make_pipeline(SimpleImputer(), StandardScaler())
+preproc = ColumnTransformer(
+    transformers=[
+        ("cat_transform", categorical_preproc, ['city']), # [] because OneHotEncoder expects 2D data
+        ("text_transform", text_preproc, 'title'), # no [] because TfidfVectorizer expects plain data
+        ("num_transform", numerical_preprocessing, ['expert_rating', 'user_rating'])
+    ],
+    remainder='drop' # if a column wasn't referenced in the ColumnTransformer, drop it
+)
+pipe = make_pipeline(preproc, LogisticRegression())
+pipe.fit(X, y)
+```
+
+#### Pipelines with Pytorch
+
+Pipelines are also possible with other ML frameworks, e.g., pytorch.
+
+The folder `./lab/pytorch_inference_pipeline` contains an example of how pipelines work, following these steps:
+
+- A pre-trained ResNet is loaded
+- A `Sequential` pipeline is created and `transforms` + model + `Softmax` are packed into it
+- The pipeline is saved as an inference artifact with `torch.jit.script`
+- The inference artifact is loaded
+- An image is loaded, prepared and passed to the pipeline for inference
+
+To use the example:
+
+```bash
+cd  .../lab/pytorch_inference_pipeline
+conda activate cvnd
+python transforms.py
+# ResNet18 is donwloaded
+# Inference pipeline is saved to disk
+# Inference artifact is loaded as well as a test image
+# Inference of the image is done
+```
+
+The whole inference script `transforms.py`:
+
+```python
+import torch
+from torchvision import transforms
+from torch.nn import Sequential, Softmax
+from PIL import Image
+import numpy as np
+
+# Get a pre-trained model
+model = torch.hub.load('pytorch/vision:v0.9.0', 'resnet18', pretrained=True)
+model.eval()
+
+# Define the inference pipeline
+pipe = Sequential(
+    # NOTE: for the pipeline to be scriptable with script,
+    # you must use a list [256, 256] instead of just one number (256)
+    transforms.Resize([256, 256]),
+    transforms.CenterCrop([224, 224]),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    model,
+    Softmax(1)
+)
+
+# Save inference artifact using torch.script
+scripted = torch.jit.script(pipe)
+scripted.save("inference_artifact.pt")
+
+# NOTE: normally we would upload it to the artifact store
+
+# Load inference artifact
+pipe_reload = torch.jit.load("inference_artifact.pt")
+
+# Load one example
+# NOTE: these operations are usually taken care by the inference
+# engine
+img = Image.open("dog.jpg")
+img.load()
+# Make into a batch of 1 element
+data = transforms.ToTensor()(np.asarray(img, dtype="uint8").copy()).unsqueeze(0)
+
+# Perform inference
+with torch.no_grad():
+    logits = pipe_reload(data).detach()
+
+proba = logits[0]
+
+# Transform to class and print answer
+with open("imagenet_classes.txt", "r") as f:
+    classes = [s.strip() for s in f.readlines()]
+print(f"Classification: {classes[proba.argmax()]}")
+```
+
+#### Example / Exercise 10
+
+In this exercise, the artifacts from the previous exercise 6 are downloaded: the pre-processed dataset split in train and test subsets; then, a pipeline is defined and trained.
+
+Hydra is used for parameter configuration in a `config.yaml` file.
+
+The exercise/example is very interesting and could be used as a boilerplate.
+
+Repository:
+
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
+
+Folder:
+
+`lesson-4-training-validation-experiment-tracking/exercises/exercise_10/`
+
+I also copied the files to
+
+`./lab/InferencePipeline_exercise_10/`
+
+The file structure is the following:
+
+```
+.
+├── MLproject
+├── conda.yml
+├── config.yaml # hydra configuration
+├── main.py # main script that calls the component random_forest
+└── random_forest
+    ├── MLproject
+    ├── conda.yml
+    ├── run.py # the pipeline is defined here; file to be modified
+
+```
+
+To run the project:
+
+```bash
+cd path-to-mlflow-file
+mlflow run .
+# Since the project is connected to W&B, the run logs can be seen on the web interface
+# Confusion matrix and feature importances are also uploaded
+```
+
+#### Solution to Exercise 10
+
+There are many files; all should be read. I only put here the most important ones. Note that I had to update the `conda.yaml` files to contain `python=3.8` and `protobuf==3.20`.
+
+Hydra configuration file `config.yaml`:
+
+```yaml
+main:
+  project_name: exercise_10
+  experiment_name: dev
+data:
+  train_data: "exercise_6/data_train.csv:latest"
+random_forest:
+  n_estimators: 100
+  criterion: 'gini'
+  max_depth: null
+  min_samples_split: 2
+  min_samples_leaf: 1
+  min_weight_fraction_leaf: 0.0
+  max_features: 'auto'
+  max_leaf_nodes: null
+  min_impurity_decrease: 0.0
+  min_impurity_split: null
+  bootstrap: true
+  oob_score: false
+  n_jobs: null
+  random_state: null
+  verbose: 0
+  warm_start: false
+  class_weight: null
+  ccp_alpha: 0.0
+  max_samples: null
+```
+
+`random_forest/MLproject`:
+
+```yaml
+name: decision_tree
+conda_env: conda.yml
+
+entry_points:
+  main:
+    parameters:
+      train_data:
+        description: Fully-qualified name for the training data artifact
+        type: str
+      model_config:
+        description: JSON blurb containing the configuration for the decision tree
+        type: str
+    command: >-
+      python run.py --train_data {train_data} \
+                    --model_config {model_config}
+
+```
+
+Inference pipeline components `random_forest/run.py`:
+
+```python
+#!/usr/bin/env python
+import argparse
+import logging
+import json
+
+import pandas as pd
+import numpy as np
+from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import roc_auc_score, plot_confusion_matrix
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OrdinalEncoder, StandardScaler, FunctionTransformer
+import matplotlib.pyplot as plt
+import wandb
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.impute import SimpleImputer
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
+logger = logging.getLogger()
+
+
+def go(args):
+
+    run = wandb.init(project="exercise_10", job_type="train")
+
+    logger.info("Downloading and reading train artifact")
+    train_data_path = run.use_artifact(args.train_data).file()
+    df = pd.read_csv(train_data_path, low_memory=False)
+
+    # Extract the target from the features
+    logger.info("Extracting target from dataframe")
+    X = df.copy()
+    y = X.pop("genre")
+
+    logger.info("Splitting train/val")
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y, test_size=0.3, stratify=y, random_state=42
+    )
+
+    logger.info("Setting up pipeline")
+
+    pipe = get_inference_pipeline(args)
+
+    logger.info("Fitting")
+    pipe.fit(X_train, y_train)
+
+    logger.info("Scoring")
+    score = roc_auc_score(
+        y_val, pipe.predict_proba(X_val), average="macro", multi_class="ovo"
+    )
+
+    run.summary["AUC"] = score
+
+    # We collect the feature importance for all non-nlp features first
+    feat_names = np.array(
+        pipe["preprocessor"].transformers[0][-1]
+        + pipe["preprocessor"].transformers[1][-1]
+    )
+    feat_imp = pipe["classifier"].feature_importances_[: len(feat_names)]
+
+    # For the NLP feature we sum across all the TF-IDF dimensions into a global
+    # NLP importance
+    nlp_importance = sum(pipe["classifier"].feature_importances_[len(feat_names) :])
+
+    feat_imp = np.append(feat_imp, nlp_importance)
+    feat_names = np.append(feat_names, "title + song_name")
+
+    fig_feat_imp, sub_feat_imp = plt.subplots(figsize=(10, 10))
+    idx = np.argsort(feat_imp)[::-1]
+    sub_feat_imp.bar(range(feat_imp.shape[0]), feat_imp[idx], color="r", align="center")
+    _ = sub_feat_imp.set_xticks(range(feat_imp.shape[0]))
+    _ = sub_feat_imp.set_xticklabels(feat_names[idx], rotation=90)
+
+    fig_feat_imp.tight_layout()
+
+    fig_cm, sub_cm = plt.subplots(figsize=(10, 10))
+    plot_confusion_matrix(
+        pipe,
+        X_val,
+        y_val,
+        ax=sub_cm,
+        normalize="true",
+        values_format=".1f",
+        xticks_rotation=90,
+    )
+    fig_cm.tight_layout()
+
+    run.log(
+        {
+            "feature_importance": wandb.Image(fig_feat_imp),
+            "confusion_matrix": wandb.Image(fig_cm),
+        }
+    )
+
+
+def get_inference_pipeline(args):
+    # Our pipeline will contain a pre-processing step and a Random Forest.
+    # The pre-processing step will impute missing values, encode the labels,
+    # normalize numerical features and compute a TF-IDF for the textual
+    # feature
+
+    # We need 3 separate preprocessing "tracks":
+    # - one for categorical features
+    # - one for numerical features
+    # - one for textual ("nlp") features
+
+    # Categorical preprocessing pipeline.
+    # NOTE: we sort the list so that the order of the columns will be
+    # defined, and not dependent on the order in the input dataset
+    categorical_features = sorted(["time_signature", "key"])
+    categorical_transformer = make_pipeline(
+        SimpleImputer(strategy="constant", fill_value=0), OrdinalEncoder()
+    )
+
+    # Numerical preprocessing pipeline
+    numeric_features = sorted([
+        "danceability",
+        "energy",
+        "loudness",
+        "speechiness",
+        "acousticness",
+        "instrumentalness",
+        "liveness",
+        "valence",
+        "tempo",
+        "duration_ms",
+    ])
+
+    ############# YOUR CODE HERE
+    # USE make_pipeline to create a pipeline containing a SimpleImputer using strategy=median
+    # and a StandardScaler (you can use the default options for the latter)
+    numeric_transformer = make_pipeline(SimpleImputer(strategy="median"), StandardScaler())
+    
+    # Textual ("nlp") preprocessing pipeline
+    nlp_features = ["text_feature"]
+    # This trick is needed because SimpleImputer wants a 2d input, but
+    # TfidfVectorizer wants a 1d input. So we reshape in between the two steps
+    reshape_to_1d = FunctionTransformer(np.reshape, kw_args={"newshape": -1})
+
+    ############# YOUR CODE HERE
+    # USE make_pipeline to create a pipeline containing a SimpleImputer with strategy=constant and
+                      # fill_value="" (the empty string), followed by our custom reshape_to_1d instance, and finally
+                      # insert a TfidfVectorizer with the options binary=True
+    nlp_transformer = make_pipeline(SimpleImputer(strategy="constant",fill_value=""),
+                                    reshape_to_1d,
+                                    TfidfVectorizer(binary=True))
+
+    # Put the 3 tracks together into one pipeline using the ColumnTransformer
+    # This also drops the columns that we are not explicitly transforming
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ("num", numeric_transformer, numeric_features),
+            ("cat", categorical_transformer, categorical_features), # COMPLETE HERE using the categorical transformer and the categorical_features,
+            ("nlp1", nlp_transformer, nlp_features),
+        ],
+        remainder="drop",  # This drops the columns that we do not transform (i.e., we don't use)
+    )
+
+    # Get the configuration for the model
+    with open(args.model_config) as fp:
+        model_config = json.load(fp)
+    # Add it to the W&B configuration so the values for the hyperparams
+    # are tracked
+    wandb.config.update(model_config)
+
+    ############# YOUR CODE HERE
+    # Append classifier to preprocessing pipeline.
+    # Now we have a full prediction pipeline.
+    # CREATE a Pipeline instances with 2 steps: one step called "preprocessor" using the
+    # preprocessor instance, and another one called "classifier" using RandomForestClassifier(**model_config)
+    # (i.e., a Random Forest with the configuration we have received as input)
+    # NOTE: here you should create the Pipeline object directly, and not make_pipeline
+    # HINT: Pipeline(steps=[("preprocessor", instance1), ("classifier", LogisticRegression)]) creates a
+    #       Pipeline with two steps called "preprocessor" and "classifier" using the sklearn instances instance1
+    #       as preprocessor and a LogisticRegression as classifier
+    pipe = Pipeline(
+        steps=[
+            ("preprocessor", preprocessor),
+            ("classifier", RandomForestClassifier(**model_config))
+        ]
+    )
+
+    return pipe
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Train a Random Forest",
+        fromfile_prefix_chars="@",
+    )
+
+    parser.add_argument(
+        "--train_data",
+        type=str,
+        help="Fully-qualified name for the training data artifact",
+        required=True,
+    )
+
+    parser.add_argument(
+        "--model_config",
+        type=str,
+        help="Path to a JSON file containing the configuration for the random forest",
+        required=True,
+    )
+
+    args = parser.parse_args()
+
+    go(args)
+
+```
+
+### 5.3 Machine Learning Experimentation
