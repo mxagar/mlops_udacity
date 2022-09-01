@@ -79,8 +79,38 @@ conda activate ds
     - [3.6 Data Segregation](#3.6-Data-Segregation)
     - [3.7 Data Segregation Script with W&B and MLflow: Exercise 6](#3.7-Data-Segregation-Script-with-W&B-and-MLflow:-Exercise-6)
     - [3.8 Feature Stores](#3.8-Feature-Stores)
-4. Lesson 4: Data Validation
-5. Lesson 5: Training, Validation and Experiment Tracking
+4. [Lesson 4: Data Validation](#4.-Data-Validation)
+    - 4.1 A Primer on Pytest
+    - 4.2 Deterministic Tests: Example / Exercise 7
+        - Exercise 7: Deterministic Data Tests
+        - Solution
+        - Important Notes / Comments / Issues
+    - 4.3 Non-Deterministic or Statistical Tests: Example / Exercise 8
+        - Exercise 8: Non-Deterministic Data Tests
+        - Solution
+    - 4.4 Parameters in Pytest: Example / Exercise 9
+        - Exercise 9: Parametrized Test Functions
+        - Solution
+    - 4.5 Alternative Tool for Data Validation: Great Expectations
+5. [Lesson 5: Training, Validation and Experiment Tracking](#5.-Training,-Validation-and-Experiment-Tracking)
+    - 5.1 The Inference Pipeline
+    - 5.2 Inference Pipelines with Scikit-Learn and Pytorch
+        - Pipelines with Pytorch
+        - Example / Exercise 10
+        - Solution to Exercise 10
+    - 5.3 Machine Learning Experimentation
+    - 5.4 Experiment Tracking with Weights and Biases: A Example with Jupyter Notebook
+    - 5.5 Experiment Tracking and Hyperparameter Optimization with Weights and Biases and Hydra
+        - Choosing the Best Performing Model
+        - Example / Exercise 11: Validate and Choose the Best Performing Model
+        - Solution to Exercise 11
+    - 5.6 Export the Inference Pipeline / Artifact
+        - Example / Exercise 12: Export ML Inference Pipeline with MLflow
+        - Solution to Example / Exercise 12
+    - 5.7 Testing the Final Artifact and Storing It in the Model Registry
+        - Example / Exercise 13: Testing the Final Model
+        - Solution to Exercise 13
+    - 5.8 Using MLflow for Experiment Tracking
 6. Lesson 6: Final Pipeline, Release and Deploy
 7. Project: Build an ML Pipeline for Short-term Rental Prices in NYC
 
@@ -3992,7 +4022,7 @@ run.log_artifact(artifact)
 
 In this exercise, the artifacts from the previous exercise 6 are downloaded: the pre-processed dataset split in train and test subsets; then, a pipeline is defined and trained.
 
-The exercise is based on the previous exercises 10 and 11. The new part here is that in `random_forest/run.py` we have a function that packs the pipeline and uploads it as an artifact to W&B: `export_model()`.
+The exercise is based on the previous exercises 10 and 11. The new part here is that in `random_forest/run.py` we have a function that packs the pipeline and uploads it as an artifact to W&B: `export_model()`. The exported pipeline is a serialized version, which is supported by many other tools.
 
 The exercise/example is very interesting and could be used as a boilerplate.
 
@@ -4511,3 +4541,49 @@ if __name__ == "__main__":
     go(args)
 
 ```
+
+### 5.8 Using MLflow for Experiment Tracking
+
+We have used WandB for experiment tracking, but MLflow has also that functionality. However, we have some differences:
+
+- No multiple users supported.
+- We need to deploy it on our cloud infrastructure.
+- There is less functionality around the lineage of artifacts.
+
+For the backend, we can use:
+
+- Local filesystem
+- Local database + file system
+- Remote database + data lake
+
+We have also a user interface called `mlflow ui`.
+
+Example of tracking (tracking is similar to how it is done in W and B):
+
+```python
+experiment_id = mlflow.create_experiment("experiment 1")
+with mlflow.run() as run:
+    # Log an hyper parameter
+    run.log_param("param1", 100)
+
+    # Log a metric
+    for i in range(10):
+        run.log_metric("foo", i)
+    
+    # Log an artifact
+    if not os.path.exists("outputs"):
+        os.makedirs("outputs")
+    with open("output/test.txt", "w") as f:
+        f.write("hello world!")
+    run.log_artifacts("outputs")
+```
+
+More information: [MLflow Tracking](https://www.mlflow.org/docs/latest/tracking.html).
+
+
+
+
+
+
+
+
