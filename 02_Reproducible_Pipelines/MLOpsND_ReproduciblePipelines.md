@@ -4580,7 +4580,21 @@ with mlflow.run() as run:
 
 More information: [MLflow Tracking](https://www.mlflow.org/docs/latest/tracking.html).
 
+## 6. Final Pipeline, Release and Deploy
 
+In this section, we bring everything together and compose and release an entire pipeline.
+
+We can usually do it in two ways:
+
+1. We pack all the components in one repository; we have the main `MLproject` and `conda.yaml` as well as the ones related to the components in their folders.
+2. We have one repository for each component and another one for the whole project; this approach is more complex, but it enables easier scalability for larger projects.
+
+It is fundamental to have good skills in git; check:
+
+- [git-cheat-sheet.pdf](https://about.gitlab.com/images/press/git-cheat-sheet.pdf)
+- `./git-cheat-sheet.pdf`
+
+### 6.1 Exercise 14: Write an End-to-End Machine Learning Pipeline
 
 
 
