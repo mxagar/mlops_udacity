@@ -4332,8 +4332,182 @@ if __name__ == "__main__":
 
 ```
 
+### 5.7 Testing the Final Artifact and Storing It in the Model Registry
+
+After the inference pipeline has been exported and uploaded as an artifact, we need to test it; we explicitly test the production artifact, since we want to make sure we test  what's going to be used in production!
+
+![ML Pipeline: Model Testing](./pics/ml_pipeline_model_testing.png)
+
+We might discover that our model is overfitting the training set; then, we need to address that separately.
+
+Testing script example:
+
+```python
+# Download selected model (i.e., usually the best performing one)
+# .download() needs to be used because we get an entire directory
+model_export_path = run.use_artifact(args.model_export).download()
+
+# Load pipeline
+pipe = mlflow.sklearn.load_model(model_export_path)
+
+# Perform inference
+pred_proba = pipe.predict_proba(X_test)
+
+# Evaluate; usually we do much more tests: confusion matrices, etc.
+score = roc_auc_score(y_test, pred_proba, average="macro", multi_class="ovo")
+run.summary["AUC"] = score
+```
+
+After the tests are done and we're happy, we **mark the model for production**: on the W&B web interface, we go to the project artifacts, select the desired one and add to it the tag `prod`.
+
+Then, wwhen getting the artifact use that tag:
+
+```python
+import wandb
+run = wandb.init()
+artifact = run.use_artifact('datamix-ai/exercise_12/inference_pipeline:prod', type='pipeline')
+artifact_dir = artifact.download()
+```
+
+#### Example / Exercise 13: Testing the Final Model
+
+This is a very simple pipeline with a component that tests and inference pipeline with the test  split of the dataset processed in exercise 6.
+
+The exercise/example is very interesting and could be used as a boilerplate.
+
+Repository:
+
+[udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
+
+Folder:
+
+`lesson-4-training-validation-experiment-tracking/exercises/exercise_13/`
+
+I also copied the files to
+
+`./lab/InferencePipeline_exercise_13/`
+
+The file structure is the following:
+
+```
+.
+.
+├── MLproject
+├── conda.yml
+└── run.py
+```
+
+To run it:
+
+```bash
+```bash
+cd path-to-mlflow-file
+
+mlflow run . -P model_export="exercise_12/inference_pipeline:latest" -P test_data="exercise_6/data_test.csv:latest"
+
+```
+
+#### Solution to Exercise 13
+
+The solution is in `run.py`; basically the artifacts related to the test dataset and the inference pipeline are downloaded and used. The evaluation results (confusion matrix PNG and AUC value) are logged to W & B; we can see them in the web interface.
+
+We can mark model export as production ready: `prod`; we navigate to it in the web interface and add the tag.
+
+```python
+#!/usr/bin/env python
+import argparse
+import logging
+import pandas as pd
+import wandb
+import mlflow.sklearn
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score, plot_confusion_matrix
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
+logger = logging.getLogger()
 
 
+def go(args):
+
+    run = wandb.init(project="exercise_13", job_type="test")
+
+    logger.info("Downloading and reading test artifact")
+    ## Get the args.test_data artifact from W&B locally
+    ## YOUR CODE HERE
+    test_data_artifact = run.use_artifact(args.test_data)
+    test_data_path = test_data_artifact.file()
+    df = pd.read_csv(test_data_path, low_memory=False)
+
+    # Extract the target from the features
+    logger.info("Extracting target from dataframe")
+    X_test = df.copy()
+    y_test = X_test.pop("genre")
+
+    logger.info("Downloading and reading the exported model")
+
+    ## Get the args.model_export artifact from W&B locally. Since this artifact contains a directory
+    # and not a single file, you will have to use .download() instead of .file()
+    ## YOUR CODE HERE
+    # args.model_export
+    artifact = run.use_artifact('datamix-ai/exercise_12/inference_pipeline:prod', type='pipeline')
+    model_export_path = artifact.download()
+
+    # Load the model using mlflow.sklearn.load_model
+    ## YOUR CODE HERE
+    pipe = mlflow.sklearn.load_model(model_export_path)
+
+    # Compute the prediction from the model using .predict_proba on the test set
+    ## YOUR CODE HERE
+    # args.test_data    
+    pred_proba = pipe.predict_proba(X_test)
+
+    logger.info("Scoring")
+    score = roc_auc_score(y_test, pred_proba, average="macro", multi_class="ovo")
+
+    run.summary["AUC"] = score
+
+    logger.info("Computing confusion matrix")
+    fig_cm, sub_cm = plt.subplots(figsize=(10, 10))
+    plot_confusion_matrix(
+        pipe,
+        X_test,
+        y_test,
+        ax=sub_cm,
+        normalize="true",
+        values_format=".1f",
+        xticks_rotation=90,
+    )
+    fig_cm.tight_layout()
+
+    run.log(
+        {
+            "confusion_matrix": wandb.Image(fig_cm)
+        }
+    )
 
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Test the provided model on the test artifact",
+        fromfile_prefix_chars="@",
+    )
 
+    parser.add_argument(
+        "--model_export",
+        type=str,
+        help="Fully-qualified artifact name for the exported model to evaluate",
+        required=True,
+    )
+
+    parser.add_argument(
+        "--test_data",
+        type=str,
+        help="Fully-qualified artifact name for the test data",
+        required=True,
+    )
+
+    args = parser.parse_args()
+
+    go(args)
+
+```
