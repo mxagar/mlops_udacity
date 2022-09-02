@@ -4596,8 +4596,404 @@ It is fundamental to have good skills in git; check:
 
 ### 6.1 Exercise 14: Write an End-to-End Machine Learning Pipeline
 
+**This exercise is the boilerplate for simple ML pipelines with MLflow and W&B**. The pipeline is divided into the typical steps or components in a pipeline, carried out in order.
+
+The exercises/example can be found in two repositories:
+
+- The original from Udacity: [udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises) `/lesson-5-final-pipeline-release-and-deploy/exercises/exercise_14/` 
+- My own repository: [https://github.com/mxagar/music_genre_classification](https://github.com/mxagar/music_genre_classification)
+
+The file structure:
+
+```
+.
+├── MLproject
+├── README.md
+├── check_data
+│   ├── MLproject
+│   ├── conda.yml
+│   ├── conftest.py
+│   └── test_data.py
+├── conda.yml
+├── config.yaml
+├── dataset
+│   └── genres_mod.parquet
+├── download
+│   ├── MLproject
+│   ├── conda.yml
+│   └── download_data.py
+├── evaluate
+│   ├── MLproject
+│   ├── conda.yml
+│   └── run.py
+├── main.py
+├── preprocess
+│   ├── MLproject
+│   ├── conda.yml
+│   └── run.py
+├── random_forest
+│   ├── MLproject
+│   ├── conda.yml
+│   └── run.py
+└── segregate
+    ├── MLproject
+    ├── conda.yml
+    └── run.py
+```
+
+The most important high-level files are `config.yaml` and `main.py`; there contain the parameters and the main pipeline execution order, respectively. Each component or pipeline step has its own project sub-folder.
+
+Pipeline steps or components:
+
+1. `download/`
+    - A parquet file of songs and their attributes is downloaded from a URL; the songs need to be classified according to their genre.
+    - The dataset it uploaded to Weights and Biases as an artifact.
+2. `preprocess/`
+    - Raw dataset artifact is downloaded and preprocessed: missing values imputed and duplicates removed.
+3. `check_data/`
+    - Data validation: pre-processed dataset is checked using `pytest`.
+    - In the dummy example, the reference and sample datasets are the same, and only deterministic tests are carried out, but we could have used a reference dataset for non-deterministic tests.
+4. `segregate/`
+    - Train/test split is done and the two splits are uploaded as artifacts.
+5. `random_forest/`
+    - Component/step with which a random forest model is defined and trained.
+    - The training split is subdivided to train/validation.
+    - The model is packed in a pipeline which contains data preprocessing and the model itself
+        - The data preprocessing differentiates between numerical/categorical/NLP columns with `ColumnTransformer` and performs imputations, reshapings, feature extraction (TDIDF) and scaling.
+        - The model configuration is achieved via a temporary yaml file created in the `main.py` using the parameters from `config.yaml`.
+    - That inference pipeline is exported and uploaded as an artifact.
+    - Performance metrics (AUC) and images (confusion matrix, feature importances) are generated and uploaded as artifacts.
+6. `evaluate/`
+    - The artifacts related to the test split and the inference pipeline are downloaded and used to compute the metrics with the test dataset.
+
+Obviously, not all steps need to be carried out every time; to that end, with have the parameter `main.execute_steps` in the `config.yaml`. We can override it when calling `mlflow run`.
+
+Possible run commands:
+
+```bash
+cd path-to-main-mlflow-file
+# All steps are executed, in the order defined in main.py
+mlflow run .
+
+# Download dataset and preprocess it
+# The order is given by main.py
+mlflow run . -P hydra_options="main.execute_steps='download,preprocess,check_data,segregate'"
+
+# Just re-generate the inference pipeline and evaluate it
+# The order is given by main.py
+mlflow run . -P hydra_options="main.execute_steps='random_forest,evaluate'"
+
+# Change the name of the project for production
+mlflow run . -P hydra_options="main.project_name='music_genre_classification_prod'"
+```
+
+Since the repository is publicly released, anyone can **run the code remotely** as follows:
+
+```bash
+# Go to a new empty folder
+cd new-empty-folder
+
+# General command
+mlflow run -v [commit hash or branch name] [URL of your Github repo]
+
+# Concrete command for the exercise in section 6.1
+# We point to the commit hash of tag 0.0.1
+# Note: currently, we cannot put tag names in -v
+mlflow run -v 82f17d94e0800811e81f4d55c0442d3189ed0a63 git@github.com:mxagar/music_genre_classification.git
+
+# Project name changed
+# We point to the branch main; usually, we should point to a branch like master / stable, etc.
+# Note: currently, we cannot put tag names in -v
+mlflow run git@github.com:mxagar/music_genre_classification.git -v main -P hydra_options="main.project_name=remote_execution"
+```
+
+Issues:
+
+- `conda.yaml` modified/extended to contain `python=3.8` and `protobuf` dependencies.
+
+#### Most Important Files
+
+`config.yaml`:
+
+```yaml
+main:
+  project_name: exercise_14 # production name: music_genre_classification_prod; add tag prod
+  experiment_name: dev
+  execute_steps:
+    # In production we don't need all steps, so we can override execute_steps, e.g.:
+    # mlflow run . -P hydra_options="main.execute_steps='random_forest'"
+    # mlflow run . -P hydra_options="main.execute_steps='download,preprocess'"
+    - download
+    - preprocess
+    - check_data
+    - segregate
+    - random_forest
+    - evaluate
+  # This seed will be used to seed the random number generator
+  # to ensure repeatibility of the data splits and other
+  # pseudo-random operations
+  random_seed: 42
+data:
+  # We can use either a web link or a file path for files
+  # but in the current implementation an URL passes to the requests module is required
+  #file_url: "dataset/genres_mod.parquet"
+  #file_url: "https://github.com/udacity/nd0821-c2-build-model-workflow-exercises/blob/master/lesson-2-data-exploration-and-preparation/exercises/exercise_4/starter/genres_mod.parquet?raw=true"
+  file_url: "https://github.com/mxagar/music_genre_classification/blob/main/dataset/genres_mod.parquet?raw=true"
+  reference_dataset: "exercise_14/preprocessed_data.csv:latest"
+  # Threshold for Kolomorov-Smirnov test
+  ks_alpha: 0.05
+  test_size: 0.3
+  val_size: 0.3
+  # Stratify according to the target when splitting the data
+  # in train/test or in train/val
+  stratify: genre
+random_forest_pipeline:
+  random_forest:
+    # Whenever we have model or other object with many parameters
+    # we should write config files for them.
+    # That is easier than passing parameters in the code or via CLI
+    # and we can guarantee compatibility in the code in case the model API changes
+    # (i.e., we would simply change the config file).
+    n_estimators: 100
+    criterion: 'gini'
+    max_depth: 13
+    min_samples_split: 2
+    min_samples_leaf: 1
+    min_weight_fraction_leaf: 0.0
+    max_features: 'auto'
+    max_leaf_nodes: null
+    min_impurity_decrease: 0.0
+    min_impurity_split: null
+    bootstrap: true
+    oob_score: false
+    n_jobs: null
+    # This is a different random seed than main.random_seed,
+    # because this is used only within the RandomForest
+    random_state: 42
+    verbose: 0
+    warm_start: false
+    class_weight: "balanced"
+    ccp_alpha: 0.0
+    max_samples: null
+  tfidf:
+    max_features: 10
+  features:
+    numerical:
+      - "danceability"
+      - "energy"
+      - "loudness"
+      - "speechiness"
+      - "acousticness"
+      - "instrumentalness"
+      - "liveness"
+      - "valence"
+      - "tempo"
+      - "duration_ms"
+    categorical:
+      - "time_signature"
+      - "key"
+    nlp:
+      - "text_feature"
+  export_artifact: "model_export"
+
+```
+
+`main.py`:
+
+```python
+import mlflow
+import os
+import hydra
+from omegaconf import DictConfig, OmegaConf
 
 
+# This automatically reads in the configuration
+@hydra.main(config_name='config')
+def go(config: DictConfig):
 
+    # Setup the wandb experiment. All runs will be grouped under this name
+    os.environ["WANDB_PROJECT"] = config["main"]["project_name"]
+    os.environ["WANDB_RUN_GROUP"] = config["main"]["experiment_name"]
 
+    # You can get the path at the root of the MLflow project with this:
+    root_path = hydra.utils.get_original_cwd()
+
+    # Check which steps we need to execute
+    if isinstance(config["main"]["execute_steps"], str):
+        # This was passed on the command line as a comma-separated list of steps
+        steps_to_execute = config["main"]["execute_steps"].split(",")
+    else:
+        #assert isinstance(config["main"]["execute_steps"], list)
+        steps_to_execute = config["main"]["execute_steps"]
+
+    # Download step
+    if "download" in steps_to_execute:
+
+        _ = mlflow.run(
+            os.path.join(root_path, "download"), # path of component
+            "main", # entry point
+            parameters={ # parameters passed to MLproject
+                "file_url": config["data"]["file_url"],
+                "artifact_name": "raw_data.parquet",
+                "artifact_type": "raw_data",
+                "artifact_description": "Data as downloaded"
+            }
+        )
+
+    if "preprocess" in steps_to_execute:
+
+        ## YOUR CODE HERE: call the preprocess step
+        # --input_artifact {input_artifact}
+        # --artifact_name {artifact_name}
+        # --artifact_type {artifact_type}
+        # --artifact_description {artifact_description}
+        _ = mlflow.run(
+            os.path.join(root_path, "preprocess"),
+            "main",
+            parameters={
+                # the project path is not necessary
+                "input_artifact": "raw_data.parquet:latest",
+                "artifact_name": "preprocessed_data.csv",
+                "artifact_type": "preprocessed_data",
+                "artifact_description": "Preprocessed data: missing values imputed and duplicated dropped"
+            }
+        )
+        
+    if "check_data" in steps_to_execute:
+
+        ## YOUR CODE HERE: call the check_data step
+        # --reference_artifact {reference_artifact}
+        # --sample_artifact {sample_artifact}
+        # --ks_alpha {ks_alpha}
+        _ = mlflow.run(
+            os.path.join(root_path, "check_data"),
+            "main",
+            parameters={
+                "reference_artifact": config["data"]["reference_dataset"],
+                "sample_artifact": "preprocessed_data.csv:latest",
+                "ks_alpha": config["data"]["ks_alpha"]
+            }
+        )
+
+    if "segregate" in steps_to_execute:
+
+        ## YOUR CODE HERE: call the segregate step
+        # --input_artifact {input_artifact}
+        # --artifact_root {artifact_root}
+        # --artifact_type {artifact_type}
+        # --test_size {test_size}
+        # --random_state {random_state}
+        # --stratify {stratify}
+        _ = mlflow.run(
+            os.path.join(root_path, "segregate"),
+            "main",
+            parameters={
+                "input_artifact": "preprocessed_data.csv:latest",
+                "artifact_root": "data",
+                "artifact_type": "segregated_data",
+                "test_size": config["data"]["test_size"],
+                #"random_state": 42, # already default value in MLproject
+                "stratify": config["data"]["stratify"]
+            }
+        )
+        
+    if "random_forest" in steps_to_execute:
+
+        # Serialize decision tree configuration
+        # Whenever we have model or other object with many parameters
+        # we should write config files for them.
+        # That is easier than passing parameters in the code or via CLI
+        # and we can guarantee compatibility in the code in case the model API changes
+        # (i.e., we would simply change the config file).
+        # Here a yaml is created from the relevant section of the config file
+        # and passed as a dictionary to the model later on.
+        model_config = os.path.abspath("random_forest_config.yml")
+
+        with open(model_config, "w+") as fp:
+            fp.write(OmegaConf.to_yaml(config["random_forest_pipeline"]))
+
+        ## YOUR CODE HERE: call the random_forest step
+        # --train_data {train_data}
+        # --model_config {model_config}
+        # --export_artifact {export_artifact}
+        # --random_seed {random_seed}
+        # --val_size {val_size}
+        # --stratify {stratify}
+        _ = mlflow.run(
+            os.path.join(root_path, "random_forest"),
+            "main",
+            parameters={
+                "train_data": "data_train.csv:latest",
+                "model_config": model_config,
+                "export_artifact": config["random_forest_pipeline"]["export_artifact"],
+                "random_seed": config["random_forest_pipeline"]["random_forest"]["random_state"],
+                "val_size": config["data"]["val_size"],
+                "stratify": config["data"]["stratify"]
+            }
+        )
+
+    if "evaluate" in steps_to_execute:
+
+        ## YOUR CODE HERE: call the evaluate step
+        # --model_export {model_export}
+        # --test_data {test_data}
+        _ = mlflow.run(
+            os.path.join(root_path, "evaluate"),
+            "main",
+            parameters={
+                "model_export": f"{config['random_forest_pipeline']['export_artifact']}:latest",
+                "test_data": "data_test.csv:latest"
+            }
+        )
+
+if __name__ == "__main__":
+    go()
+
+```
+
+### 6.2 Releases
+
+A release is a static copy of the code with a tag.
+
+Often the semantic versioning scheme is used:
+
+`1.3.8`: `Major.Minor.Patch`
+
+- Major: changes not backward compatible.
+- Minor: changes backward compatible.
+- Patch: bug-fixes or small changes, backward compatible.
+
+We can create releases on Github: right column pannel, create release.
+
+- We choose the branch and a tag; we can also create the tag when publishing the release.
+- Select a title according to the semantic versioning scheme, e.g., `1.0.0` or `0.0.1`.
+- Describe the changes / content of the release.
+
+We then get 
+
+- a tag for our code,
+- a releases page with zipped or archived code files.
+
+If we create a release with the tag, everyone can use our release!
+
+We should specify a branch name or a commit hash:
+
+```bash
+# General command
+mlflow run -v [commit hash or branch name] [URL of your Github repo]
+
+# Concrete command for the exercise in section 6.1
+# We point to the commit hash of tag 0.0.1
+# Note: currently, we cannot put tag names in -v
+mlflow run -v 82f17d94e0800811e81f4d55c0442d3189ed0a63 git@github.com:mxagar/music_genre_classification.git
+
+# Project name changed
+# We point to the branch main; usually, we should point to a branch like master / stable, etc.
+# Note: currently, we cannot put tag names in -v
+mlflow run git@github.com:mxagar/music_genre_classification.git -v main -P hydra_options="main.project_name=remote_execution"
+```
+
+### 6.3 Deployments with MLflow
+
+![Deployments with MLflow](./pics/deployment.png)
 
