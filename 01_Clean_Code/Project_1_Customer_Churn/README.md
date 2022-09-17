@@ -2,11 +2,13 @@
 
 This repository contains a project that analyzes and predicts **Customer Churn** using the [Credit Card Customers](https://www.kaggle.com/datasets/sakshigoyal7/credit-card-customers/code) dataset from [Kaggle](https://www.kaggle.com/). 
 
+**IMPORTANT NOTE: This repository is old; a new more advanced version can be found here: []()**
+
 Data analysis and modeling pipelines are implemented in the project to end up with an interpretable model that is also able to predict customer churn. However, the focus of the project are neither the business case nor the analysis and modeling techniques; instead, **the goal is to provide with a boilerplate that shows how to transform a research notebook into a development/production environment code**. Also, note that not all aspects necessary in a ML worklflow are covered either:
 
 - The EDA and FE are very simple.
 - The data artifacts are not tracked or versioned, neither are the models or the pipelines.
-- No through inference pipeline is defined.
+- No through pipeline is defined.
 - No through deployment nor API are performed.
 - etc.
 
@@ -19,11 +21,9 @@ Overview of contents:
 - [Predict Customer Churn Using Production-Level Code](#predict-customer-churn-using-production-level-code)
 	- [Project Description](#project-description)
 	- [Files Description](#files-description)
-		- [Docker Environment](#docker-environment)
 	- [How to Use This](#how-to-use-this)
 		- [Installation](#installation)
 		- [Running the Scripts](#running-the-scripts)
-		- [Docker](#docker)
 	- [Possible Improvements](#possible-improvements)
 	- [Interesting Links](#interesting-links)
 	- [Authorship](#authorship)
@@ -80,8 +80,6 @@ In addition, those files and folders are also present in the repository:
 - `images/`: folder for the EDA and classification report images
 - `models/`: folder where the generated models are stored as pickle objects
 - `logs/`: folder for the log files
-
-### Docker Environment
 
 ## How to Use This
 ### Installation
@@ -164,8 +162,6 @@ Tip: If you'd like to automatically edit and improve the score of a file that al
 ```bash
 autopep8 --in-place --aggressive --aggressive churn_library.py
 ```
-
-### Docker
 
 ## Possible Improvements
 
