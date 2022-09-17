@@ -30,7 +30,7 @@ The file `churn_library.py` should complete a typical data science process, whic
 - Prediction
 - Model Evaluation
 
-![Sequence diagram](./pics/sequence_diagram.jpeg)
+![Sequence diagram](./pics/sequencediagram.jpeg)
 
 
 ### `churn_library.py`
