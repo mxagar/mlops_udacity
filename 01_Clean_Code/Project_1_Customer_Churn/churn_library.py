@@ -207,7 +207,7 @@ def perform_feature_engineering(data, response="Churn"):
     # Automatically detect categorical columns
     category_lst = list(data.select_dtypes(['object']).columns)
 
-    # Encode categorcial variables as category ratios
+    # Encode categorical variables as category ratios
     cat_columns_encoded = []
     data, cat_columns_encoded = encoder_helper(data, category_lst, response)
 
