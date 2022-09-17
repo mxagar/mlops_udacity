@@ -75,7 +75,7 @@ In addition, those files and folders are also present in the repository:
 
 - `requirements_py*.txt`: dependencies to be installed (see section below)
 - `README.md`: this documentation file
-- `Project_1_Customer_Churn.md`: a summary of `Guide.ipynb` and the project requirements defined by Udacity
+- `Customer_Churn_Guide.md`: a summary of `Guide.ipynb` and the project requirements defined by Udacity
 - `data/`: folder where the dataset is stored
 - `images/`: folder for the EDA and classification report images
 - `models/`: folder where the generated models are stored as pickle objects
