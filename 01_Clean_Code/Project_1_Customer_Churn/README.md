@@ -1,8 +1,8 @@
 # Predict Customer Churn Using Production-Level Code
 
-This repository contains a project that analyzes and predicts **Customer Churn** using the [Credit Card Customers](https://www.kaggle.com/datasets/sakshigoyal7/credit-card-customers/code) dataset from [Kaggle](https://www.kaggle.com/). 
+This repository contains a project that analyzes and predicts **Customer Churn** using the [Credit Card Customers](https://www.kaggle.com/datasets/sakshigoyal7/credit-card-customers/code) dataset from [Kaggle](https://www.kaggle.com/).
 
-**IMPORTANT NOTE: This repository is old; a new more advanced version can be found here: []()**
+**IMPORTANT NOTE: This repository is old; a new more advanced and extended version can be found here: [customer_churn_production](https://github.com/mxagar/customer_churn_production)**.
 
 Data analysis and modeling pipelines are implemented in the project to end up with an interpretable model that is also able to predict customer churn. However, the focus of the project are neither the business case nor the analysis and modeling techniques; instead, **the goal is to provide with a boilerplate that shows how to transform a research notebook into a development/production environment code**. Also, note that not all aspects necessary in a ML worklflow are covered either:
 
