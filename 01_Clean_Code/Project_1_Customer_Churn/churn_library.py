@@ -83,11 +83,12 @@ def import_data(pth):
     return None
 
 def perform_eda(data):
-    '''Performs EDA on df and saves figures to `images/` folder
-    input:
+    '''Performs EDA on df and saves figures to `images/` folder.
+    
+    Input:
             df (pandas.DataFrame): dataset
 
-    output:
+    Output:
             None
     '''
     # General paramaters
@@ -128,15 +129,16 @@ def perform_eda(data):
 
 def encoder_helper(data, category_lst, response="Churn"):
     '''Helper function to turn each categorical column into a new column with
-    propotion of churn for each category - associated with cell 15
-    input:
+    proportion of churn for each category - associated with cell 15.
+    
+    Input:
             df (pandas.DataFrame): dataset
             category_lst (list of str): list of columns that contain
                 categorical features
             response (str): string of response name [optional argument
                 that could be used for naming variables or index y column]
 
-    output:
+    Output:
             df (pandas.DataFrame): pandas dataframe with new columns
             cat_columns_encoded (list of str): names of new columns
     '''
@@ -167,13 +169,15 @@ def encoder_helper(data, category_lst, response="Churn"):
 
 def perform_feature_engineering(data, response="Churn"):
     '''
-    input:
+    Perform Feature Engineering: basic cleaning, select/drop features, encode categoricals, split.
+    
+    Input:
               df (pandas.DataFrame): dataset
               response (str): string of response name
                 [optional argument that could be used
                 for naming variables or index y column]
 
-    output:
+    Output:
               X_train: X training data
               X_test: X testing data
               y_train: y training data
@@ -246,9 +250,10 @@ def classification_report_image(y_train,
                                 y_test_preds,
                                 outputpath):
     '''
-    produces classification report for training and testing results and stores report as image
-    in images folder
-    input:
+    Produces classification report for training and testing results and stores report as image
+    in images folder.
+    
+    Input:
             y_train (pandas.DataFrame): training response values
             y_test (pandas.DataFrame):  test response values
             y_train_preds_lr (np.array): training preds. from log. regression
@@ -257,8 +262,8 @@ def classification_report_image(y_train,
             y_test_preds_lr (np.array): test preds. from logistic regression
             y_test_preds_rf (np.array): test preds. from random forest
 
-    output:
-             None
+    Output:
+            None
     '''
     # General parameters
     dpi = 200
@@ -297,14 +302,15 @@ def classification_report_image(y_train,
 
 def roc_curve_plot(models, X_test, y_test, outputpath):
     '''
-    creates and stores the feature importances in pth
-    input:
+    Creates and stores the feature importances in pth
+    
+    Input:
             models (objects): trained models
             X_test (numpy.array): test split features to compute ROC curves
             y_test (numpy.array): test split target to compute ROC curves
 
-    output:
-             None
+    Output:
+            None
     '''
     # General parameters
     dpi = 200
@@ -323,14 +329,15 @@ def roc_curve_plot(models, X_test, y_test, outputpath):
 
 def feature_importance_plot(model, X_data, output_pth):
     '''
-    creates and stores the feature importances in pth
-    input:
+    Creates and stores the feature importances in pth.
+    
+    Input:
             model: model object containing feature_importances_
             X_data: pandas dataframe of X values
             output_pth: path to store the figure
 
-    output:
-             None
+    Output:
+            None
     '''
     # Calculate feature importances
     importances = model.best_estimator_.feature_importances_
@@ -358,13 +365,14 @@ def feature_importance_plot(model, X_data, output_pth):
 
 def train_models(X_train, X_test, y_train, y_test):
     '''
-    train, store model results: images + scores, and store models
-    input:
-              X_train: X training data
-              X_test: X testing data
-              y_train: y training data
-              y_test: y testing data
-    output:
+    Train, store model results: images + scores, and store models.
+    
+    Input:
+            X_train: X training data
+            X_test: X testing data
+            y_train: y training data
+            y_test: y testing data
+    Output:
               None
     '''
     # Grid search
@@ -426,8 +434,17 @@ def train_models(X_train, X_test, y_train, y_test):
     # Save plot of feature importance
     feature_importance_plot(cv_rfc, X_train, image_output_path)
 
-if __name__ == "__main__":
-
+def modeling():
+    '''
+    Execute the complete model/pipeline generation.
+    In a real context we would pass the path to the dataset
+    and 
+    
+    Input:
+            None    
+    Output:
+            None
+    '''    
     # Load dataset
     print("Loading dataset...")
     FILEPATH = "./data/bank_data.csv"
@@ -448,3 +465,23 @@ if __name__ == "__main__":
     # and reports saved to `images/`
     print("Trainig...")
     train_models(X_train, X_test, y_train, y_test)
+
+def inference():
+    '''
+    Execute the an exemplary inference.
+    In a real context we would pass the path of the data to be inferred.
+    Additionally, model serving requires having the model/pipeline in memory
+    and answering to requests, which is not done here.
+    The artifacts generated in the function modeling() are used here.
+    
+    Input:
+            None    
+    Output:
+            None
+    '''    
+    pass
+
+if __name__ == "__main__":
+
+    modeling()
+    inference()
