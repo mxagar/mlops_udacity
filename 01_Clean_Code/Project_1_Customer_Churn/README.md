@@ -8,7 +8,7 @@ Data analysis and modeling pipelines are implemented in the project to end up wi
 
 - The EDA and FE are very simple.
 - The data artifacts are not tracked or versioned, neither are the models or the pipelines.
-- No through pipeline is defined.
+- No through inference is defined.
 - No through deployment nor API are performed.
 - etc.
 
