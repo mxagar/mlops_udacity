@@ -1697,6 +1697,10 @@ The rest of there-tranings is usually done manually, i.e., non-automated.
 
 See `./Project_1_Customer_Churn`.
 
+Additionally, I have extended and improved the project to be a boilerplate for transforming research notebooks into production level code; the result can be found in this repository:
+
+[customer_churn_production](https://github.com/mxagar/customer_churn_production)
+
 Interesting links provided by the reviewer:
 
 - [Logging Wisdom: How to Log](https://medium.com/unomaly/logging-wisdom-how-to-log-5a19145e35ec)
