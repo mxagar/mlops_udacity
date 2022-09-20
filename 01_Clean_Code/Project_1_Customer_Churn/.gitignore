@@ -3,3 +3,4 @@ ml_devops_project_1_churn.zip
 __pycache__
 .ipynb_checkpoints
 .pytest_cache
+customer_churn_production
