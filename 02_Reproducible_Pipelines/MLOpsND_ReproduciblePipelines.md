@@ -42,77 +42,98 @@ conda activate ds
 
 ## Overview of Contents
 
-1. [Lesson 1: Introduction to Reproducible Model Workflows](#1.-Introduction-to-Reproducible-Model-Workflows)
-    - 1.1 Machine Learning Operations (MLOps)
-        - What Are MLOps and Reproducible Workflows?
-    - 1.2 Business Stakeholders: Which Roles Are Important in MLOps?
-    - 1.3 When Should We Use MLOps?
-    - 1.4 MLOps Tools Used
-        - Installation of Weights & Biases and MLflow
-    - 1.5 Module Project: Rental Price Prediction in New York
-2. [Lesson 2: Machine Learning Pipelines](#2.-Machine-Learning-Pipelines)
-    - [2.1 The Three Levels of MLOps](#2.1-The-Three-Levels-of-MLOps)
-    - [2.2 Argparse](#2.2-Argparse)
-    - [2.3 Versioning Data and Artifacts in Weights and Biases](#2.3-Versioning-Data-and-Artifact-in-Weights-and-Biases)
-    - [2.4 Weights & Biases: Example Notebook](#2.4-Weights-&-Biases:-Example-Notebook)
-    - [2.5 Weights & Biases: Exercise 1, Versioning Data & Artifacts and Using Them](#2.5-Weights-&-Biases:-Exercise-1,-Versioning-Data-&-Artifacts-and-Using-Them)
-    - [2.6 ML Pipeline Components in MLFlow](#2.6-ML-Pipeline-Components-in-MLFlow)
-        - Conda: `conda.yaml`
-        - Project Definition: `MLproject`
-        - Running the Project
-    - [2.7 Introduction to YAML](#2.7-Introduction-to-YAML)
-    - [2.8 MLflow: Exercise 2, Defining and Running an MLflow pipeline](#2.8-MLflow:-Exercise-2,-Defining-and-Running-an-MLflow-pipeline)
-    - [2.9 Linking Together the Components](#2.9-Linking-Together-the-Components)
-        - Pipeline Configuration: Hydra
-        - Tracking Pipelines with Weights & Biases
-    - [2.10 MLflow and Hydra: Exercise 3, Parametrized Pipeline](#2.10-MLflow-and-Hydra:-Exercise-3,-Parametrized-Pipeline)
-    - [2.11 MLflow Project Development Recommendations](#2.11-MLflow-Project-Development-Recommendations)
-    - [2.12 Conda vs. Docker](#2.12-Conda-vs.-Docker)
-    - [2.13 Running in the Cloud](#2.13-Running-in-the-Cloud)
-3. [Lesson 3: Data Exploration and Preparation](#3.-Data-Exploration-and-Preparation)
-    - [3.1 Exploratory Data Analysis (EDA)](#3.1-Exploratory-Data-Analysis-(EDA))
-    - [3.2 Pandas Profiling](#3.2-Pandas-Profiling)
-    - [3.3 Set Up EDA Notebook with WandB and MLflow: Exercise 4](#3.3-Set-Up-EDA-Notebook-with-WandB-and-MLflow:-Exercise-4)
-        - **Important Issues**
-    - [3.4 Clean and Pre-Process the Data](#3.4-Clean-and-Pre-Process-the-Data)
-    - [3.5 Pre-Processing Script with W&B and MLflow: Exercise 5](#3.5-Pre-Processing-Script-with-W&B-and-MLflow:-Exercise-5)
-    - [3.6 Data Segregation](#3.6-Data-Segregation)
-    - [3.7 Data Segregation Script with W&B and MLflow: Exercise 6](#3.7-Data-Segregation-Script-with-W&B-and-MLflow:-Exercise-6)
-    - [3.8 Feature Stores](#3.8-Feature-Stores)
-4. [Lesson 4: Data Validation](#4.-Data-Validation)
-    - 4.1 A Primer on Pytest
-    - 4.2 Deterministic Tests: Example / Exercise 7
-        - Exercise 7: Deterministic Data Tests
-        - Solution
-        - Important Notes / Comments / Issues
-    - 4.3 Non-Deterministic or Statistical Tests: Example / Exercise 8
-        - Exercise 8: Non-Deterministic Data Tests
-        - Solution
-    - 4.4 Parameters in Pytest: Example / Exercise 9
-        - Exercise 9: Parametrized Test Functions
-        - Solution
-    - 4.5 Alternative Tool for Data Validation: Great Expectations
-5. [Lesson 5: Training, Validation and Experiment Tracking](#5.-Training,-Validation-and-Experiment-Tracking)
-    - 5.1 The Inference Pipeline
-    - 5.2 Inference Pipelines with Scikit-Learn and Pytorch
-        - Pipelines with Pytorch
-        - Example / Exercise 10
-        - Solution to Exercise 10
-    - 5.3 Machine Learning Experimentation
-    - 5.4 Experiment Tracking with Weights and Biases: A Example with Jupyter Notebook
-    - 5.5 Experiment Tracking and Hyperparameter Optimization with Weights and Biases and Hydra
-        - Choosing the Best Performing Model
-        - Example / Exercise 11: Validate and Choose the Best Performing Model
-        - Solution to Exercise 11
-    - 5.6 Export the Inference Pipeline / Artifact
-        - Example / Exercise 12: Export ML Inference Pipeline with MLflow
-        - Solution to Example / Exercise 12
-    - 5.7 Testing the Final Artifact and Storing It in the Model Registry
-        - Example / Exercise 13: Testing the Final Model
-        - Solution to Exercise 13
-    - 5.8 Using MLflow for Experiment Tracking
-6. Lesson 6: Final Pipeline, Release and Deploy
-7. Project: Build an ML Pipeline for Short-term Rental Prices in NYC
+- [Machine Learning DevOps Engineer: Personal Notes on the Udacity Nanodegree](#machine-learning-devops-engineer-personal-notes-on-the-udacity-nanodegree)
+  - [Practical Installation Notes](#practical-installation-notes)
+  - [Overview of Contents](#overview-of-contents)
+  - [1. Introduction to Reproducible Model Workflows](#1-introduction-to-reproducible-model-workflows)
+    - [1.1 Machine Learning Operations (MLOps)](#11-machine-learning-operations-mlops)
+      - [What Are MLOps and Reproducible Workflows?](#what-are-mlops-and-reproducible-workflows)
+    - [1.2 Business Stakeholders: Which Roles Are Important in MLOps?](#12-business-stakeholders-which-roles-are-important-in-mlops)
+    - [1.3 When Should We Use MLOps?](#13-when-should-we-use-mlops)
+    - [1.4 MLOps Tools Used](#14-mlops-tools-used)
+      - [Installation of Weights & Biases and MLflow](#installation-of-weights--biases-and-mlflow)
+    - [1.5 Module Project: Rental Price Prediction in New York](#15-module-project-rental-price-prediction-in-new-york)
+  - [2. Machine Learning Pipelines](#2-machine-learning-pipelines)
+    - [2.1 The Three Levels of MLOps](#21-the-three-levels-of-mlops)
+    - [2.2 Argparse](#22-argparse)
+    - [2.3 Versioning Data and Artifacts in Weights and Biases](#23-versioning-data-and-artifacts-in-weights-and-biases)
+    - [2.4 Weights & Biases: Example Notebook](#24-weights--biases-example-notebook)
+    - [2.5 Weights & Biases: Exercise 1, Versioning Data & Artifacts and Using Them](#25-weights--biases-exercise-1-versioning-data--artifacts-and-using-them)
+    - [2.6 ML Pipeline Components in MLFlow](#26-ml-pipeline-components-in-mlflow)
+      - [Conda: `conda.yaml`](#conda-condayaml)
+      - [Project Definition: `MLproject`](#project-definition-mlproject)
+      - [Running the Project](#running-the-project)
+    - [2.7 Introduction to YAML](#27-introduction-to-yaml)
+    - [2.8 MLflow: Exercise 2, Defining and Running an MLflow pipeline](#28-mlflow-exercise-2-defining-and-running-an-mlflow-pipeline)
+      - [Solution](#solution)
+    - [2.9 Linking Together the Components](#29-linking-together-the-components)
+      - [Pipeline Configuration: Hydra](#pipeline-configuration-hydra)
+      - [Tracking Pipelines with Weights & Biases](#tracking-pipelines-with-weights--biases)
+    - [2.10 MLflow and Hydra: Exercise 3, Parametrized Pipeline](#210-mlflow-and-hydra-exercise-3-parametrized-pipeline)
+      - [Solution](#solution-1)
+    - [2.11 MLflow Project Development Recommendations](#211-mlflow-project-development-recommendations)
+      - [Notes, Tips & Tricks](#notes-tips--tricks)
+      - [Troubleshooting Pipelines](#troubleshooting-pipelines)
+      - [Remove all conda mlflow conda environments](#remove-all-conda-mlflow-conda-environments)
+    - [2.12 Conda vs. Docker](#212-conda-vs-docker)
+    - [2.13 Running in the Cloud](#213-running-in-the-cloud)
+  - [3. Data Exploration and Preparation](#3-data-exploration-and-preparation)
+    - [3.1 Exploratory Data Analysis (EDA)](#31-exploratory-data-analysis-eda)
+    - [3.2 Pandas Profiling](#32-pandas-profiling)
+    - [3.3 Set Up EDA Notebook with WandB and MLflow: Exercise 4](#33-set-up-eda-notebook-with-wandb-and-mlflow-exercise-4)
+      - [Solution](#solution-2)
+      - [Important Issues](#important-issues)
+    - [3.4 Clean and Pre-Process the Data](#34-clean-and-pre-process-the-data)
+    - [3.5 Pre-Processing Script with W&B and MLflow: Exercise 5](#35-pre-processing-script-with-wb-and-mlflow-exercise-5)
+      - [Solution](#solution-3)
+      - [Running the Example](#running-the-example)
+    - [3.6 Data Segregation](#36-data-segregation)
+    - [3.7 Data Segregation Script with W&B and MLflow: Exercise 6](#37-data-segregation-script-with-wb-and-mlflow-exercise-6)
+      - [Solution](#solution-4)
+      - [Run the Exercise](#run-the-exercise)
+    - [3.8 Feature Stores](#38-feature-stores)
+  - [4. Data Validation](#4-data-validation)
+    - [4.1 A Primer on Pytest](#41-a-primer-on-pytest)
+    - [4.2 Deterministic Tests: Example / Exercise 7](#42-deterministic-tests-example--exercise-7)
+      - [Exercise 7: Deterministic Data Tests](#exercise-7-deterministic-data-tests)
+      - [Solution](#solution-5)
+      - [Important Notes / Comments / Issues](#important-notes--comments--issues)
+    - [4.3 Non-Deterministic or Statistical Tests: Example / Exercise 8](#43-non-deterministic-or-statistical-tests-example--exercise-8)
+      - [Exercise 8: Non-Deterministic Data Tests](#exercise-8-non-deterministic-data-tests)
+      - [Solution](#solution-6)
+    - [4.4 Parameters in Pytest: Example / Exercise 9](#44-parameters-in-pytest-example--exercise-9)
+      - [Exercise 9: Parametrized Test Functions](#exercise-9-parametrized-test-functions)
+      - [Solution](#solution-7)
+    - [4.5 Alternative Tool for Data Validation: Great Expectations](#45-alternative-tool-for-data-validation-great-expectations)
+  - [5. Training, Validation and Experiment Tracking](#5-training-validation-and-experiment-tracking)
+    - [5.1 The Inference Pipeline](#51-the-inference-pipeline)
+    - [5.2 Inference Pipelines with Scikit-Learn and Pytorch](#52-inference-pipelines-with-scikit-learn-and-pytorch)
+      - [Pipelines with Pytorch](#pipelines-with-pytorch)
+      - [Example / Exercise 10](#example--exercise-10)
+      - [Solution to Exercise 10](#solution-to-exercise-10)
+    - [5.3 Machine Learning Experimentation](#53-machine-learning-experimentation)
+    - [5.4 Experiment Tracking with Weights and Biases: A Example with Jupyter Notebook](#54-experiment-tracking-with-weights-and-biases-a-example-with-jupyter-notebook)
+    - [5.5 Experiment Tracking and Hyperparameter Optimization with Weights and Biases and Hydra](#55-experiment-tracking-and-hyperparameter-optimization-with-weights-and-biases-and-hydra)
+      - [Choosing the Best Performing Model](#choosing-the-best-performing-model)
+      - [Example / Exercise 11: Validate and Choose the Best Performing Model](#example--exercise-11-validate-and-choose-the-best-performing-model)
+      - [Solution to Exercise 11](#solution-to-exercise-11)
+    - [5.6 Export the Inference Pipeline / Artifact](#56-export-the-inference-pipeline--artifact)
+      - [Example / Exercise 12: Export ML Inference Pipeline with MLflow](#example--exercise-12-export-ml-inference-pipeline-with-mlflow)
+      - [Solution to Example / Exercise 12](#solution-to-example--exercise-12)
+    - [5.7 Testing the Final Artifact and Storing It in the Model Registry](#57-testing-the-final-artifact-and-storing-it-in-the-model-registry)
+      - [Example / Exercise 13: Testing the Final Model](#example--exercise-13-testing-the-final-model)
+      - [Solution to Exercise 13](#solution-to-exercise-13)
+    - [5.8 Using MLflow for Experiment Tracking](#58-using-mlflow-for-experiment-tracking)
+  - [6. Final Pipeline, Release and Deploy](#6-final-pipeline-release-and-deploy)
+    - [6.1 Exercise 14: Write an End-to-End Machine Learning Pipeline](#61-exercise-14-write-an-end-to-end-machine-learning-pipeline)
+      - [Most Important Files](#most-important-files)
+    - [6.2 Releases](#62-releases)
+    - [6.3 Deployments with MLflow](#63-deployments-with-mlflow)
+      - [Offline/Batch Deployment](#offlinebatch-deployment)
+      - [Online/Realtime Deployment](#onlinerealtime-deployment)
+      - [Docker Image](#docker-image)
+    - [6.4 Other Options for Deployment](#64-other-options-for-deployment)
+  - [7. Final Project: Build an ML Pipeline for Short-term Rental Prices in NYC](#7-final-project-build-an-ml-pipeline-for-short-term-rental-prices-in-nyc)
 
 ## 1. Introduction to Reproducible Model Workflows
 
@@ -5162,3 +5183,7 @@ MLflow models can be deployed using other tools:
 - etc.
 
 We can also dockerize the MLflow model manually and deploy it on a cloud platform (e.g., AWS).
+
+## 7. Final Project: Build an ML Pipeline for Short-term Rental Prices in NYC
+
+See the repository: [ml_pipeline_rental_prices](https://github.com/mxagar/ml_pipeline_rental_prices).
