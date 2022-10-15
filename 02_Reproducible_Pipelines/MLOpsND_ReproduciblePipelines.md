@@ -5187,3 +5187,4 @@ We can also dockerize the MLflow model manually and deploy it on a cloud platfor
 ## 7. Final Project: Build an ML Pipeline for Short-term Rental Prices in NYC
 
 See the repository: [ml_pipeline_rental_prices](https://github.com/mxagar/ml_pipeline_rental_prices).
+
