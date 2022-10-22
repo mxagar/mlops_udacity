@@ -216,7 +216,7 @@ In a real-world machine learning deployment, we don't only deploy the model pipe
 
 **Reproducible Workflow** is an orchestrated, tracked and versioned workflow that can be reproduced and inspected.
 
-[Gartnet Report: Top Strategic Technology Trends for 2021](https://www.gartner.com/en/newsroom/press-releases/2020-10-19-gartner-identifies-the-top-strategic-technology-trends-for-2021#:~:text=Gartner%20research%20shows%20only%2053,a%20production%2Dgrade%20AI%20pipeline.): *" only 53% of projects make it from artificial intelligence (AI) prototypes to production"*
+[Gartner Report: Top Strategic Technology Trends for 2021](https://www.gartner.com/en/newsroom/press-releases/2020-10-19-gartner-identifies-the-top-strategic-technology-trends-for-2021#:~:text=Gartner%20research%20shows%20only%2053,a%20production%2Dgrade%20AI%20pipeline.): *" only 53% of projects make it from artificial intelligence (AI) prototypes to production"*
 
 ### 1.2 Business Stakeholders: Which Roles Are Important in MLOps?
 
@@ -301,7 +301,7 @@ Artifacts are ouput files of objects that need to be
 - versioned,
 - stored.
 
-Example 1: **ETL pipeline** = Extract, Transform, Load: it ingests the data from varois sources, aggregates and cleans it and stores it in a database.
+Example 1: **ETL pipeline** = Extract, Transform, Load: it ingests the data from various sources, aggregates and cleans it and stores it in a database.
 
 ![ETL pipeline](./pics/etl-pipeline.png)
 
@@ -315,7 +315,7 @@ The tools are:
 
 - Weights and Biases, `wandb`: it tracks pipeline runs as wells as artifacts generated in the different steps. We can upload and download artifact versions.
 - MLflow, `mlflow`: each step in the pipeline is a mini-project with a well defined conda/docker environment which executes a script or code file in any language; example steps are: get the data, process the data, train, etc. With MLflow we can define sequences of steps with their parameters; additionally, in combination with `wandb` we can generate and track artifacts which glue the different steps of the pipeline.
-- Hydra: hydra offers an extra layer on top of MLFlow with which we can parametrize the pipeline with a configuration file. Hydra can do much more, but it's covered in the section.
+- Hydra: hydra offers an extra layer on top of MLFlow with which we can parametrize the pipeline with a configuration file. Hydra can do much more, but it's not covered in the section.
 
 The examples are in the repository [udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises). However, I copied them to `./lab/`. In particular the exercise/example 3 is very interesting: `WandB_MLflow_Hydra_exercise_3_parametrized_pipeline`. It covers a 2-step pipeline which fetches data, uploads, downloads and processes artifacts, etc. It is like a blueprint for any large ML pipeline.
 
@@ -366,9 +366,9 @@ logger.error("This is an error")
 ```
 
 Argparse is a Python module which can be used to parse script arguments.
-In order to use it, we instantiate an `ArgumentParser` with a description and then simply `add_arguments` to it. Later, those arguments can be introduced to the script execution comman and they are parsed for use and stored in a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple).
+In order to use it, we instantiate an `ArgumentParser` with a description and then simply `add_arguments` to it. Later, those arguments can be introduced to the script execution command and they are parsed for use and stored in a [namedtuple](https://docs.python.org/3/library/collections.html#collections.namedtuple).
 
-The following example shows how this works and provides a tpical script structure in which we factorize the functionality to a function called from the `main` scope.
+The following example shows how this works and provides a typical script structure in which we factorize the functionality to a function called from the `main` scope.
 
 ```python
 
@@ -1082,7 +1082,7 @@ ml_pipeline/
     MLproject
 ```
 
-The top directory contains all the components in folder, and additionally:
+The top directory contains all the components in folders, and additionally:
 
 - `main.py`, which executes all the `mlflow.run()`
 - `MLproject`, to define how to call `main.py`
@@ -1135,7 +1135,7 @@ We should always avoid hard-coding the parameters in the `main.py` script, becau
 
 The typical hydra YAML has sections that map each one to each of the components (in addition to the main script), but that's a convention -- we can organize it as we please.
 
-Example configuration YAML for hydra; the projects aims to train a random forest and has two components: (1) fetching the data and the (2) train random forest. Each section can have subsections.
+Example configuration YAML for hydra; the project aims to train a random forest and has two components: (1) fetching the data and the (2) train random forest. Each section can have subsections.
 
 Hydra configuration `config.yaml`:
 
@@ -1196,8 +1196,8 @@ if __name__=="__main__":
 
 Notes:
 
-- Since we're using `hydra`, we don't need `argparse`.
-- `go()` is called without the `config` object.
+- Since we're using `hydra`, we don't need `argparse`, at least in `main.py`.
+- `go()` is called *without* the `config` object.
 - The `config` object is created when using the `hydra` decorator, which loads the `config.yaml`, even though we pass the filename without extension.
 
 To use `hydra`, we need to change the `MLproject` file so that we can override the parameters written in the configuration file. That is done allowing only one option, `hydra_options`, which is echoed directly to the `main.py` script. If we don't explicitly override parameters, the default ones from the `hydra` `config.yaml` are going to be used.
@@ -1266,7 +1266,7 @@ if __name__ == "__main__":
 However, note that:
 
 - This is set for the main script only.
-- Any component can iveride the project/experiment name in `wandb.init()`.
+- Any component can override the project/experiment name in `wandb.init()`.
 
 ### 2.10 MLflow and Hydra: Exercise 3, Parametrized Pipeline
 
@@ -1695,7 +1695,7 @@ These are tipcs and tricks I collected while following the course.
 
 #### Notes, Tips & Tricks
 
-- Make sure that teh indentation in zthe YAML files is correct.
+- Make sure that the indentation in the YAML files is correct.
 - Make sure that the requirements of the conda env are correctly typed: =, ==, etc.
 - Sometimes I needed to add protobuf as pip requirement for the environment.
 - The first time a run with an environment is executed, the conda environment is created; the next times, the environment is already there, so it's faster. See how to delete the `mlflow` `conda` environments below.
@@ -1745,7 +1745,7 @@ Mlflow offers the possibility of working with Docker instead of conda. For more 
 Conda, in contrast to Docker, is/has:
 
 - Easier to use, no need of DevOps knowledge.
-- No need of a separate regstry for the images.
+- No need of a separate registry for the images.
 - Self-contained, but not completely isolated: still OS libraries are used.
 - No integration with Kubernetes; that's only possible with Docker
 
@@ -1757,7 +1757,7 @@ In summary, these are the options we have for running our pipelines in the cloud
 
 - If we have Databricks enterprise, we can just add the option `-b` to the `mlflow run` command. More details: [Run MLflow Projects on Databricks](https://docs.databricks.com/applications/mlflow/projects.html#run-mlflow-projects-on-databricks).
 - We can upload the code to a repo, generate an AWS compute instance, clone the repo there and run it on the cloud. This is the manual way.
-- We can use hydra lanchers. These can distirbute the work in different cores, computers, clusters, etc. Hydra is very powerful, but not covered here.
+- We can use hydra launchers. These can distribute the work in different cores, computers, clusters, etc. Hydra is very powerful, but not covered here.
 - Use Kubernetes with Kubeflow.
 
 ## 3. Data Exploration and Preparation
@@ -1781,7 +1781,7 @@ To that end:
 - Write an MLflow component that installs Jupyter + libs, and execute the EDA as a notebook from within this component.
 - Track inputs and outputs of the notebook (artifacts) with Weights & Biases; for that we create a run and set `save_code=True`. This keeps the code in synch with the copy W&B. W&B tracks even the order in which the cells were run. BUT: please, write notebooks that can be run sequentially from top to bottom!
 
-```pyhon
+```python
 run = wandb.init(
   project="my_exercise",
   save_code=True
@@ -1860,7 +1860,7 @@ Then, we carry out these steps (exercise instructions):
 - Upload the dataset to W&B with the command above.
 - Write the `MLproject` file: `main` step, no `parameters`, `command`: `jupyter notebook`.
 - Check & update the `conda.yaml` file.
-- Excute: `mlflow run .`
+- Execute: `mlflow run .`
 - Wait for the environment to be created and the Jupyter to be opened.
 - Create a notebook called EDA.
 - Write code into the notebook:
@@ -1988,7 +1988,7 @@ However, the pre-processing is related to the training data; if the production d
 Examples of operations that should not be part of the pre-processing step:
 
 - Categorical encoding: if something needs to be carried out in inference and training, then it should go to the inference pipeline!
-- MIssing value imputation when this should also happen in production, too.
+- Mssing value imputation when this should also happen in production, too.
 - Dimensionality reduction (e.g., PCA), when this should happen in production, too.
 
 Key idea: keep in mind the type of data that the model should see in production: its collection, transformations, etc. The model must  be trained with a dataset which is representative of that!
@@ -2191,7 +2191,7 @@ We should take into account the following points:
 - First split train/test, and then obtain the validation subset from within the train split.
 - We can also perform k-fold validation, for which we don't need to fix the validation sub-set, since it is chosen later.
 - The test split is used only to evaluate the model performance when we finish; never use the test split for anything else.
-- The validation split is used for model validation, prevent overfitting and hyperparameter tuning; the validation split should be always different to the stest split!
+- The validation split is used for model validation, prevent overfitting and hyperparameter tuning; the validation split should be always different to the test split!
 
 We can also go beyond the simple train/validation/test split: this can happen by sub-dividing the validation and test splits in strata groups: male vs. female, low income vs. high income, etc. This is possible if we have enough data. It is called complex sub-sampling.
 
@@ -4135,7 +4135,6 @@ cd path-to-mlflow-file
 mlflow run .
 
 mlflow run . -P hydra_options="random_forest_pipeline.random_forest.max_depth=13 random_forest_pipeline.tfidf.max_features=10"
-
 ```
 
 #### Solution to Example / Exercise 12
@@ -4411,7 +4410,7 @@ run.summary["AUC"] = score
 
 After the tests are done and we're happy, we **mark the model for production**: on the W&B web interface, we go to the project artifacts, select the desired one and add to it the tag `prod`.
 
-Then, wwhen getting the artifact use that tag:
+Then, when getting the artifact use that tag:
 
 ```python
 import wandb
@@ -4442,7 +4441,6 @@ The file structure is the following:
 
 ```
 .
-.
 ├── MLproject
 ├── conda.yml
 └── run.py
@@ -4451,11 +4449,9 @@ The file structure is the following:
 To run it:
 
 ```bash
-```bash
 cd path-to-mlflow-file
 
 mlflow run . -P model_export="exercise_12/inference_pipeline:latest" -P test_data="exercise_6/data_test.csv:latest"
-
 ```
 
 #### Solution to Exercise 13
