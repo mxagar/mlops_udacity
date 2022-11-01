@@ -9,31 +9,17 @@ The nanodegree is composed of four modules:
 3. Deploying a Scalable ML Pipeline in Production
 4. ML Model Scoring and Monitoring
 
-Each module has a folder with its respective notes.
+Each module has a folder with its respective notes; **you need to go to each module folder and follow the Markdown file in it.**
 
-## Practical Installation Notes
+## Projects
 
-I basically followed the installation & setup guide from `TODO`.
+Udacity requires the submission of a project for each module; these are the repositories of the projects I submitted:
 
-We need to install:
+1. Predicting Customer Churn with *Production-Level* Software: [customer_churn_production](https://github.com/mxagar/customer_churn_production).
+2. A Reproducible Machine Learning Pipeline for Short-Term Rental Price Prediction in New York City: [ml_pipeline_rental_prices](https://github.com/mxagar/ml_pipeline_rental_prices).
+3. Deploying a Machine Learning Model on Heroku with FastAPI.
+4. A Dynamic Risk Assessment System
 
-- Python 3.X
-- Anaconda
-- Machine Learning libraries: Scikit-Learn, Matplotlib, Pandas, Seaborn, Numpy, etc.
-- Git
-- GitHub account
 
-```bash
-conda create -n ds python=3.7
-conda install jupyter numpy pandas matplotlib scipy sympy cython numba pytables jupyterlab pip -y
-conda install scikit-learn scikit-image -y
-conda install -c pytorch pytorch -y
-conda install statsmodels -y
-conda install seaborn -y
-conda install pandas-datareader -y
-# ...
-conda activate ds
-```
-
-Mikel Sagardia, 2022.
+Mikel Sagardia, 2022.  
 No guarantees.
