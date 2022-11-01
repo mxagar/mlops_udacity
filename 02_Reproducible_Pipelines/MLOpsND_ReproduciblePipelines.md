@@ -4,8 +4,8 @@ These are my notes of the [Udacity Nanodegree Machine Learning DevOps Engineer](
 
 The nanodegree is composed of four modules:
 
-1. Clean Code Principles
-2. Building a Reproducible Model Workflow
+1. [Clean Code Principles](01_Clean_Code/MLOpsND_CleanCode.md)
+2. [Building a Reproducible Model Workflow](02_Reproducible_Pipelines/MLOpsND_ReproduciblePipelines.md)
 3. Deploying a Scalable ML Pipeline in Production
 4. ML Model Scoring and Monitoring
 
