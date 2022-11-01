@@ -18,32 +18,10 @@ This module uses exercises from the following forked repository:
 Mikel Sagardia, 2022.  
 No guarantees.
 
-## Practical Installation Notes
-
-We need to install:
-
-- Python 3.X
-- Anaconda
-- Machine Learning libraries: Scikit-Learn, Matplotlib, Pandas, Seaborn, Numpy, etc.
-- Git
-- GitHub account
-
-```bash
-conda create -n ds python=3.7
-conda install jupyter numpy pandas matplotlib scipy sympy cython numba pytables jupyterlab pip -y
-conda install scikit-learn scikit-image -y
-conda install -c pytorch pytorch -y
-conda install statsmodels -y
-conda install seaborn -y
-conda install pandas-datareader -y
-# ...
-conda activate ds
-```
 
 ## Overview of Contents
 
 - [Machine Learning DevOps Engineer: Personal Notes on the Udacity Nanodegree](#machine-learning-devops-engineer-personal-notes-on-the-udacity-nanodegree)
-  - [Practical Installation Notes](#practical-installation-notes)
   - [Overview of Contents](#overview-of-contents)
   - [1. Introduction to Reproducible Model Workflows](#1-introduction-to-reproducible-model-workflows)
     - [1.1 Machine Learning Operations (MLOps)](#11-machine-learning-operations-mlops)

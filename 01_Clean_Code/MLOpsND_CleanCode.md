@@ -11,10 +11,6 @@ The nanodegree is composed of four modules:
 
 Each module has a folder with its respective notes. This folder and file refer to the **first** module: **Clean Code Principles**.
 
-Note that:
-- `TODO`
-- `TODO`
-
 Mikel Sagardia, 2022.  
 No guarantees.
 
@@ -29,6 +25,8 @@ We need to install:
 - GitHub account
 
 ```bash
+# Create the environment
+# and install basic libraries
 conda create -n ds python=3.7
 conda install jupyter numpy pandas matplotlib scipy sympy cython numba pytables jupyterlab pip -y
 conda install scikit-learn scikit-image -y
@@ -36,62 +34,64 @@ conda install -c pytorch pytorch -y
 conda install statsmodels -y
 conda install seaborn -y
 conda install pandas-datareader -y
-# ...
+# Activate the environment
 conda activate ds
 ```
 
 ## Overview of Contents
 
-1. Lesson 1: Introduction
+- [Machine Learning DevOps Engineer: Personal Notes on the Udacity Nanodegree](#machine-learning-devops-engineer-personal-notes-on-the-udacity-nanodegree)
+	- [Practical Installation Notes](#practical-installation-notes)
+	- [Overview of Contents](#overview-of-contents)
+	- [1. Lesson 1: Introduction](#1-lesson-1-introduction)
+	- [2. Lesson 2: Coding Best Practices](#2-lesson-2-coding-best-practices)
+		- [Clean and Modular Code](#clean-and-modular-code)
+		- [PEP 8 Summary (My Notes)](#pep-8-summary-my-notes)
+		- [Conventions (DLR)](#conventions-dlr)
+		- [Writing Modular Code](#writing-modular-code)
+		- [Refactoring Code](#refactoring-code)
+		- [Refactoring Code - Notebook: `./lab/wine_quality/refactor_whine_quality.ipynb`](#refactoring-code---notebook-labwine_qualityrefactor_whine_qualityipynb)
+		- [Efficient Code](#efficient-code)
+		- [Efficient Code - Notebook: `./lab/common_books/optimizing_code_common_books.ipynb`](#efficient-code---notebook-labcommon_booksoptimizing_code_common_booksipynb)
+		- [Efficient Code - Notebook: `./lab/holiay_gifts/optimizing_code_holiday_gifts.ipynb`](#efficient-code---notebook-labholiay_giftsoptimizing_code_holiday_giftsipynb)
+		- [Documentation](#documentation)
+		- [Documentation: Inline Comments](#documentation-inline-comments)
+		- [Documentation: Docstrings](#documentation-docstrings)
+		- [Documentation: `README.md`](#documentation-readmemd)
+		- [Auto-PEP8 and Linting](#auto-pep8-and-linting)
+		- [Pycodestyle](#pycodestyle)
+	- [3. Lesson 3: Working with Others Using Version Control](#3-lesson-3-working-with-others-using-version-control)
+		- [Basic Git](#basic-git)
+		- [Notes on `pull` and `push` and Remote/Cloud Repos](#notes-on-pull-and-push-and-remotecloud-repos)
+		- [Working on Teams](#working-on-teams)
+			- [A successful Git branching model](#a-successful-git-branching-model)
+			- [Scenario 1: We Develop Features Locally on Branches and Merge Them to `develop`](#scenario-1-we-develop-features-locally-on-branches-and-merge-them-to-develop)
+			- [More on Branches](#more-on-branches)
+			- [Scenario 2: Another colleague merges to `develop`](#scenario-2-another-colleague-merges-to-develop)
+			- [Merge Conflicts](#merge-conflicts)
+			- [Pull Request (PR) Workflow](#pull-request-pr-workflow)
+			- [Fork-Branch-Pull-Request Workflow](#fork-branch-pull-request-workflow)
+				- [Step by Step Workflow](#step-by-step-workflow)
+		- [Model and Dataset Versioning](#model-and-dataset-versioning)
+		- [Code Reviews](#code-reviews)
+	- [4. Lesson 4: Production Ready Code](#4-lesson-4-production-ready-code)
+		- [Catching Errors](#catching-errors)
+		- [`assert` and `raise`](#assert-and-raise)
+		- [Testing](#testing)
+		- [Pytest: Unit Testing Tool](#pytest-unit-testing-tool)
+			- [Installation and Basic Usage](#installation-and-basic-usage)
+			- [Pytest Fixtures 1](#pytest-fixtures-1)
+			- [Pytest Fixtures 2](#pytest-fixtures-2)
+			- [Pytest Fixture Parametrization](#pytest-fixture-parametrization)
+			- [Pytest Parametrization](#pytest-parametrization)
+			- [Pytest Shared Namespace with `conftest.py`](#pytest-shared-namespace-with-conftestpy)
+			- [Pytest Shared Namespace with Cache](#pytest-shared-namespace-with-cache)
+		- [Test-Drivem Development (TDD)](#test-drivem-development-tdd)
+		- [More Notes on Testing](#more-notes-on-testing)
+		- [Logging](#logging)
+		- [Model Drift](#model-drift)
+	- [5. Project: Predict Customer Churn with Clean Code](#5-project-predict-customer-churn-with-clean-code)
 
-2. Lesson 2: Coding Best Practices
-	- Clean and Modular Code
-	- PEP 8 Summary (My Notes)
-	- Conventions (DLR)
-	- Writing Modular Code
-	- Refactoring Code
-	- Refactoring Code - Notebook: `./lab/wine_quality/refactor_whine_quality.ipynb`
-	- Efficient Code
-	- Efficient Code - Notebook: `./lab/common_books/optimizing_code_common_books.ipynb`
-	- Efficient Code - Notebook: `./lab/holiay_gifts/optimizing_code_holiday_gifts.ipynb`
-	- Documentation
-	- Documentation: Inline Comments
-	- Documentation: Docstrings
-	- Documentation: `README.md`
-	- Auto-PEP8 and Linting
-    - Psycodestyle
-
-3. Lesson 3: Working with Others Using Version Control
-	- Basic Git
-	- Notes on `pull` and `push` and Remote/Cloud Repos
-	- Working on Teams
-		- A successful Git branching model
-		- Scenario 1: We Develop Features Locally on Branches and Merge Them to `develop`
-		- More on Branches
-		- Scenario 2: Another colleague merges to `develop`
-		- Merge Conflicts
-		- Pull Request (PR) Workflow
-		- Fork-Branch-Pull-Request Workflow
-	- Model and Dataset Versioning
-	- Code Reviews
-
-4. Lesson 4: Production Ready Code
-    - Catching Errors
-    - `assert` and `raise`
-    - Testing
-    - Pytest: Unit Testing Tool
-        - Installation and Basic Usage
-        - Pytest Fixtures 1
-        - Pytest Fixtures 2
-        - Pytest Fixture Parametrization
-        - Pytest Parametrization
-        - Pytest Shared Namespace with `conftest.py`
-        - Pytest Shared Namespace with Cache
-    - Test-Drivem Development (TDD)
-    - Logging
-    - Model Drift
-
-5. Project: Predict Customer Churn with Clean Code
 
 ## 1. Lesson 1: Introduction
 
