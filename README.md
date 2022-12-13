@@ -4,10 +4,10 @@ These are my notes of the [Udacity Nanodegree Machine Learning DevOps Engineer](
 
 The nanodegree is composed of four modules:
 
-1. [Clean Code Principles](01_Clean_Code/MLOpsND_CleanCode.md)
-2. [Building a Reproducible Model Workflow](02_Reproducible_Pipelines/MLOpsND_ReproduciblePipelines.md)
-3. Deploying a Scalable ML Pipeline in Production
-4. ML Model Scoring and Monitoring
+1. [Clean Code Principles](./01_Clean_Code/MLOpsND_CleanCode.md)
+2. [Building a Reproducible Model Workflow](./02_Reproducible_Pipelines/MLOpsND_ReproduciblePipelines.md)
+3. [Deploying a Scalable ML Pipeline in Production](./03_Deployment/MLOpsND_Deployment.md)
+4. [ML Model Scoring and Monitoring](./04_Monitoring/MLOpsND_Monitoring.md)
 
 Each module has a folder with its respective notes; **you need to go to each module folder and follow the Markdown file in it.**
 
