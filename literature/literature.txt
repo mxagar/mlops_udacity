@@ -1,2 +1,4 @@
 Sculley_MLOps_Hidden-technical-debt-in-machine-learning-systems_2015.pdf
 	Seminal paper from google in which MLOps is defined.
+
+Chen_SliceBasedLearning_2019.pdf
