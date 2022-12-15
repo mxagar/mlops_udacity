@@ -31,6 +31,7 @@ No guarantees.
     - [2.4 Unit Testing for Data Slicing](#24-unit-testing-for-data-slicing)
       - [Exercise: Data Slicing with the Iris Dataset](#exercise-data-slicing-with-the-iris-dataset)
     - [2.5 Model Bias](#25-model-bias)
+    - [2.6 Investigating Model Bias: The Aequitas Package](#26-investigating-model-bias-the-aequitas-package)
   - [3. Data and Model Versioning](#3-data-and-model-versioning)
   - [4. CI/CD](#4-cicd)
   - [5. API Deployment with FastAPI](#5-api-deployment-with-fastapi)
@@ -264,6 +265,42 @@ slice_iris(df, "petal_width")
 ```
 
 ### 2.5 Model Bias
+
+- Bias = performance in favor or against one group in an unfair manner.
+- Do not confuse with the bias of the bias-variance tradeoff.
+- Model bias is often related to data bias, but not always (?).
+- Types of **data bias**:
+  - Human error
+    - Sampling error: the sample doesn't capture the real population.
+    - Exclusion bias: a group is excluded from the data acquisition; that can be on purpose/unwanted.
+    - Recall bias: the unreliability of trying people to remember past events; data that consists of past event descriptions is usually unreliable.
+  - Society error:
+    - Implicit bias / stereotypes.
+    - Unjust policy.
+
+Bias is everywhere! Examples of data bias:
+
+- In a dataset with animals, the bias in favor of cats might be significant.
+- In a dataset with humans, a bias against black people can be significant.
+- Collection: images from web might have a higher quality than the ones fed by regular users.
+- Annotation: labeler bias, due to many factors, e.g., challenging time with little time.
+- Preprocessing: truncating long text so that it fits into memory/model input size; maybe longer texts are long because they have certain characteristic features!
+
+### 2.6 Investigating Model Bias: The Aequitas Package
+
+[Aequitas](http://aequitas.dssg.io/) is a tool that quantifies bias; it has 3 main interfaces:
+
+- Web app
+- CLI: shown here.
+- Python package
+
+In Aequitas we specify the score, label, and at least one categorical field (or numerical in ranges/cuts) and then three reports are created comparing against a reference group (often the majority):
+
+- Group Metrics Results
+- Bias Metrics Results
+- Fairness Measures Results
+
+
 
 ## 3. Data and Model Versioning
 
