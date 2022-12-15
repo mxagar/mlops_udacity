@@ -28,6 +28,9 @@ No guarantees.
     - [2.1 K-Fold Coss-Validation](#21-k-fold-coss-validation)
     - [2.2 Data Slicing](#22-data-slicing)
     - [2.3 Data Slicing Use Cases](#23-data-slicing-use-cases)
+    - [2.4 Unit Testing for Data Slicing](#24-unit-testing-for-data-slicing)
+      - [Exercise: Data Slicing with the Iris Dataset](#exercise-data-slicing-with-the-iris-dataset)
+    - [2.5 Model Bias](#25-model-bias)
   - [3. Data and Model Versioning](#3-data-and-model-versioning)
   - [4. CI/CD](#4-cicd)
   - [5. API Deployment with FastAPI](#5-api-deployment-with-fastapi)
@@ -160,7 +163,107 @@ Interesting links:
 - [Slice-based Learning](https://www.snorkel.org/blog/slicing)
 - [Slice-based Learning: A Programming Model for Residual Learning in Critical Data Slices](https://papers.nips.cc/paper/2019/file/351869bde8b9d6ad1e3090bd173f600d-Paper.pdf)
 
+### 2.4 Unit Testing for Data Slicing
 
+Data slicing is used together with unit tests: we write unit tests that check the performance of data slices.
+
+Unit tests can be run pre- and post-deployment.
+
+Write unit tests following the SOLID principles:
+
+- Single responsibility: every class/function should do only one thing.
+- Open-closed: software should be open to extension but closed to modification.
+- Liskov substitution: functions that use pointers to base classes should be able to use derived classes.
+- Interface segregation: clients should not be forced to depend upon interfaces that they don't use.
+- Dependency inversion: depend upon abstractions, not concretions.
+
+Example of unit test for data slicing:
+
+```python
+
+### --- foo.py
+
+def foo():
+    return "Hello world!"
+
+### --- test_foo.py
+
+from .foo import foo
+
+def test_foo():
+    foo_result = foo()
+
+    expected_foo_result = "Hello world!"
+    assert foo_result == expected_foo_result
+
+### --- test_slice.py
+
+import pandas as pd
+import pytest
+
+
+@pytest.fixture
+def data():
+    """ Simple function to generate some fake Pandas data."""
+    df = pd.DataFrame(
+        {
+            "id": [1, 2, 3],
+            "numeric_feat": [3.14, 2.72, 1.62],
+            "categorical_feat": ["dog", "dog", "cat"],
+        }
+    )
+    return df
+
+
+def test_data_shape(data):
+    """ If your data is assumed to have no null values then this is a valid test. """
+    assert data.shape == data.dropna().shape, "Dropping null changes shape."
+
+
+def test_slice_averages(data):
+    """ Test to see if our mean per categorical slice is in the range 1.5 to 2.5."""
+    for cat_feat in data["categorical_feat"].unique():
+        avg_value = data[data["categorical_feat"] == cat_feat]["numeric_feat"].mean()
+        assert (
+            2.5 > avg_value > 1.5
+        ), f"For {cat_feat}, average of {avg_value} not between 2.5 and 3.5."
+
+### --- Run
+
+pytest -v test_slice.py
+
+```
+
+#### Exercise: Data Slicing with the Iris Dataset
+
+Used dataset: [Iris](https://archive.ics.uci.edu/ml/datasets/Iris).
+
+> Load the data using Pandas and then write a function that outputs the descriptive stats for each numeric feature while the categorical variable is held fixed. Run this function for each of the four numeric variables in the Iris data set.
+
+The code is in [`DataSlicing_UnitTest.ipynb`](./lab/DataSlicing_UnitTest.ipynb):
+
+```python
+def slice_iris(df, feature):
+    """ Function for calculating descriptive stats on slices of the Iris dataset."""
+    for cls in df["class"].unique():
+        # Alternative:
+        # df.groupby('class').mean()
+        # df.groupby('class').std()
+        df_temp = df[df["class"] == cls]
+        mean = df_temp[feature].mean()
+        stddev = df_temp[feature].std()
+        print(f"Class: {cls}")
+        print(f"{feature} mean: {mean:.4f}")
+        print(f"{feature} stddev: {stddev:.4f}")
+    print()
+
+slice_iris(df, "sepal_length")
+slice_iris(df, "sepal_width")
+slice_iris(df, "petal_length")
+slice_iris(df, "petal_width")
+```
+
+### 2.5 Model Bias
 
 ## 3. Data and Model Versioning
 
