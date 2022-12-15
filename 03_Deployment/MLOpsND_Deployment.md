@@ -32,6 +32,10 @@ No guarantees.
       - [Exercise: Data Slicing with the Iris Dataset](#exercise-data-slicing-with-the-iris-dataset)
     - [2.5 Model Bias](#25-model-bias)
     - [2.6 Investigating Model Bias: The Aequitas Package](#26-investigating-model-bias-the-aequitas-package)
+      - [Exercise/Demo: Aequitas Workflow with COMPAS Dataset](#exercisedemo-aequitas-workflow-with-compas-dataset)
+      - [Exercise: Aequitas Workflow with Car Evaluation Dataset](#exercise-aequitas-workflow-with-car-evaluation-dataset)
+    - [2.7 Model Cards](#27-model-cards)
+    - [2.8 Performance Testing: Final Exercise](#28-performance-testing-final-exercise)
   - [3. Data and Model Versioning](#3-data-and-model-versioning)
   - [4. CI/CD](#4-cicd)
   - [5. API Deployment with FastAPI](#5-api-deployment-with-fastapi)
@@ -41,6 +45,11 @@ No guarantees.
 The module is taught by [Justin Clifford Smith, PhD](https://www.justincliffordsmith.com/). Principal data scientist at [Optum](https://www.optum.com/).
 
 Deployment consists in putting the model to work in production. But not all deployments are the same: sometimes we want to keep learning during the usage of the model!
+
+The demos and exercises of this module are located in:
+
+- [`./lab`](./lab)
+- [mlops-udacity-deployment-demos](https://github.com/mxagar/mlops-udacity-deployment-demos)
 
 ### Deployment considerations
 
@@ -290,9 +299,9 @@ Bias is everywhere! Examples of data bias:
 
 [Aequitas](http://aequitas.dssg.io/) is a tool that quantifies bias; it has 3 main interfaces:
 
-- Web app
-- CLI: shown here.
-- Python package
+- Web app.
+- CLI.
+- Python package: shown here.
 
 In Aequitas we specify the score, label, and at least one categorical field (or numerical in ranges/cuts) and then three reports are created comparing against a reference group (often the majority):
 
@@ -300,7 +309,93 @@ In Aequitas we specify the score, label, and at least one categorical field (or 
 - Bias Metrics Results
 - Fairness Measures Results
 
+Install it:
 
+```bash
+pip install aequitas
+```
+
+#### Exercise/Demo: Aequitas Workflow with COMPAS Dataset
+
+Links to the demo/exercise:
+
+- Demo repository: [mlops-udacity-deployment-demos](https://github.com/mxagar/mlops-udacity-deployment-demos).
+- Exercise/demo notebook: [`aequitas_demo.ipynb`](https://github.com/mxagar/mlops-udacity-deployment-demos/blob/main/aequitas_demo.ipynb).
+- A more detailed official demo of Aequitas with the COMPAS dataset: [compas_demo.ipynb](https://github.com/dssg/aequitas/blob/master/docs/source/examples/compas_demo.ipynb)
+
+
+The [COMPAS dataset](https://github.com/dssg/aequitas/tree/master/examples) is used in the example; it contains a **recidivism** score, i.e., the tendency of a convict to re-offend. We have the 7214 observations with these 6 columns:
+
+- `entity_id`
+- `score`: score by the model, required by Aequitas.
+- `label_value`: true label, required by Aequitas.
+- `race`
+- `sex`
+- `age_cat`
+
+:warning: Note: as far as I understand, Aequitas works with binary classifications?
+
+The package seems a little bit dense and complex to understand straightforwardly, because it provides many statistics. Go to the notebook to understand how to make a basic use of Aequitas; the general workflow is:
+
+- We create a `Group()` object, from which we extract a crosstab; the crosstab contains the data slicing statistics: for each categorical feature and each level/group in them we have a slice/group for which the statistics are computed.
+- We create a `Bias()` object and compute disparities of the slices wrt. a reference group. We specify the reference group in `ref_groups_dict`; if we don't specify any reference group, the majority group/slice is taken. We get the same statistics as before + disparity statistics, differences wrt. reference group
+- We compute the `Fairness()`: We get the same statistics as before + Fairnes true/false parity values.
+- We can obtain summary values and plots, too.
+
+#### Exercise: Aequitas Workflow with Car Evaluation Dataset
+
+The exercise is similar to the previous one, with a bit more EDA. Have a look at it:
+
+Exercise/demo notebook: [`car_aequitas_solution.ipynb`](https://github.com/mxagar/mlops-udacity-deployment-demos/blob/main/aequitas_car_exercise/).
+
+### 2.7 Model Cards
+
+Model cards are documentation pages with all the key aspects to be able to use it in all possible ways: extend, re-train, etc. There is no industry standard, but we should include:
+
+- Model details: type, training/hyperparameter details, links to longer docu
+- Intended use and users.
+- Metrics: overall performance and key slice performance.
+- Relevant figures: learning curves, etc.
+- Data: information on the training and the validation splits; how they were acquired & processed, etc.
+- Bias: inherent in data or model.
+- Caveats, if there are any.
+
+![Model Card Example](./pics/model-card-cropped.jpg)
+
+Links:
+
+- [Model Cards for Model Reporting](https://arxiv.org/pdf/1810.03993.pdf)
+- [Google on Model Cards](https://modelcards.withgoogle.com/about)
+
+Example Model Card:
+
+> **Model Details**
+> 
+> Justin C Smith created the model. It is logistic regression using the default hyperparameters in scikit-learn 0.24.2.
+> 
+> **Intended Use**
+>
+> This model should be used to predict the acceptability of a car based off a handful of attributes. The users are prospective car buyers.
+> 
+> **Metrics**
+> 
+> The model was evaluated using F1 score. The value is 0.8960.
+> 
+> **Data**
+> 
+> The data was obtained from the UCI Machine Learning Repository (https://archive.ics.uci.edu/ml/datasets/Car+Evaluation). The target class was modified from four categories down to two: "unacc" and "acc", where "good" and "vgood" were mapped to "acc".
+> 
+> The original data set has 1728 rows, and a 75-25 split was used to break this into a train and test set. No stratification was done. To use the data for training a One Hot Encoder was used on the features and a label binarizer was used on the labels.
+> 
+> **Bias**
+> 
+> According to Aequitas bias is present at the unsupervised and supervised level. This implies an unfairness in the underlying data and also unfairness in the model. From Aequitas summary plot we see bias is present in only some of the features and is not consistent across metrics.
+
+### 2.8 Performance Testing: Final Exercise
+
+Exercise repository: [Performance_testing_FinalExercise](https://github.com/mxagar/mlops-udacity-deployment-demos/tree/main/Performance_testing_FinalExercise).
+
+:construction:
 
 ## 3. Data and Model Versioning
 
