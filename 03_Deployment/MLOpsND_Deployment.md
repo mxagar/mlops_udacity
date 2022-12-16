@@ -27,7 +27,7 @@ No guarantees.
   - [2. Performance Testing and Preparing a Model for Production](#2-performance-testing-and-preparing-a-model-for-production)
     - [2.1 K-Fold Coss-Validation](#21-k-fold-coss-validation)
     - [2.2 Data Slicing](#22-data-slicing)
-    - [2.3 Data Slicing Use Cases](#23-data-slicing-use-cases)
+    - [2.3 Data Slicing Use Cases and Overall Workflow](#23-data-slicing-use-cases-and-overall-workflow)
     - [2.4 Unit Testing for Data Slicing](#24-unit-testing-for-data-slicing)
       - [Exercise: Data Slicing with the Iris Dataset](#exercise-data-slicing-with-the-iris-dataset)
     - [2.5 Model Bias](#25-model-bias)
@@ -35,10 +35,11 @@ No guarantees.
       - [Exercise/Demo: Aequitas Workflow with COMPAS Dataset](#exercisedemo-aequitas-workflow-with-compas-dataset)
       - [Exercise: Aequitas Workflow with Car Evaluation Dataset](#exercise-aequitas-workflow-with-car-evaluation-dataset)
     - [2.7 Model Cards](#27-model-cards)
-    - [2.8 Performance Testing: Final Exercise](#28-performance-testing-final-exercise)
+    - [2.8 Performance Testing, Final Exercise: Manual Data Slicing](#28-performance-testing-final-exercise-manual-data-slicing)
   - [3. Data and Model Versioning](#3-data-and-model-versioning)
   - [4. CI/CD](#4-cicd)
   - [5. API Deployment with FastAPI](#5-api-deployment-with-fastapi)
+  - [6. Project](#6-project)
 
 ## 1. Introduction to Deployment
 
@@ -152,16 +153,25 @@ An overall metric value with cross validation can be good, but the same metric i
 
 ![Data Slicing](./pics/data_slicing.jpg)
 
-### 2.3 Data Slicing Use Cases
+### 2.3 Data Slicing Use Cases and Overall Workflow
 
 Possible slicing groups:
 
-- Features
+- Features:
+  - if categorical, each level/class can be a slice
+  - if numerical, we can cut in ranges/regions (e.g., above/below mean) and each is a slice
 - Label classes
 - Length of audio/text
 - Sources of data
 
 We should select the slices which are *relevant* to the model.
+
+The workflow is the following:
+
+- We train our model on the entire dataset.
+- We have now the target label + predicted outcome.
+- We compute the overall metric as always, e.g., F1: `y_true` vs. `y_pred`.
+- We take our slices and check how good the metric of each slice is compared to the overall!
 
 We can perform slicing:
 
@@ -391,11 +401,104 @@ Example Model Card:
 > 
 > According to Aequitas bias is present at the unsupervised and supervised level. This implies an unfairness in the underlying data and also unfairness in the model. From Aequitas summary plot we see bias is present in only some of the features and is not consistent across metrics.
 
-### 2.8 Performance Testing: Final Exercise
+### 2.8 Performance Testing, Final Exercise: Manual Data Slicing
 
 Exercise repository: [Performance_testing_FinalExercise](https://github.com/mxagar/mlops-udacity-deployment-demos/tree/main/Performance_testing_FinalExercise).
 
-:construction:
+In this exercise the [Raisin dataset](https://archive.ics.uci.edu/ml/datasets/Raisin+Dataset) is used. In it, 900 observations of 7 raising features (all numerical) are collected; each observation has a target class which specifies one of two types of raisins: 'Kecimen' or 'Besni'.
+
+Data slicing is applied manually to the dataset as follows:
+
+- Data is split: `train`, `validation`.
+- Logistic regression model is fit and F1 is computed: overall score.
+- 3 features are chosen and their mean is computed; then, 2 buckets or ranges are defined for each of the 3 features: above and below the mean. Thus, we get 3x2 = 6 slices.
+- For each slice, the F1 metric is computed again and compared to the overall F1.
+- Finally, a model card is written.
+
+```python
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.metrics import classification_report, f1_score
+
+data = pd.read_csv("./exercise_data/Raisin_Dataset.csv")
+
+data.head()
+data.head() # (900, 8)
+data.Class.unique() # array(['Kecimen', 'Besni'], dtype=object)
+
+# Take features + target
+y = data.pop("Class")
+
+# Split the data into train and validation, stratifying on the target feature.
+X_train, X_val, y_train, y_val = train_test_split(data, y, stratify=y, random_state=23)
+
+# Get a high level overview of the data.
+# This will be useful for slicing: we take the mean values from here!
+X_train.describe()
+
+# Define and fit model
+lr = LogisticRegression(max_iter=1000, random_state=23)
+lb = LabelBinarizer()
+
+# Binarize the target feature.
+y_train = lb.fit_transform(y_train)
+y_val = lb.transform(y_val)
+
+# Train Logistic Regression.
+lr.fit(X_train, y_train.ravel())
+
+# Use sklearn's classification report to get an overall view of our classifier.
+print(classification_report(y_val, lr.predict(X_val)))
+# Average F1: 0.88
+
+## Data Slicing + Performance
+
+print("F1 score on MajorAxisLength slices:")
+row_slice = X_val["MajorAxisLength"] >= 427.7
+print(f1_score(y_val[row_slice], lr.predict(X_val[row_slice])))
+row_slice = X_val["MajorAxisLength"] < 427.7
+print(f1_score(y_val[row_slice], lr.predict(X_val[row_slice])))
+# F1 score on MajorAxisLength slices:
+# 0.0
+# 0.9230769230769231
+
+print("\nF1 score on MinorAxisLength slices:")
+row_slice = X_val["MinorAxisLength"] >= 254.4
+print(f1_score(y_val[row_slice], lr.predict(X_val[row_slice])))
+row_slice = X_val["MinorAxisLength"] < 254.4
+print(f1_score(y_val[row_slice], lr.predict(X_val[row_slice])))
+# F1 score on MinorAxisLength slices:
+# 0.65
+# 0.9319371727748692
+
+print("\nF1 score on ConvexArea slices:")
+row_slice = X_val["ConvexArea"] >= 90407.3
+print(f1_score(y_val[row_slice], lr.predict(X_val[row_slice])))
+row_slice = X_val["ConvexArea"] < 90407.3
+print(f1_score(y_val[row_slice], lr.predict(X_val[row_slice])))
+# F1 score on ConvexArea slices:
+# 0.30769230769230765
+# 0.9174311926605505
+```
+
+Model card reported in the solution:
+
+> #### Model Card
+> ##### Model Details
+> Logistic Regresion model using default scikit-learn hyperparameters. Trained with sklearn version 0.24.1.
+> ##### Intended Use
+> For classifying two types of raisins from Turkey.
+> ##### Metrics
+> F1 classification with a macro average of 0.85, 0.84 for the minority class, and 0.85 for the majority class.
+> When analyzing across data slices, model performance is higher for raisins below the average size and much lower for raisins above the average.
+> ##### Data
+> Raisin dataset acquired from the UCI Machine Learning Repository: https://archive.ics.uci.edu/ml/datasets/Raisin+Dataset
+> Originally from: Cinar I., Koklu M. and Tasdemir S., Classification of Raisin Grains Using Machine Vision and Artificial Intelligence Methods. Gazi Journal of Engineering Sciences, vol. 6, no. 3, pp. 200-209, December, 2020.
+> ##### Bias
+> The majority of raisins are below the average size. This could be a potential source of bias but more subject matter expertise may be necessary. Note to students: this is a useful call out, and in a real-world scenario should prompt you to engage in collaboration with subject matter experts so you can flesh this out.
+
 
 ## 3. Data and Model Versioning
 
@@ -407,4 +510,6 @@ Exercise repository: [Performance_testing_FinalExercise](https://github.com/mxag
 
 ## 5. API Deployment with FastAPI
 
+
+## 6. Project
 
