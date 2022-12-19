@@ -37,6 +37,10 @@ No guarantees.
     - [2.7 Model Cards](#27-model-cards)
     - [2.8 Performance Testing, Final Exercise: Manual Data Slicing](#28-performance-testing-final-exercise-manual-data-slicing)
   - [3. Data and Model Versioning](#3-data-and-model-versioning)
+    - [3.1 Introduction Data Version Control (DVC): Installation \& Resemblance to Git](#31-introduction-data-version-control-dvc-installation--resemblance-to-git)
+      - [Installation on Mac](#installation-on-mac)
+      - [Resemblance to Git](#resemblance-to-git)
+    - [3.2 Tracking with DVC](#32-tracking-with-dvc)
   - [4. CI/CD](#4-cicd)
   - [5. API Deployment with FastAPI](#5-api-deployment-with-fastapi)
   - [6. Project](#6-project)
@@ -499,8 +503,91 @@ Model card reported in the solution:
 > ##### Bias
 > The majority of raisins are below the average size. This could be a potential source of bias but more subject matter expertise may be necessary. Note to students: this is a useful call out, and in a real-world scenario should prompt you to engage in collaboration with subject matter experts so you can flesh this out.
 
-
 ## 3. Data and Model Versioning
+
+DVC = Data Version Control. We use it to control the version of:
+
+- data
+- models
+- etc.
+
+either (1) locally or (2) remotely. Additionally, we can use it to 
+
+- create pipelines 
+- and track experiments.
+
+Data provenance or data lineage aspects, i.e., complete record of data whereabouts:
+
+- Origin: where data comes from.
+- Movement: systems and location it was.
+- Manipulation: how data has been transformed.
+
+Data provenance is important because:
+
+- We forget all the history and quality data if not recorded.
+- Accountability: adjust to regulations.
+- Future-proofing of data is only possibly if we have a complete record of all origins and movements.
+- Clear understanding of data and models is possible only if we have a complete lineage.
+
+Some links:
+
+- [List of Provenance Tools](https://projects.iq.harvard.edu/provenance-at-harvard/tools)
+- [Provenance Use Cases](https://confluence.csiro.au/public/PROMS/provenance-use-cases)
+
+### 3.1 Introduction Data Version Control (DVC): Installation & Resemblance to Git
+
+DVC relies on Git to do the version control and it doesn't store the data/models itself, but that is done by external or remote services like S3, HDFS, GDrive, etc.
+
+DVC provides tools to track changes in large/binary files.
+
+Links:
+
+- Documentation: [https://dvc.org/doc/start](https://dvc.org/doc/start).
+- Installation: [https://dvc.org/doc/install](https://dvc.org/doc/install).
+
+#### Installation on Mac
+
+```bash
+# with brew
+brew install dvc
+
+# or with pip
+pip install dvc
+
+# or with conda
+conda install -c conda-forge mamba # installs much faster than conda
+mamba install -c conda-forge dvc
+```
+
+#### Resemblance to Git
+
+DVC os designed to have a very similar use as git:
+
+```bash
+# Initialize project, ./dvc/ folder is created
+dvc init
+
+# Add files/folders to tracking
+dvc add
+
+# Upload download data from the remote store, specified in dvc.yaml
+dvc push
+dvc pull
+
+# This one is different than git commit
+dvc commit
+```
+
+[DVC Reference](https://dvc.org/doc/command-reference): Typical workflow:
+
+- `dvc init`
+- `dvc add`
+- Create a `dvc.yaml` file: it contains the processing pipeline + artifact outputs
+- `dvc repro`: execute or restore any version of the pipeline
+- `dvc push`, `dvc pull`: access remote storage
+
+### 3.2 Tracking with DVC
+
 
 
 
