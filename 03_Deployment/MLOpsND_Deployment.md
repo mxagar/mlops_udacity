@@ -40,7 +40,9 @@ No guarantees.
     - [3.1 Introduction Data Version Control (DVC): Installation \& Resemblance to Git](#31-introduction-data-version-control-dvc-installation--resemblance-to-git)
       - [Installation on Mac](#installation-on-mac)
       - [Resemblance to Git](#resemblance-to-git)
-    - [3.2 Tracking with DVC](#32-tracking-with-dvc)
+    - [3.2 Tracking with DVC: Local Remote](#32-tracking-with-dvc-local-remote)
+    - [3.3 Remote Storage](#33-remote-storage)
+      - [Example: GDrive Remote Storage](#example-gdrive-remote-storage)
   - [4. CI/CD](#4-cicd)
   - [5. API Deployment with FastAPI](#5-api-deployment-with-fastapi)
   - [6. Project](#6-project)
@@ -557,6 +559,9 @@ pip install dvc
 # or with conda
 conda install -c conda-forge mamba # installs much faster than conda
 mamba install -c conda-forge dvc
+
+# If we want to use GDrive remote storage
+conda install -c conda-forge dvc-gdrive
 ```
 
 #### Resemblance to Git
@@ -586,9 +591,86 @@ dvc commit
 - `dvc repro`: execute or restore any version of the pipeline
 - `dvc push`, `dvc pull`: access remote storage
 
-### 3.2 Tracking with DVC
+### 3.2 Tracking with DVC: Local Remote
 
+```bash
+# 0. Make sure we're on a git repo;
+# if not, initialize first git, then dvc
+git init
+dvc init
+# dvc init generates:
+# .dvc/ folder
+# .dvcignore: equivalent to .gitignore
 
+# 1. Create a local remote folder
+mkdir ~/data/remote
+dvc remote add -d localremote ~/data/remote
+# list available remotes
+dvc remote list
+# In addition to local remote folders, we can use
+# real remote storage: S3, GDrive, etc.
+
+# 2. Track files
+dvc add sample.csv
+# We get a prompt saying that
+# we should add .gitignore
+# and sample.csv.dvc to git
+# NOTE: sample.csv is added to .gitignore for us!
+git add sample.csv.dvc .gitignore
+
+# 2. Commit changes to git
+git commit -m "initial commit of dataset using dvc"
+# If our git repo is connected to a remote origin
+# we can always do git push/pull
+
+# 3. Send data to local remote
+dvc push
+
+# 4. Retrieve data from local remote
+dvc pull
+
+# 5. Change a dataset and track changes
+vim sample.csv
+dvc add sample.csv
+git add sample.csv.dvc
+git commit -m "changes..."
+dvc push
+
+# 6. Manage remotes
+# Change/add properties to a remote
+dvc remote modify
+# Rename a remote
+dvc remote rename
+
+```
+
+The `sample.csv.dvc` has content of the following form:
+
+```
+outs:
+- md5: 82c893581e57f7e84418cc44e9c0a3d0
+  size: 3856
+  path: sample.csv
+```
+
+### 3.3 Remote Storage
+
+The true potential of DVC is unlocked when we use remote storage; then, we can simply `git clone` any repository anywhere and push/pull remote datasets/models from GDrive, S3, or similar. Therefore, we can develop on one machine a deploy on another one without any issues, because the datasets and models are remotely stored.
+
+Example:
+
+```bash
+dvc remote add s3remote s3://a/remote/bucket
+```
+
+Note: We can have multiple remote stores!
+
+Links:
+
+- [Data and Model Access](https://dvc.org/doc/start/data-management/data-and-model-access)
+- [Supported Storage Types](https://dvc.org/doc/command-reference/remote/add#supported-storage-types)
+
+#### Example: GDrive Remote Storage
 
 
 ## 4. CI/CD
