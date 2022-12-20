@@ -702,7 +702,7 @@ dvc push --remote driveremote
 # we paste it back on the terminal
 # Now, in GDrive, we should see version files
 
-# If we do dvc puc´sh,
+# If we do dvc push,
 # it pushes to the default remote,
 # which is usually the local remote! 
 dvc push
