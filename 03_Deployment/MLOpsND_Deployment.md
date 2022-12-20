@@ -43,6 +43,10 @@ No guarantees.
     - [3.2 Tracking with DVC: Local Remote](#32-tracking-with-dvc-local-remote)
     - [3.3 Remote Storage](#33-remote-storage)
       - [Example: GDrive Remote Storage](#example-gdrive-remote-storage)
+    - [3.4 Pipelines with DVC](#34-pipelines-with-dvc)
+      - [Exercise: Defining a Pipeline](#exercise-defining-a-pipeline)
+        - [Solution](#solution)
+    - [3.5 Experiment Tracking with DVC](#35-experiment-tracking-with-dvc)
   - [4. CI/CD](#4-cicd)
   - [5. API Deployment with FastAPI](#5-api-deployment-with-fastapi)
   - [6. Project](#6-project)
@@ -549,19 +553,21 @@ Links:
 
 #### Installation on Mac
 
+There are several ways of installing DVC; we need an environment with Python 3.8+ to run the latest version, which is necessary for some remote storage functionalities.
+
 ```bash
-# with brew
+conda activate mlops-nd # Python 3.8
+
+# with brew (outdated)
 brew install dvc
 
 # or with pip
-pip install dvc
+# BUT: we need to have an environment with python 3.8+
+# to have the latest version of dvc
+pip install -U "dvc[all]" # all: all remote storage interfaces are installed
 
-# or with conda
-conda install -c conda-forge mamba # installs much faster than conda
-mamba install -c conda-forge dvc
-
-# If we want to use GDrive remote storage
-conda install -c conda-forge dvc-gdrive
+# also a conda installation is possible,
+# but it didn't work for me
 ```
 
 #### Resemblance to Git
@@ -609,6 +615,8 @@ dvc remote add -d localremote ~/data/remote
 dvc remote list
 # In addition to local remote folders, we can use
 # real remote storage: S3, GDrive, etc.
+# Check how config file changed
+less .dvc/config
 
 # 2. Track files
 dvc add sample.csv
@@ -630,7 +638,7 @@ dvc push
 dvc pull
 
 # 5. Change a dataset and track changes
-vim sample.csv
+vim sample.csv # now, change something
 dvc add sample.csv
 git add sample.csv.dvc
 git commit -m "changes..."
@@ -641,7 +649,9 @@ dvc push
 dvc remote modify
 # Rename a remote
 dvc remote rename
-
+# Change a defalut remote
+dvc remote default # we get the name of the current default remote
+dvc remote default <name> # new default remote
 ```
 
 The `sample.csv.dvc` has content of the following form:
@@ -672,6 +682,296 @@ Links:
 
 #### Example: GDrive Remote Storage
 
+```python
+# To work with remote GDrive folders, we need the unique identifier,
+# ie., the last long token in the URL after the last slash '/'
+# Unique identifier: <UNIQUEID>
+# Additionally, dvc-gdrive must be installed (see above)
+dvc remote add driveremote gdrive://<UNIQUEID>
+dvc remote modify driveremote gdrive_acknowledge_abuse true
+# Check how config file changes
+less .dvc/config
+
+# Push to the gdrive remote
+# Since the local remote is the default,
+# we need to specify the new drive remote
+dvc push --remote driveremote
+# We open the prompted URL and log in to Google
+# or are redirected to a log in window.
+# If a verification code is given on the web
+# we paste it back on the terminal
+# Now, in GDrive, we should see version files
+
+# If we do dvc puc´sh,
+# it pushes to the default remote,
+# which is usually the local remote! 
+dvc push
+
+# We can change the default remote
+# to be a cloud storage
+dvc remote list # we get the list of all remotes: localremote, driveremote
+dvc remote default # we get the name of the current default remote
+dvc remote default driveremote # new default remote
+```
+
+### 3.4 Pipelines with DVC
+
+DVC also handles Direct Acyclic Graph (DAG) pipelines, like MLflow. In such pipelines, the output of a stage is the input of a next stage.
+
+To that end, we need to create:
+
+- `dvc.yaml`: where the stages or components of the pipeline are defined. This file is generated when we execute a stage with `dvc run`, as shown below.
+- `params.yaml`: where the parameters are defined. We need to manually define this file manually; then, we can use the parameters defined in it as follows:
+
+```python
+import yaml
+from yaml import CLoader as Loader
+
+with open("./params.yaml", "rb") as f:
+    params = yaml.load(f, Loader=Loader)
+
+my_param = params["my_param"]
+```
+
+To create a pipeline stage, we need to execute `dvc run` as follows:
+
+```bash
+dvc run -n  clean_data \ # stage name, as defined in dvc.yaml
+            -p param \ # parameter param defined in params.yaml
+            -d clean.py -d data/data.csv \ # dependencies: files required to run stage
+            -o data/clean_data.csv \ # output artifact directory + name
+            python clean.py data/data.csv # command to execute the stage
+
+# This command will create the dvc.yaml file
+# with the stage clean_data
+```
+
+The only files we need to version control are `dvc.yaml` and `params.yaml`. With them, we have the pipeline, and we can track and reproduce it.
+
+```bash
+git add dvc.yaml params.yaml
+git commit -m "adding dvc pipeline files"
+```
+
+Important links:
+
+- [Creating pipelines](https://dvc.org/doc/start/data-management/data-pipelines)
+- [Running pipelines](https://dvc.org/doc/command-reference/run)
+
+#### Exercise: Defining a Pipeline
+
+In the folder [`./lab/dvc_test`](./lab/dvc_test), the following files are added:
+
+- `fake_data.csv`: fake dataset.
+- `prepare.py`: it prepares the fake dataset by scaling the features.
+- `train.py`: it trains a logistic regression model with the prepared fake dataset.
+
+The exercise consists in 
+
+1. creating the two stages of the pipeline using DVC
+2. and reading the hyperparameters used in `train.py` from `params.yaml`.
+
+In the following, the file contents are provided.
+
+`fake_data.csv`
+
+```
+feature,label
+3,0
+4,0
+5,0
+7,1
+8,1
+1,0
+9,1
+10,1
+2,0
+2,0
+3,0
+4,1
+1,0
+0,1
+8,1
+10,0
+7,1
+6,1
+5,0
+```
+
+Python files:
+
+```python
+### prepare.py
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+
+df = pd.read_csv("./fake_data.csv")
+
+X = df["feature"].values
+y = df["label"].values
+
+scaler = MinMaxScaler()
+X = scaler.fit_transform(X.reshape(-1, 1))
+print(X)
+
+np.savetxt("X.csv", X)
+np.savetxt("y.csv", y)
+
+### train.py
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
+
+X = np.loadtxt("X.csv")
+y = np.loadtxt("y.csv")
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=23
+)
+
+lr = LogisticRegression(C=1.0)
+lr.fit(X_train.reshape(-1, 1), y_train)
+
+preds = lr.predict(X_test.reshape(-1, 1))
+f1 = f1_score(y_test, preds)
+print(f"F1 score: {f1:.4f}")
+
+```
+
+##### Solution
+
+First, after creating the files, we need to properly 
+
+```bash
+# Create the files
+# and version-control them properly
+git add prepare.py train.py
+dvc add fake_data.csv # fake_data.csv.dvc is created
+git add fake_data.csv.dvc .gitignore # we ignore fake_data.csv
+git commit -m "adding first version"
+dvc remote default # make sure which default remote we're using
+dvc push
+```
+
+Then, we create `param.yaml`:
+
+```
+C: 1.0
+```
+
+And modify `train.py`:
+
+```python
+import yaml
+from yaml import CLoader as Loader
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import f1_score
+
+with open("./params.yaml", "rb") as f:
+    params = yaml.load(f, Loader=Loader)
+
+X = np.loadtxt("X.csv")
+y = np.loadtxt("y.csv")
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=23
+)
+
+lr = LogisticRegression(C=params["C"])
+lr.fit(X_train.reshape(-1, 1), y_train)
+
+preds = lr.predict(X_test.reshape(-1, 1))
+f1 = f1_score(y_test, preds)
+print(f"F1 score: {f1:.4f}")
+```
+
+Finally, we create/run the pipeline stages as follows:
+
+```bash
+# Version-control params.yaml
+git add params.yaml train.py
+git commit -m "add params + use it ni train.py"
+
+# Stage 1: prepare
+# The outputs are automatically added to .gitignore
+dvc run -n prepare \
+        -d fake_data.csv -d prepare.py \
+        -o X.csv -o y.csv \
+        python ./prepare.py
+
+# Stage 2: train, with the modified script
+dvc run -n train \
+        -d X.csv -d y.csv -d train.py \
+        -p C \ # NOTE we're using the param C from params.yaml
+        python ./train.py
+
+# The first command generates dvc.yaml & dvc.lock
+# and the second updates them
+# We need to track those files
+git add dvc.lock dvc.yaml
+# The outputs are added to .gitignore;
+# they don't have a .dvc file, but that's ok
+# because they stage outputs!
+# Then, we push
+dvc push
+```
+
+### 3.5 Experiment Tracking with DVC
+
+We can run several experiments with varied hyperparameters using DVC. To that end, first we need to define an `evaluate` stage which uses a model pickle which was the output of the stage `train`. The `evaluate` stage creates a metric `validation.json`, which is the output of our validation/evaluation script. The stage generation command is the following:
+
+```bash
+dvc run -n evaluate \
+        -d validate.py -d model.pkl \
+        -M validation.json \
+        python validate.py model.pkl validation.json
+
+# To see the metrics we can either open validation.json
+# or execute the following command
+dvc metrics show
+```
+
+We can use the same strategy to output plots as metrics, too. In order to dump JSON files:
+
+```python
+import json
+
+metrics = dict()
+metrics['m1'] = 0.99 # e.g., accuracy
+metrics['m2'] = 0.79 # e.g., F1
+
+with open ('./validation.json') as f:
+    json.dump(metrics, f)
+```
+
+Then, to run **experiments**, we execute the following:
+
+```bash
+# param is a generic parameter defined in params.yaml
+# which is presumably used in the train stage.
+# Thus, this command executes the complete pipeline with
+# the manually defined param value and
+# outputs the metric associated to the 
+dvc exp run --set-param param=100
+```
+
+Each experiment is given a unique name to ultimately choose the best one; we commit the best experiment. To compare experiments:
+
+```bash
+dvc exp diff
+dvc exp show # a nice table is shown
+```
+
+Important links:
+
+- [DVC Metrics, parameters, plots](https://dvc.org/doc/start/data-management/metrics-parameters-plots)
+- [DVC Experiments](https://dvc.org/doc/start/experiment-management/experiments)
 
 ## 4. CI/CD
 
