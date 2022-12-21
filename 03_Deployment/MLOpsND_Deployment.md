@@ -1061,12 +1061,15 @@ Practical definitions:
 
 ### 4.3 Continuous Integration with Github Actions
 
+See this file:
 
+[`github_ci_cd_actions_howto.md`](https://github.com/mxagar/cicd_guide/blob/master/github_ci_cd_actions_howto.md)
 
 ### 4.4 Continuous Deployment with Heroku
 
+See this file:
 
-
+[`github_ci_cd_actions_howto.md`](https://github.com/mxagar/cicd_guide/blob/master/github_ci_cd_actions_howto.md)
 
 ## 5. API Deployment with FastAPI
 
