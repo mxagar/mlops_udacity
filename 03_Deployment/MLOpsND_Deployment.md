@@ -47,7 +47,14 @@ No guarantees.
       - [Exercise: Defining a Pipeline](#exercise-defining-a-pipeline)
         - [Solution](#solution)
     - [3.5 Experiment Tracking with DVC](#35-experiment-tracking-with-dvc)
-  - [4. CI/CD](#4-cicd)
+  - [4. CI/CD: Continuous Integration and Continuous Deployment](#4-cicd-continuous-integration-and-continuous-deployment)
+    - [4.1 Software Engineering Principles: Automation, Testing, Versioning](#41-software-engineering-principles-automation-testing-versioning)
+      - [Automation](#automation)
+      - [Testing - in the Context of Machine Learning](#testing---in-the-context-of-machine-learning)
+      - [Versioning](#versioning)
+    - [4.2 Continuous Integration and Continuous Delivery: Definition](#42-continuous-integration-and-continuous-delivery-definition)
+    - [4.3 Continuous Integration with Github Actions](#43-continuous-integration-with-github-actions)
+    - [4.4 Continuous Deployment with Heroku](#44-continuous-deployment-with-heroku)
   - [5. API Deployment with FastAPI](#5-api-deployment-with-fastapi)
   - [6. Project](#6-project)
 
@@ -973,7 +980,91 @@ Important links:
 - [DVC Metrics, parameters, plots](https://dvc.org/doc/start/data-management/metrics-parameters-plots)
 - [DVC Experiments](https://dvc.org/doc/start/experiment-management/experiments)
 
-## 4. CI/CD
+## 4. CI/CD: Continuous Integration and Continuous Deployment
+
+There are many software engineering principles, like the SOLID principles:
+
+- Single responsibility: every class/function should do only one thing.
+- Open-closed: software should be open to extension but closed to modification.
+- Liskov substitution: functions that use pointers to base classes should be able to use derived classes.
+- Interface segregation: clients should not be forced to depend upon interfaces that they don't use.
+- Dependency inversion: depend upon abstractions, not concretions.
+
+In this section, the following principles are worked:
+
+1. Automation
+2. Testing, specifically, how it applies to automation
+3. Versioning, specifically, how it applies to machine learning
+
+Thanks to them, the following is achieved:
+
+- **Continuous Integration**, using Github Actions
+- **Continuous Deployment**, using Heroku
+
+### 4.1 Software Engineering Principles: Automation, Testing, Versioning
+
+#### Automation
+
+Everything that can be automated, should be, because we safe time!
+
+The principle of **Don't Repeat Yourself (DRY)** is a subset of the **Automation** principle.
+
+Examples:
+
+- Code formatting: [black](https://black.readthedocs.io/en/stable/)
+- Pre-commit hooks: for instance, we set up that our code formatter runs prior to committing, every time we execute `git commit`
+- Editor features: for instance, remove EOL (end of line) symbol from scripts.
+
+Links on git hooks:
+
+- [Git Hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks)
+- [`https://pre-commit.com/`](https://pre-commit.com/)
+
+#### Testing - in the Context of Machine Learning
+
+Testing is like using seat belts.
+
+Tests:
+
+- Ensure that the code behaves as expected.
+- Ensure that changes in the code don't alter its behavior unexpectedly.
+- Build trust in our code.
+
+In machine learning, tests can be:
+
+- deterministic: e.g., number of features
+- indeterministic / stochastic: e.g, mean of a feature
+
+Interesting links:
+
+- [Effective testing for machine learning systems](https://www.jeremyjordan.me/testing-ml/)
+- [How to Trust Your Deep Learning Code](https://krokotsch.eu/posts/deep-learning-unit-tests/)
+- [Unit Testing for Data Scientists](https://towardsdatascience.com/unit-testing-for-data-scientists-dc5e0cd397fb)
+- [Great Expectations: Tools for Testing ML Datasets](https://greatexpectations.io/)
+
+#### Versioning
+
+Versioning is essential to track compatibilities and dependencies; necessary if we work in a team.
+
+Semantic versioning: `Major.Minor.Patch`:
+
+- Major: API changes
+- Minor: backward compatible
+- Patch: bugs fixed, minor features added
+
+### 4.2 Continuous Integration and Continuous Delivery: Definition
+
+Practical definitions:
+
+- Continuous Integration = Automated Testing. In other words, we make sure that any change we implement can be integrated in the code base without breaking it, i.e., the new implementations are integrable. CI makes possible to deploy our code any time, i.e., continuous deployment!
+- Continuous Deployment = Deploy code/applications verified by CI automatically, without time gaps from the implementation integration. That way, the latest version of an app is always available to the users.
+
+### 4.3 Continuous Integration with Github Actions
+
+
+
+### 4.4 Continuous Deployment with Heroku
+
 
 
 
