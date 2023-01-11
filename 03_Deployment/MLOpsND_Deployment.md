@@ -11,6 +11,14 @@ The nanodegree is composed of four modules:
 
 Each module has a folder with its respective notes. This folder and file refer to the **third** module: **Deploying a Scalable ML Pipeline in Production**.
 
+I have extended this module with material from other courses:
+
+- [Udacity Data Science Nanodegree](https://www.udacity.com/course/data-scientist-nanodegree--nd025); repository: [data_science_udacity](https://github.com/mxagar/data_science_udacity).
+- [Deployment of Machine Learning Models](https://www.udemy.com/course/deployment-of-machine-learning-models) by Soledad Galli & Christopher Samiullah; repository: [deploying-machine-learning-models](https://github.com/mxagar/deploying-machine-learning-models).
+- [Complete Tensorflow 2 and Keras Deep Learning Bootcamp](https://www.udemy.com/course/complete-tensorflow-2-and-keras-deep-learning-bootcamp/) J.M. Portilla; repository: [data_science_python_tools](https://github.com/mxagar/data_science_python_tools/tree/main/19_NeuralNetworks_Keras)
+
+Although I provide the links to the repositories with other notes, everything is self-contained here, too.
+
 Mikel Sagardia, 2022.  
 No guarantees.
 
@@ -55,6 +63,9 @@ No guarantees.
     - [4.2 Continuous Integration and Continuous Delivery: Definition](#42-continuous-integration-and-continuous-delivery-definition)
     - [4.3 Continuous Integration with Github Actions](#43-continuous-integration-with-github-actions)
     - [4.4 Continuous Deployment with Heroku](#44-continuous-deployment-with-heroku)
+      - [Introduction to Heroku](#introduction-to-heroku)
+      - [Continuous Deployment to Heroku: Demo](#continuous-deployment-to-heroku-demo)
+    - [4.5 Deployment to Render Cloud Platform](#45-deployment-to-render-cloud-platform)
   - [5. API Deployment with FastAPI](#5-api-deployment-with-fastapi)
   - [6. Project](#6-project)
 
@@ -1067,9 +1078,111 @@ See this file:
 
 ### 4.4 Continuous Deployment with Heroku
 
-See this file:
+#### Introduction to Heroku
 
-[`github_ci_cd_actions_howto.md`](https://github.com/mxagar/cicd_guide/blob/master/github_ci_cd_actions_howto.md)
+Heroku is a cloud Platform-as-a-Service (PaaS). See my brief notes on [cloud computing](https://github.com/mxagar/deep_learning_udacity/blob/main/06_Deployment/DLND_Deployment.md#12-cloud-computing) service model types:
+
+- Software as a Service (SaaS): Google Docs, GMail; as opposed to software as a product, in SaaS the application is on the cloud and we access it via browser. The user has the unique responsibility of the login and the administration of the application and the content.
+- Platform as a Service (PaaS): Heroku; we can use PaaS to e-commerce websites, deploy an app which is reachable via web or a REST API, etc. usually, easy deployments at the application level are done. Obviously, the user that deploys the application has more responsibilities.
+- Infrastructure as a Service (IaaS): AWS EC2; they offer virtual machines on which the user needs to do everything: virtual machine provisioning, networking, app deployment, etc.
+
+Some alternatives to Heroku, which has become now a paid service:
+
+- Elastic Beanstalk (AWS)
+- Digital Ocean App Platform
+- [Render](https://render.com/): there is a section on it below: [4.5 Deployment to Render Cloud Platform](#45-deployment-to-render-cloud-platform); it's suggested by Udacity as an alternative to Heroku since Heroku removed the free tier (on November 28, 2022).
+
+Heroku in a nutshell:
+
+- Heroku has two important elements tha are referred constantly:
+  - **Dyno**: a lightweight container where the app is deployed; these containers can easily scale. There are several dyno types: eco, basic, standard, etc. 
+  - **Slug**: the complete app (pipeline, etc.) an its dependencies; usually there's a limit of 500 MB, but we can leverage dvc to downloaded pipelines/artifacts.
+- You need at least the **Eco subscription** (5 USD/month) and you get 1,000 dyno hours; eco dynos sleep when inactive.
+- In this section, we'll use 1 web dyno to run the API.
+- A `Procfile` contains the instructions to run the app, e.g.: `web: uvicorn main:app`
+  - `web`: dyno type configuration
+  - `uvicorn`: command to run; [Uvicorn](https://www.uvicorn.org/) is a python-based web server package, i.e., we create a web server which runs the application we want, specified below
+  - `main:app`: the app to execute has the name `app` and is located in `main.py` 
+
+Relevant links:
+
+- [Getting Started on Heroku with Python](https://devcenter.heroku.com/articles/getting-started-with-python)
+- [Dynos and the Dyno Manager](https://devcenter.heroku.com/articles/dynos)
+- [Dyno Types](https://devcenter.heroku.com/articles/dyno-types)
+
+#### Continuous Deployment to Heroku: Demo
+
+In this section, I started creating the repository [vanilla_deployments](https://github.com/mxagar/vanilla_deployments) and its associated Heroku app.
+
+Basic notions of CD in Heroku:
+
+- Heroku has multiple deployment options: Git (Github or Heroku Git), Docker; we'll use Github here.
+- Interestingly, we can perform continuous deployment if we use the Git option: we connect our git repo to Heroku and we have a continuous delivery.
+- Furthermore, we can couple our CI (Github Actions) with the CD (Deployment to Heroku): we can specify that the deployment occurs only when tests are successful.
+- Be mindful of the **slug** limits = The app and all its dependencies:
+  - It has a limit of 500 MB: code, pipeline, data, everything needs to fit in that limit!
+  - We can trim unnecessary files by adding them to the file `.slugignore`
+  - However, we can use dvc to download larger data files
+
+To create a slug/app, we can work with the CLI or using the GUI.
+Example pf creating a **slug/app** with the GUI and the repository [vanilla_deployments](https://github.com/mxagar/vanilla_deployments):
+
+- Log in to Heroku (we need to have an account and a subscription)
+- New: Create new app (Europe / US)
+- Select name, e.g., `vanilla-deployment-test`
+- Deployment method: we choose `Github`
+  - Connect to Github, authorize / grant access
+  - Select repository: `vanilla_deployments`
+  - Connect
+- Automatic deploys
+  - Choose branch: `main` (or another)
+  - Wait for CI to pass before deploy
+  - Enable automatic deploys: every time we push to the branch and tests pass, the code is deployed on Heroku
+- Then, the app will be deployed automatically right away; however, note that:
+  - If we have no `Procfile`, the slug will be deployed, but nothing will happen (a default blank app is launched).
+  - If we have no executable code, nothing will happen (a default blank app is launched).
+
+We can **check the Heroku app in the web GUI**: We select the app in the main dashboard and:
+
+- Open App: App management dashboard is shown
+- More > View logs: logs of deployment are shown
+  - If we have no `Procfile`, the slug will be deployed, but nothing will happen (a default blank app is launched); the logs will reflect that
+
+**Apps vs. Pipelines:**
+
+- A Pipeline is a group of apps that run the same code.
+- A pipeline has four stages:
+  - Development
+  - Review
+  - Staging
+  - Production
+- Main use case for a pipeline: throughly test an app before deployment. Example:
+  - > A developer creates a pull request to make a change to the codebase.
+  - > Heroku automatically creates a review app for the pull request, allowing developers to test the change.
+  - > When the change is ready, it’s merged into the codebase’s master branch.
+  - > The master branch is automatically deployed to the pipeline’s staging app for further testing.
+  - > When the change is ready, a developer promotes the staging app to production, making it available to the app’s end users.
+- The idea is that we automate all this process; e.g., when pushed to the master branch, a stage app is created, etc.
+
+Relevant links:
+
+- [Heroku Limits](https://devcenter.heroku.com/articles/limits)
+- [Slug Compiler](https://devcenter.heroku.com/articles/slug-compiler)
+- [Heroku Pipelines vs. Apps](https://devcenter.heroku.com/articles/pipelines)
+
+### 4.5 Deployment to Render Cloud Platform
+
+Heroku removed the free tier in November 28, 2022. Therefore, Udacity suggested an alternative to Heroku: [Render](https://render.com/). Render offers many services:
+
+- Static websites
+- Web services
+- PostgreSQL
+- Cron Jobs
+- etc.
+
+This section is a tutorial on how to deploy a PostgreSQL web app using Render. The tutorial uses the following example repository from Udacity: [render-cloud-example](https://github.com/udacity/render-cloud-example).
+
+For now, I leave the tutorial in the following PDF, without summarizing it here: [`Udacity_Render_Tutorial.pdf`](Udacity_Render_Tutorial.pdf).
 
 ## 5. API Deployment with FastAPI
 
