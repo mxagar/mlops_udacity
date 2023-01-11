@@ -20,3 +20,7 @@ linux_bash_howto.txt
 linux_bash_howto_examples.sh
 gitlab_ci_cd_howto.md
 test_actions
+19_NeuralNetworks_Keras
+deploying-machine-learning-models
+ml_deployment_guide
+vanilla_deployments
