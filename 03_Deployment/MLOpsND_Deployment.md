@@ -67,7 +67,18 @@ No guarantees.
       - [Continuous Deployment to Heroku: Demo](#continuous-deployment-to-heroku-demo)
     - [4.5 Deployment to Render Cloud Platform](#45-deployment-to-render-cloud-platform)
   - [5. API Deployment with FastAPI](#5-api-deployment-with-fastapi)
-  - [6. Project](#6-project)
+    - [5.1 Review of Python Type Hints](#51-review-of-python-type-hints)
+    - [5.2 Fundamentals of FastAPI](#52-fundamentals-of-fastapi)
+      - [Basic Example](#basic-example)
+      - [Core Features of FastAPI](#core-features-of-fastapi)
+      - [Example/Demo Using the App Above](#exampledemo-using-the-app-above)
+      - [Example/Demo: Variable Paths and Testing](#exampledemo-variable-paths-and-testing)
+    - [5.3 Local API Testing](#53-local-api-testing)
+    - [5.4 Heroku Revisited](#54-heroku-revisited)
+    - [5.5 Live API Testing](#55-live-api-testing)
+    - [5.6 Extra](#56-extra)
+  - [6. Project: Deploying a Model with FastAPI to Heroku](#6-project-deploying-a-model-with-fastapi-to-heroku)
+  - [7. Excurs: Docker and AWS EC2](#7-excurs-docker-and-aws-ec2)
 
 ## 1. Introduction to Deployment
 
@@ -1186,6 +1197,331 @@ For now, I leave the tutorial in the following PDF, without summarizing it here:
 
 ## 5. API Deployment with FastAPI
 
+Topics covered:
 
-## 6. Project
+- Review of Python Type Hints
+- Fundamentals of FastAPI: many FastAPI features rely on type-hints
+- Local API Testing
+- Heroku Revisited: Deployment of our REST API app
+- Live API Testing
 
+### 5.1 Review of Python Type Hints
+
+Python is dynamically typed, i.e., the variable types are inferred during runtime. However, we can use type hints, which make possible applications that need to know the variable types before execution. FastAPI is one of them. However, note that type hints are hints, not declarations! Thus, no type enforcing/checking is done with the hints
+
+```python
+from typing import Union
+
+## Basic structure
+# a: Union[list,str]: a should be a string or a list; e.g., a path or many paths
+# b: int = 5: b is an integer with default value 5
+# -> str: foo returns a string
+def foo(a: Union[list,str], b: int = 5) -> str:
+    pass
+
+## Example
+def greeting(name: str) -> str:
+    return 'Hello ' + name
+
+## Type aliases
+Vector = list[float]
+
+def scale(scalar: float, vector: Vector) -> Vector:
+    return [scalar * num for num in vector]
+
+# passes type checking; a list of floats qualifies as a Vector.
+new_vector = scale(2.0, [1.0, -4.2, 5.4])
+
+## Complex type signatures with aliases
+
+from collections.abc import Sequence
+
+ConnectionOptions = dict[str, str]
+Address = tuple[str, int]
+Server = tuple[Address, ConnectionOptions]
+
+def broadcast_message(message: str, servers: Sequence[Server]) -> None:
+    pass
+
+## New types
+
+from typing import NewType
+
+UserId = NewType('UserId', int)
+some_id = UserId(524313)
+
+def get_user_name(user_id: UserId) -> str:
+    pass
+
+
+## User-defined classes
+
+from typing import TypeVar, Generic
+from logging import Logger
+
+T = TypeVar('T')
+
+# Generic[T] as a base class defines that the class LoggedVar
+# takes a single type parameter T .
+# This also makes T valid as a type within the class body.
+# Note also that we use the class name Logger as type!
+class LoggedVar(Generic[T]):
+    def __init__(self, value: T, name: str, logger: Logger) -> None:
+        self.name = name
+        self.logger = logger
+        self.value = value
+
+```
+
+More on type hints:
+
+- [PEP 483 – The Theory of Type Hints](https://peps.python.org/pep-0483/)
+- [Support for type hints](https://docs.python.org/3/library/typing.html)
+
+
+### 5.2 Fundamentals of FastAPI
+
+FastAPI creates REST APIs very fast using type hints; it's fast for development and execution.
+
+FastAPI is only for APIs, in contrast to Flask; thus, it's optimized for that application.
+
+#### Basic Example
+
+Example of a basic implementation in `main.py`:
+
+```python
+from fastapi import FastAPI
+
+# Instantiate the app.
+# The app is an instantiation of FastAPI class,
+# which is our application that contains the API
+app = FastAPI()
+
+# Define a GET on the specified endpoint.
+# If we open the browser at localhost:8000
+# we'll get {"greeting": "Hello World!"}
+@app.get("/") # root domain: /
+async def say_hello():
+    return {"greeting": "Hello World!"}
+```
+
+To run the app, start the `uvicorn` web server:
+
+```bash
+uvicorn main:app --reload
+
+# uvicorn: lightweight and fast web server
+# main:app: start the FastAPI application called app located in main.py
+# --reload: regenerate the API if main.py is modified
+```
+
+Then, open a browser and go to any of the defined endpoints; at the moment, there's only one endpoint:
+
+```bash
+# localhost, port 8000
+http://127.0.0.1:8000
+
+# we get {"greeting": "Hello World!"}
+```
+
+#### Core Features of FastAPI
+
+- FastAPI uses type hints and also the [pydantic](https://docs.pydantic.dev/) package:
+  - Type hints allow to automatically create documentation
+  - Pydantic is used for defining data models, which are used to define request bodies with built-in parsing and validation
+- Default API documentation is in `http://127.0.0.1:8000/docs`
+- Using pydantic and type hints, API URL path parameters are seamlessly converted from URL strings to the desired types:
+  - The API URL path structure is defined in the decorator.
+  - The backend python function that follows the decorator catches the parsed parameters defined in the decorator and uses them as we want inside the function.
+  - To create optional query parameters use `Optional` from the `typing` module.
+
+A simple `main.py` which creates a FastAPI app using pydantic data models is the following:
+
+```python
+# Import Union since our Item object
+# will have tags that can be strings or a list.
+from typing import Union 
+
+from fastapi import FastAPI
+# BaseModel from Pydantic is used to define data objects.
+from pydantic import BaseModel
+
+# Declare the data object (class) with its components and their type.
+# For that, we derive from the pydantic BaseModel.
+# This is what Pydantic is for.
+# Note: we can also use default values, as done with type hints!
+class TaggedItem(BaseModel):
+    # These key names will be used in the JSON/dict generated later
+    name: str
+    tags: Union[str, list] # a string or a list
+    item_id: int
+
+app = FastAPI()
+
+# This allows sending of data (our TaggedItem) via POST to the API.
+# Note we are creating a POST method, in contrast
+# to the previous GET.
+# The endpoint is http://127.0.0.1:8000/items
+# This piece of code converts the HTML body into a JSON
+# with the structure defined in TaggedItem!
+# Also, the pydantic data model definitions
+# will be used to geenrate automatically the API documentation in
+# http://127.0.0.1:8000/docs
+@app.post("/items/")
+async def create_item(item: TaggedItem):
+    return item
+
+# A GET (query) that in this case just returns the item_id we pass, 
+# but a future iteration may link the item_id here
+# to the one we defined in our TaggedItem.
+@app.get("/items/{item_id}")
+async def get_items(item_id: int, count: int = 1):
+    return {"fetch": f"Fetched {count} of {item_id}"}
+# Notes:
+# 1. Parameters not declared in the path
+# are automatically query parameters: count
+# 2. Parameters with curly braces in the path
+# are expected as parameters in the function
+# definition, and FastAPI takes care of converting
+# the path element to the funtion parameter.
+# 3. If we want to make quer parameters optional
+# we can use the Optional typing module
+# 
+# Example above:
+# http://127.0.0.1:8000/items/42/?count=1
+# This returns {"fetch": "Fetched 1 of 42"}
+```
+
+More on FastAPI and REST APIs:
+
+- [FastAPI docs](https://fastapi.tiangolo.com/)
+- [Best practices for REST API design](https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/)
+
+
+#### Example/Demo Using the App Above
+
+This demo is in the reporsitory [mlops-udacity-deployment-demos](https://github.com/mxagar/mlops-udacity-deployment-demos), folder `core_features_of_fast_api`. That folder contains the following files:
+
+- `main.py` (same code as above)
+- `sample_request.py` (content added below)
+
+To start the REST API app:
+
+```bash
+# Start uvicorn web server
+# running app from main.py
+# and reload if we change our code
+uvicorn main:app --reload
+```
+
+Then, we can play with the API app using the browser:
+
+- `http://127.0.0.1:8000/docs`: documentation; **we can test the endpoints here!**
+- `http://127.0.0.1:8000/items/42/?count=2`: we get `{"fetch": "Fetched 2 of 42"}`
+- `http://127.0.0.1:8000/items`: error, because it tries to POST without an input JSON. To use this endpoint, we can employ `sample_request.py`, which uses the `resquest` module to POST/send a JSON object to the API endpoint. Another option would be to use `curl`, as shown in the documentation.
+
+The content of `sample_request.py`:
+
+```python
+import requests
+import json
+
+data = {"name": "Hitchhiking Kit",
+        "tags": ["book", "towel"],
+        "item_id": 23}
+
+r = requests.post("http://127.0.0.1:8000/items/", data=json.dumps(data))
+
+print(r.json())
+# Note that the dictionary keys are the ones used in the pydantic BaseModel
+# {'name': 'Hitchhiking Kit', 'tags': ['book', 'towel'], 'item_id': 23}
+```
+
+To use the POST method with `sample_request.py`, we run
+
+```bash
+python sample_request.py
+```
+
+#### Example/Demo: Variable Paths and Testing
+
+This demo is in the reporsitory [mlops-udacity-deployment-demos](https://github.com/mxagar/mlops-udacity-deployment-demos), folder `params_inputs_FastAPI`. That folder contains the following files:
+
+- `bar.py`
+- `test_bar.py`
+
+... with the following content:
+
+```python
+## bar.py
+
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Value(BaseModel):
+    value: int
+
+# Use POST action to send data to the server
+# path: user defined path value
+# query: query value
+# body: data sent in the post, body; type is Value
+@app.post("/{path}")
+async def exercise_function(path: int, query: int, body: Value):
+    return {"path": path, "query": query, "body": body}
+
+## test_bar.py
+
+import json
+from fastapi.testclient import TestClient
+
+# We import the app from bar.py
+from bar import app
+
+# Test client from FastAPI
+client = TestClient(app)
+
+def test_post():
+    data = json.dumps({"value": 10})
+    r = client.post("/42?query=5", data=data)
+    print(r.json())
+    # {'path': 42, 'query': 5, 'body': {'value': 10}}
+    assert r.json()["path"] == 42
+    assert r.json()["query"] == 5
+    assert r.json()["body"] == {"value": 10}
+
+if __name__ == '__main__':
+
+    test_post()
+
+```
+
+To run everything:
+
+```bash
+# To start the web server with the REST API app
+uvicorn bar:app --reload
+
+# In another terminal session, we can test.
+# HOWEVER, we don't need the server running
+# to use the FastAPI TestClient!
+# That makes possible to perform integration tests
+# before deployment! 
+python test_bar.py
+```
+
+### 5.3 Local API Testing
+
+I'm here.
+
+### 5.4 Heroku Revisited
+
+### 5.5 Live API Testing
+
+### 5.6 Extra
+
+
+## 6. Project: Deploying a Model with FastAPI to Heroku
+
+## 7. Excurs: Docker and AWS EC2
