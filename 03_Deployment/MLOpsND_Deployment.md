@@ -74,11 +74,15 @@ No guarantees.
       - [Example/Demo Using the App Above](#exampledemo-using-the-app-above)
       - [Example/Demo: Variable Paths and Testing](#exampledemo-variable-paths-and-testing)
     - [5.3 Local API Testing](#53-local-api-testing)
-    - [5.4 Heroku Revisited](#54-heroku-revisited)
-    - [5.5 Live API Testing](#55-live-api-testing)
+      - [Exercise: Testing Example](#exercise-testing-example)
+    - [5.4 Heroku Revisited: Procfiles and CLI](#54-heroku-revisited-procfiles-and-cli)
+      - [Heroku CLI](#heroku-cli)
+    - [5.5 Live API Testing with Requests Package](#55-live-api-testing-with-requests-package)
+      - [Exercise/Demo: Data Ingestion and Error Handling with FastAPI](#exercisedemo-data-ingestion-and-error-handling-with-fastapi)
     - [5.6 Extra](#56-extra)
   - [6. Project: Deploying a Model with FastAPI to Heroku](#6-project-deploying-a-model-with-fastapi-to-heroku)
   - [7. Excurs: Docker and AWS EC2](#7-excurs-docker-and-aws-ec2)
+  - [8. Summary Project: Vanilla Deployments](#8-summary-project-vanilla-deployments)
 
 ## 1. Introduction to Deployment
 
@@ -1106,14 +1110,18 @@ Some alternatives to Heroku, which has become now a paid service:
 Heroku in a nutshell:
 
 - Heroku has two important elements tha are referred constantly:
-  - **Dyno**: a lightweight container where the app is deployed; these containers can easily scale. There are several dyno types: eco, basic, standard, etc. 
+  - **Dyno**: a lightweight container where the app is deployed; these containers can easily scale. There are several dyno types: eco, basic, standard, etc.
   - **Slug**: the complete app (pipeline, etc.) an its dependencies; usually there's a limit of 500 MB, but we can leverage dvc to downloaded pipelines/artifacts.
-- You need at least the **Eco subscription** (5 USD/month) and you get 1,000 dyno hours; eco dynos sleep when inactive.
+- You need at least the **Eco subscription** (5 USD/month for 1000h Dyno hours/month) and you get 1,000 dyno hours; eco dynos sleep when inactive.
 - In this section, we'll use 1 web dyno to run the API.
 - A `Procfile` contains the instructions to run the app, e.g.: `web: uvicorn main:app`
   - `web`: dyno type configuration
   - `uvicorn`: command to run; [Uvicorn](https://www.uvicorn.org/) is a python-based web server package, i.e., we create a web server which runs the application we want, specified below
-  - `main:app`: the app to execute has the name `app` and is located in `main.py` 
+  - `main:app`: the app to execute has the name `app` and is located in `main.py`
+- **IMPORTANT**: since we run everything in dyno containers, everything works under the principles of containerization:
+  - Statelessness: no data stored or cached; if we want to access/save anything, we need to connect to external services.
+  - Processes are disposable: they can be started/stopped at any time. That enables fault tolerance, rapid inteation and scalability.
+  - Heroku breaks the app lifecycle into 3 stages: **build, release, run**; we're always in one of the three.
 
 Relevant links:
 
@@ -1491,10 +1499,14 @@ def test_post():
     assert r.json()["query"] == 5
     assert r.json()["body"] == {"value": 10}
 
+# We don't really need the below function
+# invokation, because we can use pytest!
+# FastAPI TestClient works with pytest!
+'''
 if __name__ == '__main__':
 
     test_post()
-
+'''
 ```
 
 To run everything:
@@ -1507,21 +1519,401 @@ uvicorn bar:app --reload
 # HOWEVER, we don't need the server running
 # to use the FastAPI TestClient!
 # That makes possible to perform integration tests
-# before deployment! 
-python test_bar.py
+# before deployment!
+pytest
 ```
 
 ### 5.3 Local API Testing
 
-I'm here.
+As introduced in the example above, we can write tests using the FastAPI `TestClient` class in a `test_app.py` file and run them using `pytest`. That means we don't need to start the web server with `uvicorn` for testing.
 
-### 5.4 Heroku Revisited
+The `TestClient` behaves like the `requests` module which is interacting with a web server.
 
-### 5.5 Live API Testing
+That integration with `pytest` and the functionality offered by `TestClient` make possible to perform CI with FastAPI.
+
+Another example:
+
+```python
+# The `TestClient` behaves like the `requests` module
+# which is interacting with a web server
+from fastapi.testclient import TestClient
+
+# Import our app from main.py
+from main import app
+
+# Instantiate the testing client with our app
+client = TestClient(app)
+
+# Write tests using the same syntax
+# as with the requests module
+def test_api_locally_get_root():
+    r = client.get("/")
+    # 200: successful
+    assert r.status_code == 200
+```
+
+Interesting links:
+
+- [FastAPI Testing Tutorial](https://fastapi.tiangolo.com/tutorial/testing/)
+
+#### Exercise: Testing Example
+
+This exercise is in the reporsitory [mlops-udacity-deployment-demos](https://github.com/mxagar/mlops-udacity-deployment-demos), folder `local_api_testing`. That folder contains the following files:
+
+- `foo.py`
+- `test_foo.py`
+
+
+```python
+### foo.py
+
+from fastapi import FastAPI
+
+app = FastAPI()
+
+@app.get("/items/{item_id}")
+async def get_items(item_id: int, count: int = 1):
+    return {"fetch": f"Fetched {count} of {item_id}"}
+
+### test_foo.py
+from fastapi.testclient import TestClient
+
+# Import the app from foo.py
+from foo import app
+
+# Instantiate the TestClient with the app
+client = TestClient(app)
+
+# Recommendation: write a test for each
+# endpoint usage case;
+# that facilitates rapid identification of what exactly
+# is failing when a test breaks
+def test_get_path():
+    r = client.get("/items/42")
+    assert r.status_code == 200
+    assert r.json() == {"fetch": "Fetched 1 of 42"}
+
+def test_get_path_query():
+    r = client.get("/items/42?count=5")
+    assert r.status_code == 200
+    assert r.json() == {"fetch": "Fetched 5 of 42"}
+
+def test_get_malformed():
+    r = client.get("/items")
+    assert r.status_code != 200
+
+```
+
+To test it:
+
+```bash
+pytest
+```
+
+### 5.4 Heroku Revisited: Procfiles and CLI
+
+Since we run everything in dyno containers in Heroku, everything works under the principles of containerization:
+
+- Statelessness: no data stored or cached; if we want to access/save anything, we need to connect to external services.
+- Processes are disposable: they can be started/stopped at any time. That enables fault tolerance, rapid inteation and scalability.
+- Heroku breaks the app lifecycle into 3 stages: **build, release, run**; we're always in one of the three.
+
+We introduced a simple `Procfile`; however we can/should make it more advanced:
+
+```bash
+# Simple:
+# - web: type of dyno
+# - uvicorn: run web server
+# - main:app: from main.py execute app
+# - reload: if anything changes in the code update running instance
+web: uvicorn main:app --reload
+
+# Advanced: we specify
+# - host 0.0.0.0: listen on any network interface
+# - port: system specified in PORT, and if not define, port 5000 used
+# In Unix ${VARIABLE:-default} is used to assigna ddefault value
+# if VARIABLE is not set
+web: uvicorn main:app --host=0.0.0.0 --port=${PORT:-5000}
+```
+
+![Heroku Procfile](./pics/heroku_procfile.jpg)
+
+Interesting links:
+
+- [Heroku's Runtime Principles](https://devcenter.heroku.com/articles/runtime-principles)
+- [Difference between 127.0.0.1 and 0.0.0.0](https://superuser.com/questions/949428/whats-the-difference-between-127-0-0-1-and-0-0-0-0/949522#949522)
+
+#### Heroku CLI
+
+To install the Heroku CLI, follow the [instructions](https://devcenter.heroku.com/articles/heroku-cli):
+
+```bash
+# Mac
+brew tap heroku/brew && brew install heroku
+# Linux
+curl https://cli-assets.heroku.com/install.sh | sh
+```
+
+Then, we can check that `heroku` was installed and log in:
+
+```bash
+# Check heroku is installed by requesting the version
+heroku --version
+# Log in: browser is opened and we log in
+heroku login
+# Log in: credentials entered via CLI
+heroku login -i
+```
+
+The following commands show how to use the Heroku CLI (assuming we're logged in). I have the app files in the local copy of the repository [mlops-udacity-deployment-demos](https://github.com/mxagar/mlops-udacity-deployment-demos), folder `heroku_cli_demo`:
+
+`~/git_repositories/mlops-udacity-deployment-demos/heroku_cli_demo`
+
+But the files are not committed to that repo; instead, a new repo is created and connected to Heroku.
+
+This app creation replicates approximately what is done in [Section 4.4](#44-continuous-deployment-with-heroku) using the GUI, but this time via the CLI. Another difference is that we don' link an existing Github repository, but link a local git repository to the Heroku git. After executing what comes in the following, we can open the Heroku web URL and interact with the app deployed on that endpoint.
+
+```bash
+
+cd /path/to/project # go to local project folder
+cd .../heroku_cli_demo
+heroku # list of all possible commands
+
+# Create a Heroku app via the CLI
+# We specify it's a python app, but that's not necessary
+# becuse Heroku will detect it automatically.
+# In the case of python apps, it looks for
+# requirements.txt and setup.py
+heroku create <name-of-the-app> --buildpack heroku/python
+heroku create heroku-cli-demo --buildpack heroku/python
+# https://heroku-cli-demo.herokuapp.com/ | https://git.heroku.com/heroku-cli-demo.git
+
+# List all our apps
+heroku apps
+
+# View our app buildpacks
+heroku buildpacks --app <name-of-the-app>
+heroku buildpacks --app heroku-cli-demo # heroku/python
+
+# We should have/create in our folder the following files:
+# - Procfile (example content above)
+# - requirements.txt (uvicorn, fastapi, requests)
+# - runtime.txt (if we'd like to specify a concrete Python version)
+# - main.py (FastAPI app)
+# - test_main.py (optional)
+# If we're not in a git repo, we can start one.
+git init
+git add *
+git commit -m "initial commit"
+
+# Connect the local repo to heroku git
+heroku git:remote --app <name-of-the-app>
+heroku git:remote --app heroku-cli-demo
+# set git remote heroku to https://git.heroku.com/heroku-cli-demo.git
+
+# Push our branch to main
+# This automatically will launch our app!
+# After pushing, the app is executed
+git push heroku main
+
+# We can enter the app's virtual machine/container
+heroku run bash --app <name-of-the-app>
+heroku run bash --app heroku-cli-demo
+# Now we're inside and can run bash commands
+# pwd: /app
+# ls: we see our files: main.py, Procfile, etc.
+# vi
+# ...
+exit # exit the heroku app container
+
+# On the Heroku web interface
+# we select the app and go to its settings
+# There we see in the Domains section the endpoint URL
+#   https://heroku-cli-demo.herokuapp.com
+# Note that we can use our own domains!
+# We can interact with it as we have defined: we open a browser and insert
+#   https://heroku-cli-demo.herokuapp.com/items/42
+# We get
+#   {"fetch":"Fetched 1 of 42"}
+
+# If smoething goes wrong
+heroku logs --tail
+
+# We can see whether the app is running on the web GUI
+# dashboard:
+# - The hexagon is darker
+# - If we click on the app, we see ON in the Overview Dyno
+# If we want to SHUT DOWN the app, we can either
+# 1. Do it via the web GUI: select app, Resources:
+# click on the  command pencil and switch it OFF
+# 2. Or via the CLI
+heroku ps:scale web=0 --app <name-of-the-app>
+heroku ps:scale web=0 --app heroku-cli-demo
+
+# If we want to RESTART the app, we can either 
+# 1. Do it via the web GUI: select app, Resources:
+# click on the command pencil and switch it ON
+# 2. Or via the CLI
+heroku ps:scale web=1 --app <name-of-the-app>
+heroku ps:scale web=1 --app heroku-cli-demo
+
+```
+
+Interesting links:
+
+- [Heroku CLI Plugins](https://devcenter.heroku.com/articles/heroku-cli#useful-cli-plugins)
+- [Heroku CLI commands](https://devcenter.heroku.com/articles/heroku-cli-commands)
+
+### 5.5 Live API Testing with Requests Package
+
+Interacting with REST APIs consists in interacting with HTTP methods: POST, GET, DELETE, PUT ([CRUD](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete)).
+
+Fortunately, Python has a very useful package `requests` which simplifies that.
+
+```python
+import requests
+import json
+
+# POST: send a package to endpoint URL
+# In this example we don't send any data
+response = requests.post('/url/to/query')
+
+# POST: send a package to endpoint URL
+# In this example (1) we perform authentification
+# (2) and we send a JSON of a dictionary (it could be a list, too,
+# or a variable)
+data = {'a': 1, 'b': 2}
+response = requests.post('/url/to/query/',
+                         auth=('usr', 'pass'),
+                         data=json.dumps(data))
+
+# Now we print the response
+print(response.status_code) # 200 means everything OK
+print(response.json()) # 
+
+```
+
+Interesting links:
+
+- [Requests Documentation](https://requests.readthedocs.io/en/latest/)
+- [List of public APIs](https://github.com/public-apis/public-apis)
+- [On Authentication: API Keys vs. OAuth (Access Token)](https://stackoverflow.com/questions/38047736/oauth-access-token-vs-api-key)
+
+#### Exercise/Demo: Data Ingestion and Error Handling with FastAPI
+
+This exercise/demo is not deployed, but is run locally. It can be found in the repository [mlops-udacity-deployment-demos](https://github.com/mxagar/mlops-udacity-deployment-demos), folder `API_Deployment_with_FastAPI_FinalExercise`.
+
+The folder contains two files:
+
+- `main.py`
+- `test_main.py`
+
+The task is the following:
+
+>  Create an API that implements a POST method called `ingest_data` that accepts this body parameter:
+>
+> ```
+> from pydantic import BaseModel
+> 
+> class Data(BaseModel):
+>     feature_1: float
+>     feature_2: str
+> ```
+>
+> Imagine that this data is going to be used in a machine learning model. We want to make sure that the data is in the ranges we expect so our model doesn't output bogus results. To accomplish this, use `raise` with the `HTTPException` that is included with FastAPI. Your exception should raise an appropriate status code and tell the users what the issue is. For `feature_1` assure that the input is non-negative. For `feature_2` assure that there are 280 characters or less.
+> 
+> Then, use FastAPI's test client to ensure that your API gives the expected status code when it fails.
+> 
+> Lastly, add some metadata to your API including a name, brief description, and a version number.
+> 
+> Hint: FastAPI includes `HTTPException`. 
+> 
+> For more information on FastAPI's error handling see [here](https://fastapi.tiangolo.com/tutorial/handling-errors/) and for metadata see [here](https://fastapi.tiangolo.com/tutorial/metadata/).
+
+Solution:
+
+```python
+### main.py
+
+from typing import Union, List
+# We can aise HTML exceptions with fastapi.HTTPException
+from fastapi import FastAPI, HTTPException
+
+from pydantic import BaseModel
+
+# Data structure definition
+class Data(BaseModel):
+    feature_1: float
+    feature_2: str
+
+# FastAPI app: 
+app = FastAPI(
+    title="Exercise API",
+    description="An API that demonstrates checking the values of your inputs.",
+    version="1.0.0",
+)
+
+# POST method that checks the input data
+@app.post("/data/")
+async def ingest_data(data: Data):
+    # feature_1 must be positive
+    if data.feature_1 < 0:
+        raise HTTPException(status_code=400, detail="feature_1 needs to be above 0.")
+    # feature_2 must be larger shorter than 280
+    if len(data.feature_2) > 280:
+        raise HTTPException(
+            status_code=400,
+            detail=f"feature_2 needs to be less than 281 characters. It has {len(data.feature_2)}.",
+        )
+    # If everything correct, return the same input data
+    return data
+
+# To run this:
+#   uvicorn main:app --reload
+# To test:
+#   pytest
+
+### test_main.py
+
+import json
+from fastapi.testclient import TestClient
+
+from main import app
+
+client = TestClient(app)
+
+# This will pass
+def test_post_data_success():
+    data = {"feature_1": 1, "feature_2": "test string"}
+    r = client.post("/data/", data=json.dumps(data))
+    assert r.status_code == 200
+
+# This will pass, but note that we check we get a 400 status code (error)
+def test_post_data_fail():
+    data = {"feature_1": -5, "feature_2": "test string"}
+    r = client.post("/data/", data=json.dumps(data))
+    assert r.status_code == 400
+
+# To run this:
+# pytest
+
+```
+
+Interesting links:
+
+- [Error handling with FastAPI](https://fastapi.tiangolo.com/tutorial/handling-errors)
+- [Metadata with FastAP](https://fastapi.tiangolo.com/tutorial/metadata/)
 
 ### 5.6 Extra
 
-
 ## 6. Project: Deploying a Model with FastAPI to Heroku
 
+See project repository: [census_model_deployment_fastapi](https://github.com/mxagar/census_model_deployment_fastapi).
+
 ## 7. Excurs: Docker and AWS EC2
+
+## 8. Summary Project: Vanilla Deployments
+
+I have create a repository which summarizes the usage different techniques and technologies for deployment of machine learning models/pipelines.
+
+See project repository: [vanilla_deployments](https://github.com/mxagar/vanilla_deployments).
