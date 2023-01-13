@@ -24,3 +24,4 @@ test_actions
 deploying-machine-learning-models
 ml_deployment_guide
 vanilla_deployments
+census_model_deployment_fastapi
