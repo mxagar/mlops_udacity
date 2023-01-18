@@ -1199,7 +1199,7 @@ Heroku removed the free tier in November 28, 2022. Therefore, Udacity suggested 
 - Cron Jobs
 - etc.
 
-This section is a tutorial on how to deploy a PostgreSQL web app using Render. The tutorial uses the following example repository from Udacity: [render-cloud-example](https://github.com/udacity/render-cloud-example).
+This section is a tutorial on how to deploy a PostgreSQL web app using Render. The tutorial uses the following example repository from Udacity: [render-cloud-example](https://github.com/udacity/render-cloud-example). I have copied the example to the module exercise repository, too: [mlops-udacity-deployment-demos](https://github.com/mxagar/mlops-udacity-deployment-demos).
 
 For now, I leave the tutorial in the following PDF, without summarizing it here: [`Udacity_Render_Tutorial.pdf`](Udacity_Render_Tutorial.pdf).
 
@@ -1404,6 +1404,7 @@ More on FastAPI and REST APIs:
 
 - [FastAPI docs](https://fastapi.tiangolo.com/)
 - [Best practices for REST API design](https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/)
+- [Pydantic schema](https://fastapi.tiangolo.com/tutorial/schema-extra-example/)
 
 
 #### Example/Demo Using the App Above
