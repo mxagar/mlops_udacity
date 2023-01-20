@@ -55,6 +55,7 @@ No guarantees.
       - [Exercise: Defining a Pipeline](#exercise-defining-a-pipeline)
         - [Solution](#solution)
     - [3.5 Experiment Tracking with DVC](#35-experiment-tracking-with-dvc)
+    - [3.6 DVC Integration with Heroku and the FastAPI App](#36-dvc-integration-with-heroku-and-the-fastapi-app)
   - [4. CI/CD: Continuous Integration and Continuous Deployment](#4-cicd-continuous-integration-and-continuous-deployment)
     - [4.1 Software Engineering Principles: Automation, Testing, Versioning](#41-software-engineering-principles-automation-testing-versioning)
       - [Automation](#automation)
@@ -1012,6 +1013,31 @@ Important links:
 
 - [DVC Metrics, parameters, plots](https://dvc.org/doc/start/data-management/metrics-parameters-plots)
 - [DVC Experiments](https://dvc.org/doc/start/experiment-management/experiments)
+
+### 3.6 DVC Integration with Heroku and the FastAPI App
+
+> To use DVC in Heroku, we need to give Heroku the ability to pull in data from DVC upon app start up. We will install a [buildpack](https://elements.heroku.com/buildpacks/heroku/heroku-buildpack-apt) that allows the installation of apt-files and then define the `Aptfile` that contains a path to DVC. I.e., in the CLI run:
+
+```bash
+heroku buildpacks:add --index 1 heroku-community/apt
+```
+
+> Then, in your root project folder create a file called `Aptfile` that specifies the release of DVC you want installed, e.g.
+  
+    https://github.com/iterative/dvc/releases/download/2.0.18/dvc_2.0.18_amd64.deb
+ 
+> Add the following code block to your `main.py`in which the FastAPI app is defined:
+
+```python
+import os
+
+if "DYNO" in os.environ and os.path.isdir(".dvc"):
+    os.system("dvc config core.no_scm true")
+    if os.system("dvc pull") != 0:
+        exit("dvc pull failed")
+    os.system("rm -r .dvc .apt/usr/lib/dvc")
+```
+
 
 ## 4. CI/CD: Continuous Integration and Continuous Deployment
 
