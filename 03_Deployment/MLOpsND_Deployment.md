@@ -376,20 +376,27 @@ Links to the demo/exercise:
 - Exercise/demo notebook: [`aequitas_demo.ipynb`](https://github.com/mxagar/mlops-udacity-deployment-demos/blob/main/aequitas_demo.ipynb).
 - A more detailed official demo of Aequitas with the COMPAS dataset: [compas_demo.ipynb](https://github.com/dssg/aequitas/blob/master/docs/source/examples/compas_demo.ipynb)
 
-
 The [COMPAS dataset](https://github.com/dssg/aequitas/tree/master/examples) is used in the example; it contains a **recidivism** score, i.e., the tendency of a convict to re-offend. We have the 7214 observations with these 6 columns:
 
 - `entity_id`
-- `score`: score by the model, required by Aequitas.
-- `label_value`: true label, required by Aequitas.
 - `race`
 - `sex`
 - `age_cat`
+- `score`: score by the model, required by Aequitas. **This are our model predictions stored as `score`.**
+- `label_value`: true label, required by Aequitas. **This is our target renamed as `label_value`.**
 
-:warning: Note: as far as I understand, Aequitas works with binary classifications?
+Notes:
+
+- I understand that Aequitas works primarily with binary classification problems?
+- I needed to remove numerical variables and work only with categoricals.
+- This is an ad-hoc dataset; to see how this would work on another example, check [census_notebook.ipynb](https://github.com/mxagar/census_model_deployment_fastapi/blob/master/census_notebook.ipynb).
 
 The package seems a little bit dense and complex to understand straightforwardly, because it provides many statistics. Go to the notebook to understand how to make a basic use of Aequitas; the general workflow is:
 
+- We preprocess the dataset (not shown in the COMPAS demo):
+    - Convert 'object' columns str.
+    - Create `score` and `label_value` columns.
+    - See [census_notebook.ipynb](https://github.com/mxagar/census_model_deployment_fastapi/blob/master/census_notebook.ipynb) for an example.
 - We create a `Group()` object, from which we extract a crosstab; the crosstab contains the data slicing statistics: for each categorical feature and each level/group in them we have a slice/group for which the statistics are computed.
 - We create a `Bias()` object and compute disparities of the slices wrt. a reference group. We specify the reference group in `ref_groups_dict`; if we don't specify any reference group, the majority group/slice is taken. We get the same statistics as before + disparity statistics, differences wrt. reference group
 - We compute the `Fairness()`: We get the same statistics as before + Fairnes true/false parity values.
