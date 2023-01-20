@@ -86,7 +86,7 @@ conda activate ds
 			- [Pytest Parametrization](#pytest-parametrization)
 			- [Pytest Shared Namespace with `conftest.py`](#pytest-shared-namespace-with-conftestpy)
 			- [Pytest Shared Namespace with Cache](#pytest-shared-namespace-with-cache)
-		- [Test-Drivem Development (TDD)](#test-drivem-development-tdd)
+		- [Test-Driven Development (TDD)](#test-driven-development-tdd)
 		- [More Notes on Testing](#more-notes-on-testing)
 		- [Logging](#logging)
 		- [Model Drift](#model-drift)
@@ -1220,7 +1220,7 @@ Tests should be:
 We should write and integrate tests into our deployment, for instance with [pytest](https://docs.pytest.org/en/7.1.x/) or [unittest](https://docs.python.org/3/library/unittest.html). We use pytest because it is more powerful:
 
 - much simpler to use: just use the keyword `assert`
-- it finds test files and functions automatically: they need to start witg `test_`
+- it finds test files and functions automatically: they need to start with `test_`
 - backwards compatible with the standard `unittest`: we can easily migrate projects
 - it has **fixtures**, explained below
 
@@ -1233,7 +1233,7 @@ pip install -U pytest
 
 Unless we define in the python file pytest decorators (e.g., fixtures and parametrization, explained below), we don't need to import anything: we just need to:
 
-- **name testing files and functions with preceding** `test_*`; that's the dafault, we can change that in the [configuration](https://docs.pytest.org/en/latest/example/pythoncollection.html); if we repeat the name for functions, pytest doesn't complain
+- **name testing files and functions with preceding** `test_*`; that's the default, we can change that in the [configuration](https://docs.pytest.org/en/latest/example/pythoncollection.html); if we repeat the name for functions, pytest doesn't complain
 - use in the test functions `assert`, `isinstance(value, type)` or the like to check values
 - run `pytest` in the terminal: all tests are automatically found and executed! Optionally, use the `-vv` flag for verbose outputs
 - NOTE: if we don't name the file `test_*`, we need to run `pytest filename.py`
@@ -1558,7 +1558,7 @@ def test_function_two():
     '''
 ```
 
-### Test-Drivem Development (TDD)
+### Test-Driven Development (TDD)
 
 Test-Driven Development (TDD) consists in writing tests before even programming: we write tests for test or edge cases, which will fail, but as we write our code, they all should end up working.
 
