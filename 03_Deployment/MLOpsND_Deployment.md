@@ -74,16 +74,18 @@ No guarantees.
       - [Core Features of FastAPI](#core-features-of-fastapi)
       - [Example/Demo Using the App Above](#exampledemo-using-the-app-above)
       - [Example/Demo: Variable Paths and Testing](#exampledemo-variable-paths-and-testing)
+      - [Events: startup and shutdown](#events-startup-and-shutdown)
+      - [Parsing Field Names](#parsing-field-names)
     - [5.3 Local API Testing](#53-local-api-testing)
       - [Exercise: Testing Example](#exercise-testing-example)
     - [5.4 Heroku Revisited: Procfiles and CLI](#54-heroku-revisited-procfiles-and-cli)
       - [Heroku CLI](#heroku-cli)
     - [5.5 Live API Testing with Requests Package](#55-live-api-testing-with-requests-package)
       - [Exercise/Demo: Data Ingestion and Error Handling with FastAPI](#exercisedemo-data-ingestion-and-error-handling-with-fastapi)
-    - [5.6 Extra](#56-extra)
+    - [5.6 Extra: Udemy Course Notes](#56-extra-udemy-course-notes)
   - [6. Project: Deploying a Model with FastAPI to Heroku](#6-project-deploying-a-model-with-fastapi-to-heroku)
-  - [7. Excurs: Docker and AWS EC2](#7-excurs-docker-and-aws-ec2)
-  - [8. Summary Project: Vanilla Deployments](#8-summary-project-vanilla-deployments)
+  - [7. Excurs: Docker and AWS ECS](#7-excurs-docker-and-aws-ecs)
+    - [7.1 Dockerization](#71-dockerization)
 
 ## 1. Introduction to Deployment
 
@@ -1064,7 +1066,7 @@ Thanks to them, the following is achieved:
 
 #### Automation
 
-Everything that can be automated, should be, because we safe time!
+Everything that can be automated, should be, because we save time!
 
 The principle of **Don't Repeat Yourself (DRY)** is a subset of the **Automation** principle.
 
@@ -1144,8 +1146,8 @@ Heroku in a nutshell:
 
 - Heroku has two important elements tha are referred constantly:
   - **Dyno**: a lightweight container where the app is deployed; these containers can easily scale. There are several dyno types: eco, basic, standard, etc.
-  - **Slug**: the complete app (pipeline, etc.) an its dependencies; usually there's a limit of 500 MB, but we can leverage dvc to downloaded pipelines/artifacts.
-- You need at least the **Eco subscription** (5 USD/month for 1000h Dyno hours/month) and you get 1,000 dyno hours; eco dynos sleep when inactive.
+  - **Slug**: the complete app (pipeline, etc.) an its dependencies; usually there's a limit of 500 MB, but we can leverage dvc to download pipelines/artifacts.
+- You need at least the **Eco subscription** (5 USD/month for 1000 Dyno hours/month) and you get 1,000 dyno hours; eco dynos sleep when inactive.
 - In this section, we'll use 1 web dyno to run the API.
 - A `Procfile` contains the instructions to run the app, e.g.: `web: uvicorn main:app`
   - `web`: dyno type configuration
@@ -1164,7 +1166,7 @@ Relevant links:
 
 #### Continuous Deployment to Heroku: Demo
 
-In this section, I started creating the repository [vanilla_deployments](https://github.com/mxagar/vanilla_deployments) and its associated Heroku app.
+In this section, I started creating the repository `vanilla_deployments` and its associated Heroku app (note that I erased the repository later).
 
 Basic notions of CD in Heroku:
 
@@ -1177,7 +1179,7 @@ Basic notions of CD in Heroku:
   - However, we can use dvc to download larger data files
 
 To create a slug/app, we can work with the CLI or using the GUI.
-Example pf creating a **slug/app** with the GUI and the repository [vanilla_deployments](https://github.com/mxagar/vanilla_deployments):
+Example pf creating a **slug/app** with the GUI and the repository `vanilla_deployments` (non-existent/removed now):
 
 - Log in to Heroku (we need to have an account and a subscription)
 - New: Create new app (Europe / US)
@@ -1208,7 +1210,7 @@ We can **check the Heroku app in the web GUI**: We select the app in the main da
   - Review
   - Staging
   - Production
-- Main use case for a pipeline: throughly test an app before deployment. Example:
+- Main use case for a pipeline: thoroughly test an app before deployment. Example:
   - > A developer creates a pull request to make a change to the codebase.
   - > Heroku automatically creates a review app for the pull request, allowing developers to test the change.
   - > When the change is ready, it’s merged into the codebase’s master branch.
@@ -1312,6 +1314,17 @@ class LoggedVar(Generic[T]):
         self.logger = logger
         self.value = value
 
+# We can also use classes defined in the code or imported
+from typing import Dict, List, Optional, Tuple # Sequence
+import pandas as pd
+
+class Parameters:
+    pass
+
+# df uses a pandas dataframe
+# Parameters is our custom defined class
+def extract_parameters(df: pd.DataFrame) -> Parameters:
+    pass
 ```
 
 More on type hints:
@@ -1425,7 +1438,7 @@ async def get_items(item_id: int, count: int = 1):
 # are expected as parameters in the function
 # definition, and FastAPI takes care of converting
 # the path element to the funtion parameter.
-# 3. If we want to make quer parameters optional
+# 3. If we want to make query parameters optional
 # we can use the Optional typing module
 # 
 # Example above:
@@ -1433,12 +1446,61 @@ async def get_items(item_id: int, count: int = 1):
 # This returns {"fetch": "Fetched 1 of 42"}
 ```
 
-More on FastAPI and REST APIs:
+Pydantic models/classes are very useful for many scenarios; for instance, we can check/validate the conformity of a data structure by casting it to be the Pydantic model; also we can define a Pydantic model object and export it to be a dictionary. See the example code:
+
+```python
+from pydantic import BaseModel, ValidationError
+from typing import Dict, List
+
+class MyStructure(BaseModel):
+    name: str
+    id: int
+    metadata: Dict
+    data: List[float]
+
+# Validation example
+errors = None
+try:
+    MyStructure(
+        name = "test",
+        id = 1,
+        metadata = {"date": '2023-01', "n": 10}
+        data = [1.0, 2.0, 3.0]
+    )
+except ValidationError as error:
+    print("Invalid MyStructure definition.")
+    errors = error.json()
+
+# Casting example: convert dict to MyStructure
+d_in = {
+        "name": "test",
+        "id": 1,
+        "metadata": {"date": '2023-01', "n": 10}
+        "data": [1.0, 2.0, 3.0]
+       }
+errors = None
+structure = dict()
+try:
+    structure = MyStructure(**d_in)
+except ValidationError as error:
+    print("d_in is not conformant with MyStructure.")
+    errors = error.json()
+
+# Casting example: convert MyStructure to dict
+d_out = structure.dict()
+try:
+    assert d_in == d_out
+except AssertionError as error:
+    print("Different in/out data.")
+
+```
+
+More on Pydantic, FastAPI and REST APIs:
 
 - [FastAPI docs](https://fastapi.tiangolo.com/)
 - [Best practices for REST API design](https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/)
 - [Pydantic schema](https://fastapi.tiangolo.com/tutorial/schema-extra-example/)
-
+- [Exporting pydantic models as dictionaries](https://docs.pydantic.dev/usage/exporting_models/)
 
 #### Example/Demo Using the App Above
 
@@ -1557,6 +1619,98 @@ uvicorn bar:app --reload
 pytest
 ```
 
+#### Events: startup and shutdown
+
+In ML APIs, it is convenient to load the inference artifacts before we get any endpoint invokation. One way of doing that is to declare/get the objects in the global scope:
+
+```python
+# Load model pipeline: model + data processing
+model, processing_parameters, config = load_pipeline(config_filename=CONFIG_FILENAME)
+
+# FastAPI app
+app = FastAPI(title="Project Name")
+
+@app.get("/")
+def index():
+    pass
+# ...
+
+```
+
+However, a better approach is to use the event handling from FastAPI; with it we can define what should happen on "startup" or "shutdown" events of the API. Official documentation link: [Events: startup - shutdown](https://fastapi.tiangolo.com/advanced/events/).
+
+For instance, we could define the following function:
+
+```python
+@app.on_event("startup")
+async def startup_event(): 
+    global model, processing_parameters, config
+    # EITHER
+    model = pickle.load(open("./exported_artifacts/model.pkl", "rb"))
+    processing_parameters = pickle.load(open("./exported_artifacts/processing_parameters.pkl", "rb"))
+    config = yaml.safe_load(open("./config.yaml", "r"))
+    # OR
+    model, processing_parameters, config = load_pipeline(config_filename="./config.yaml")
+```
+
+See how this is implemented in the module project: [census_model_deployment_fastapi/api.py](https://github.com/mxagar/census_model_deployment_fastapi/blob/master/api/app.py).
+
+#### Parsing Field Names
+
+Sometimes field names that need to be parsed by Pydantic models have undesired characters, like blank spaces or hyphens. One way to tackle this is to `replace()` those characters with valid ones (e.g., `_`) in the `validate_data()` function that usually comes after fetching the data. That is the way how it is handled in the module project, [census_model_deployment_fastapi/core.py](https://github.com/mxagar/census_model_deployment_fastapi/blob/master/census_salary/core/core.py):
+
+```python
+# Rename column names
+# - remove preceding blank space: ' education' -> 'education', etc.
+# - replace - with _: 'education-num' -> 'education_num', etc.
+#df_validated = df.copy()
+#data = df.copy()
+df = df.rename(
+    columns={col_name: col_name.replace(' ', '') for col_name in df.columns})
+df = df.rename(
+    columns={col_name: col_name.replace('-', '_') for col_name in df.columns})
+
+# Remove blank spaces from categorical column fields
+categorical_cols = list(df.select_dtypes(include = ['object']))
+for col in categorical_cols:
+    df[col] = df[col].str.replace(' ', '')
+```
+
+**However, a better and recommended approach consists in making use of an `alias_generator`:**
+
+```python
+from pydantic import BaseModel, Field
+
+def hyphen_to_underscore(field_name):
+    return f"{field_name}".replace("_", "-")
+
+class Input(BaseModel):
+    age: int = Field(..., example=45)
+    capital_gain: int = Field(..., example=2174)
+    capital_loss: int = Field(..., example=0)
+    education: str = Field(..., example="Bachelors")
+    education_num: int = Field(..., example=13)
+    fnlgt: int = Field(..., example=2334)
+    hours_per_week: int = Field(..., example=60)
+    marital_status: str = Field(..., example="Never-married")
+    native_country: str = Field(..., example="Cuba")
+    occupation: str = Field(..., example="Prof-specialty")
+    race: str = Field(..., example="Black")
+    relationship: str = Field(..., example="Wife")
+    sex: str = Field(..., example="Female")
+    workclass: str = Field(..., example="State-gov")
+
+    class Config:
+        alias_generator = hyphen_to_underscore
+        allow_population_by_field_name = True
+```
+
+Official documentation links with more information:
+
+- [Pydantic Model Config](https://docs.pydantic.dev/usage/model_config/)
+- [Pydantic Schema](https://docs.pydantic.dev/usage/schema/)
+- [Pydantic alias generator](https://docs.pydantic.dev/usage/model_config/#alias-generator)
+
 ### 5.3 Local API Testing
 
 As introduced in the example above, we can write tests using the FastAPI `TestClient` class in a `test_app.py` file and run them using `pytest`. That means we don't need to start the web server with `uvicorn` for testing.
@@ -1664,7 +1818,7 @@ web: uvicorn main:app --reload
 
 # Advanced: we specify
 # - host 0.0.0.0: listen on any network interface
-# - port: system specified in PORT, and if not define, port 5000 used
+# - port: system specified in PORT, and if not defined, port 5000 used
 # In Unix ${VARIABLE:-default} is used to assigna ddefault value
 # if VARIABLE is not set
 web: uvicorn main:app --host=0.0.0.0 --port=${PORT:-5000}
@@ -1672,10 +1826,16 @@ web: uvicorn main:app --host=0.0.0.0 --port=${PORT:-5000}
 
 ![Heroku Procfile](./pics/heroku_procfile.jpg)
 
+Other files that Heroku can use:
+
+- `runtime.txt`: Python version
+- `requirements.txt`: Dependencies that are installed
+
 Interesting links:
 
 - [Heroku's Runtime Principles](https://devcenter.heroku.com/articles/runtime-principles)
 - [Difference between 127.0.0.1 and 0.0.0.0](https://superuser.com/questions/949428/whats-the-difference-between-127-0-0-1-and-0-0-0-0/949522#949522)
+- [Heroku Procfile](https://devcenter.heroku.com/articles/procfile)
 
 #### Heroku CLI
 
@@ -1749,6 +1909,10 @@ heroku git:remote --app heroku-cli-demo
 # This automatically will launch our app!
 # After pushing, the app is executed
 git push heroku main
+# BUT, if we'd like to push just a folder inside our git repo
+# we need to use a special command
+# The command is to just push the specified (sub-)directory
+git subtree push --prefix /path/to/folder heroku main
 
 # We can enter the app's virtual machine/container
 heroku run bash --app <name-of-the-app>
@@ -1770,8 +1934,8 @@ exit # exit the heroku app container
 # We get
 #   {"fetch":"Fetched 1 of 42"}
 
-# If smoething goes wrong
-heroku logs --tail
+# If smoething goes wrong: check logs of app
+heroku logs --tail [-a <app-name>]
 
 # We can see whether the app is running on the web GUI
 # dashboard:
@@ -1823,7 +1987,7 @@ response = requests.post('/url/to/query/',
 
 # Now we print the response
 print(response.status_code) # 200 means everything OK
-print(response.json()) # 
+print(response.json()) # body, content
 
 ```
 
@@ -1938,16 +2102,48 @@ Interesting links:
 - [Error handling with FastAPI](https://fastapi.tiangolo.com/tutorial/handling-errors)
 - [Metadata with FastAP](https://fastapi.tiangolo.com/tutorial/metadata/)
 
-### 5.6 Extra
+### 5.6 Extra: Udemy Course Notes
+
+The repository 
+
+[deploying-machine-learning-models](https://github.com/mxagar/deploying-machine-learning-models)
+
+contains another guide to deploy ML models, based on the Udemy course [Deployment of Machine Learning Models](https://www.udemy.com/course/deployment-of-machine-learning-models) by Soledad Galli & Christopher Samiullah.
+
+Check the [`ML_Deployment_Guide.md`](https://github.com/mxagar/deploying-machine-learning-models/blob/master/ML_Deployment_Guide.md) in there.
 
 ## 6. Project: Deploying a Model with FastAPI to Heroku
 
 See project repository: [census_model_deployment_fastapi](https://github.com/mxagar/census_model_deployment_fastapi).
 
-## 7. Excurs: Docker and AWS EC2
+I have created that repository as a template for ML pipeline deployments; thus, it contains a full realistic example. I have the impression that the lessons of this module were very simplistic; on the other hand, the project code is more complex.
 
-## 8. Summary Project: Vanilla Deployments
+Links suggested by the project reviewer:
 
-I have create a repository which summarizes the usage different techniques and technologies for deployment of machine learning models/pipelines.
+- [Managing your machine learning lifecycle with MLflow and Amazon SageMaker](https://aws.amazon.com/blogs/machine-learning/managing-your-machine-learning-lifecycle-with-mlflow-and-amazon-sagemaker/)
+- [MLflow and Azure Machine Learning](https://learn.microsoft.com/en-us/azure/machine-learning/concept-mlflow)
+- Test whether a model has been fitted or not: [Stackoverflow: What's the best way to test whether an sklearn model has been fitted?](https://stackoverflow.com/questions/39884009/whats-the-best-way-to-test-whether-an-sklearn-model-has-been-fitted)
+- [Effective testing for machine learning systems](https://www.jeremyjordan.me/testing-ml/)
+- [Machine Learning Testing: A Step to Perfection](https://serokell.io/blog/machine-learning-testing)
+- [Test-Driven Development in MLOps Part 1](https://medium.com/mlops-community/test-driven-development-in-mlops-part-1-8894575f4dec)
+- Performance monitoring in production (e.g., data slicing):
+  - [Azure: Collect data from models in production](https://learn.microsoft.com/en-us/azure/machine-learning/v1/how-to-enable-data-collection)
+  - [AWS SageMaker: Monitor models for data and model quality, bias, and explainability](https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor.html)
+- Nice model card example: [Hugging Face BERT uncased](https://huggingface.co/bert-base-uncased)
+- A similar project where DVC is used: [cliffhanger](https://github.com/theyorubayesian/cliffhanger)
+- [5 Big Differences Separating API Testing From Unit Testing](https://methodpoet.com/api-testing-vs-unit-testing/)
+- [Why is it Important to Monitor Machine Learning Models?](https://mlinproduction.com/why-is-it-important-to-monitor-machine-learning-models/)
+- [Exporting Pydantic Models as Dictionaries](https://docs.pydantic.dev/usage/exporting_models/)
+- [When Do You Use an Ellipsis in Python?](https://realpython.com/python-ellipsis/)
+- [Events: startup - shutdown](https://fastapi.tiangolo.com/advanced/events/)
 
-See project repository: [vanilla_deployments](https://github.com/mxagar/vanilla_deployments).
+## 7. Excurs: Docker and AWS ECS
+
+This contents were not included in the Udacity Nanodegree; I wrote them on my own and, in part, following the content in [deploying-machine-learning-models](https://github.com/mxagar/deploying-machine-learning-models).
+
+
+### 7.1 Dockerization
+
+[Deployment of a Census Salary Classification Model Using FastAPI](https://github.com/mxagar/census_model_deployment_fastapi).
+
+If you are interested in the automated deployment of production-ready ML pipelines packaged in APIs, check my example repository [census_model_deployment_fastapi](https://github.com/mxagar/census_model_deployment_fastapi).
