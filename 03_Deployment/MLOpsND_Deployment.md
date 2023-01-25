@@ -2130,7 +2130,7 @@ Links suggested by the project reviewer:
   - [Azure: Collect data from models in production](https://learn.microsoft.com/en-us/azure/machine-learning/v1/how-to-enable-data-collection)
   - [AWS SageMaker: Monitor models for data and model quality, bias, and explainability](https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor.html)
 - Nice model card example: [Hugging Face BERT uncased](https://huggingface.co/bert-base-uncased)
-- A similar project where DVC is used: [cliffhanger](https://github.com/theyorubayesian/cliffhanger)
+- A similar project where DVC is used: [theyorubayesian/cliffhanger](https://github.com/theyorubayesian/cliffhanger)
 - [5 Big Differences Separating API Testing From Unit Testing](https://methodpoet.com/api-testing-vs-unit-testing/)
 - [Why is it Important to Monitor Machine Learning Models?](https://mlinproduction.com/why-is-it-important-to-monitor-machine-learning-models/)
 - [Exporting Pydantic Models as Dictionaries](https://docs.pydantic.dev/usage/exporting_models/)
