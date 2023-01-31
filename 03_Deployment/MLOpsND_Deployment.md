@@ -84,8 +84,13 @@ No guarantees.
       - [Exercise/Demo: Data Ingestion and Error Handling with FastAPI](#exercisedemo-data-ingestion-and-error-handling-with-fastapi)
     - [5.6 Extra: Udemy Course Notes](#56-extra-udemy-course-notes)
   - [6. Project: Deploying a Model with FastAPI to Heroku](#6-project-deploying-a-model-with-fastapi-to-heroku)
-  - [7. Excurs: Docker and AWS ECS](#7-excurs-docker-and-aws-ecs)
-    - [7.1 Dockerization](#71-dockerization)
+  - [7. Excurs: Dockerization](#7-excurs-dockerization)
+    - [7.1 Docker Images and Containers](#71-docker-images-and-containers)
+    - [7.2 Dockerfile: Image Definition](#72-dockerfile-image-definition)
+    - [7.3 Building the Image and Running the Container Locally](#73-building-the-image-and-running-the-container-locally)
+      - [Docker Compose](#docker-compose)
+    - [7.3 Heroku Docker Deployment](#73-heroku-docker-deployment)
+  - [8. Excurs: Deployment to AWS ECS](#8-excurs-deployment-to-aws-ecs)
 
 ## 1. Introduction to Deployment
 
@@ -2137,13 +2142,165 @@ Links suggested by the project reviewer:
 - [When Do You Use an Ellipsis in Python?](https://realpython.com/python-ellipsis/)
 - [Events: startup - shutdown](https://fastapi.tiangolo.com/advanced/events/)
 
-## 7. Excurs: Docker and AWS ECS
+## 7. Excurs: Dockerization
 
 This contents were not included in the Udacity Nanodegree; I wrote them on my own and, in part, following the content in [deploying-machine-learning-models](https://github.com/mxagar/deploying-machine-learning-models).
 
-
-### 7.1 Dockerization
+In this section, I use the example in the module project:
 
 [Deployment of a Census Salary Classification Model Using FastAPI](https://github.com/mxagar/census_model_deployment_fastapi).
 
-If you are interested in the automated deployment of production-ready ML pipelines packaged in APIs, check my example repository [census_model_deployment_fastapi](https://github.com/mxagar/census_model_deployment_fastapi).
+### 7.1 Docker Images and Containers
+
+I have created several guides on Docker in the past which summarize how to use docker: [templates/docker](https://github.com/mxagar/templates/tree/master/docker_swarm_kubernetes). My personal files are:
+
+`~/git_repositories/templates/docker_swarm_kubernetes/`
+
+- `docker_swarm_kubernetes_howto.md`
+- `docker_course_codium.txt` (very good short course)
+- `docker_commands_summary.txt`
+
+Some concepts we need to know:
+
+- Motivation: standardization in deployment to anywhere, universal maintainability, isolation between containerized modules
+- Images: built on layers
+- Containers: instantiated images
+- Docker vs Virtual Machines; containers use the host system kernel, so they need much less resources
+- The Dockerfile: common commands
+- `docker build` (build container from image), `docker run` (execute container)
+- Registries: Dockerhub
+
+When deploying our application to Heroku, we upload/push our API code to the platform. There, an image is created and instantiated in a container that runs our application. We don't need to take care of the image, only our code.
+
+However, it is possible to create container images on our own for a more customized deployment! The idea is: we define the image of our API app and push that image to the container registry of our choice; for instance, Heroku itself, or any other cloud provider like AWS! **Containerization is a way to avoid vendor-locking: all cloud services support containers, so we are not dependent anymore!**
+  
+### 7.2 Dockerfile: Image Definition
+
+A docker image is defined by its `Dockerfile`; additionally, we need to consider the `.dockerignore` file, which is the equivalent to `.gitignore`, but when building images. The reason is because image sizes increase fast, and cloud space can become expensive.
+
+Example `Dockerfile` from [census_model_deployment_fastapi](https://github.com/mxagar/census_model_deployment_fastapi):
+
+```Dockerfile
+# We can modify image/python version with
+# docker build --build-arg IMAGE=python:3.8
+# Otherwise, default: python:3.9.16
+ARG IMAGE=python:3.9.16
+FROM $IMAGE
+
+# Create the user that will run the app
+RUN adduser --disabled-password --gecos '' ml-api-user
+
+# Create directory IN container and change to it
+WORKDIR /opt/census_model
+
+# Copy folder contents (unless the ones from .dockerignore) TO container
+ADD . /opt/census_model/
+# Install requirements
+RUN pip install --upgrade pip
+RUN pip install -r /opt/census_model/requirements.txt --no-cache-dir
+RUN pip install .
+
+# Change permissions
+RUN chmod +x /opt/census_model/run.sh
+RUN chown -R ml-api-user:ml-api-user ./
+
+# Change user to the one created
+USER ml-api-user
+
+# Expose port
+EXPOSE 8001
+
+# Run web server, started by run.sh
+CMD ["bash", "./run.sh"]
+```
+
+Example `.dockerignore` from [census_model_deployment_fastapi](https://github.com/mxagar/census_model_deployment_fastapi):
+
+```
+.git
+.gitignore
+census_notebook.ipynb
+ModelCard.md
+assets
+screenshots
+data/census.csv
+tests
+main.py
+live_api_example.py
+conda.yaml
+Procfile
+starter
+.vscode
+.pytest_cache
+.DS_Store
+.ipynb_checkpoints
+mlops_udacity
+eda_fe_summary
+customer_churn_production
+music_genre_classification
+build
+census_salary.egg*
+__pycache__
+```
+
+### 7.3 Building the Image and Running the Container Locally
+
+In order to build the image we use `docker build` and in order to run the container, `docker run`. The following commands show how this is done with the [census_model_deployment_fastapi](https://github.com/mxagar/census_model_deployment_fastapi) example:
+
+```bash
+# Build the Dockerfile to create the image
+# docker build -t <image_name[:version]> <path/to/Dockerfile>
+docker build -t census_model_api:latest .
+ 
+# Check the image is there: watch the size (e.g., ~1GB)
+docker image ls
+
+# Run the container locally from a built image
+# Recall to: forward ports (-p) and pass PORT env variable (-e)
+# Optional: 
+# -d to detach/get the shell back,
+# --name if we want to choose conatiner name (else, one randomly chosen)
+# --rm: automatically remove container after finishing (irrelevant in our case, but...)
+docker run -d --rm -p 8001:8001 -e PORT=8001 --name census_model_app census_model_api:latest
+
+# Check the API locally: open the browser
+#   http://localhost:8001
+#   Use the web API
+ 
+# Check the running containers: check the name/id of our container,
+# e.g., census_model_app
+docker container ls
+docker ps
+
+# Get a terminal into the container: in general, BAD practice
+# docker exec -it <id|name> sh
+docker exec -it census_model_app sh
+# (we get inside)
+cd /opt/census_model
+ls
+cat logs/census_pipeline.log
+exit
+
+# Stop container and remove it (erase all files in it, etc.)
+# docker stop <id/name>
+# docker rm <id/name>
+docker stop census_model_app
+docker rm census_model_app
+```
+
+#### Docker Compose
+
+In case we would like to 
+
+### 7.3 Heroku Docker Deployment
+
+Important links:
+
+- [Heroku Dyno Documentation](https://devcenter.heroku.com/articles/dynos)
+- [Heroku: Deploying with Docker](https://devcenter.heroku.com/categories/deploying-with-docker)
+- [Heroku: Container Registry & Runtime (Docker Deploys)](https://devcenter.heroku.com/articles/container-registry-and-runtime)
+- [Makefiles](https://opensource.com/article/18/8/what-how-makefile)
+
+
+## 8. Excurs: Deployment to AWS ECS
+
