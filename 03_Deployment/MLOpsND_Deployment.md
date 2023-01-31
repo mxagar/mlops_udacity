@@ -2290,7 +2290,36 @@ docker rm census_model_app
 
 #### Docker Compose
 
-In case we would like to 
+Docker-compose can be used to launch several containers; however, we can also employ it with one container as a way to document its building or running command.
+
+The following is the `docker-compose.yaml` from the [census_model_deployment_fastapi](https://github.com/mxagar/census_model_deployment_fastapi) example:
+
+```yaml
+version: '3.1'
+# Same as 
+#   docker run -p 8001:8001 -e PORT=8001 census_model_api:latest
+services:
+  census_model_api:
+    image: census_model_api:latest
+    ports:
+      - '8001:8001'
+    environment:
+      - 'PORT=8001'
+```
+
+To use it:
+
+```bash
+# Run contaner(s), detached; local docker-compose.yaml is used
+docker-compose up -d
+
+# Check containers, logs
+docker-compose ps
+docker-compose logs
+
+# Stop containers
+docker-compose down
+```
 
 ### 7.3 Heroku Docker Deployment
 
