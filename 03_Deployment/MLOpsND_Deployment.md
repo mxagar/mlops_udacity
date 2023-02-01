@@ -2331,6 +2331,8 @@ Important links:
 - [Makefiles](https://opensource.com/article/18/8/what-how-makefile)
 
 
+Heroku container registries are accessible only by the app collaborators.
+
 ```bash
 # If you haven't already, log in to your Heroku account
 # and follow the prompts to create a new SSH public key
@@ -2406,4 +2408,214 @@ heroku open --app census-salary-container
 ```
 
 ## 8. Excurs: Deployment to AWS ECS
+
+This contents were not included in the Udacity Nanodegree; I wrote them on my own and, in part, following the content in [deploying-machine-learning-models](https://github.com/mxagar/deploying-machine-learning-models).
+
+In this section, I use the example in the module project:
+
+[Deployment of a Census Salary Classification Model Using FastAPI](https://github.com/mxagar/census_model_deployment_fastapi).
+
+While Heroku is a cloud Platform-as-a-Service (PaaS), AWS ECS is an Infrastructure-as-a-Service (IaaS); therefore, we need to spend more time on the configuration of the system. See my brief notes on [cloud computing](https://github.com/mxagar/deep_learning_udacity/blob/main/06_Deployment/DLND_Deployment.md#12-cloud-computing) service model types. However, we have more flexibility to define and scale our application.
+
+![Cloud Service Types](./pics/I-P-SaaS_range.png)
+
+### 8.1 Launch Types and Costs
+
+We have two operation modes or launch types when using ECS:
+
+- We can start EC2 instances which run our container.
+- or use [Fargate](https://aws.amazon.com/fargate/pricing/), which is a kind of a *serverless* way of running containers. The backend provisioning, scaling, load balancing, etc. is taken care for us. It seems that using Fargate with ECS is more comfortable than spinning up an EC2 instance, because we need to configure and maintain less. In contrast, Fargate is more expensive.
+
+More information on [Amazon ECS launch types](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/launch_types.html).
+
+> With **AWS Fargate**, there are no upfront costs and you pay only for the resources you use. You pay for the amount of vCPU, memory, and storage resources consumed by your containerized applications running on [Amazon Elastic Container Service (ECS)](https://aws.amazon.com/ecs/) or [Amazon Elastic Kubernetes Service (EKS)](https://aws.amazon.com/eks/).
+
+Fargate Spot Pricing for Amazon ECS (US East Ohio):
+
+- per vCPU per hour USD 0.012144
+- per GB per hour USD 0.0013335
+
+### 8.2 Introduction to ECS
+
+ECS = Elastic Container Service; Fully managed containers.
+
+> Amazon Elastic Container Service (Amazon ECS) is a highly scalable and fast container management service that makes it easy to run, stop, and manage containers on a cluster.
+
+ECS objects have the following components, which are layered to contain one the other:
+
+- Container definition
+- Task definition (contains the previous)
+- Service (contains the previous)
+- Cluster (contains the previous)
+
+A **Task** in ECS can be any instance of containers working together. We define:
+
+- which Docker image to use as containers
+- how many containers to use in the task
+- resources of each container (CPU & memory)
+- logging configuration
+- whether the task should continue when a container finishes/fails
+- command the container should run when started
+- the number of copies (in the free tier, use 1)
+- etc.
+
+We can have (and usually do have) several tasks to form the application, each with several containers.
+
+A **Service** in ECS allows to run multiple instances of a task in an ECS cluster. If a task instance fails, another instance is launched to keep the desired amount of tasks defined.
+
+The **ECS Cluster** is the logical grouping of tasks and services. A cluster can contain tasks launched as EC2 or Fargate types/modes.
+
+If we use the Fargate launch type, many provisioning and managing tasks are automated; usually, the remaining configuration question is: *When should we put multiple containers in a task vs. deploying containers separately into several tasks?*
+
+#### Orchestration
+
+Container orchestration is all about managing the life cycle of containers. The main engines for orchestration are:
+
+- AWS ECS (Amazon): proprietary, used here, easy and integrated with other AWS services. Fully managed by AWS.
+- Docker Swarm (Docker): provided by docker; however, docker has embraced Kubernetes, too.
+- Kubernetes (Google): very powerful (more than docker swarm), but more complex to install and use. Self-managed.
+- AWS Elastic Container Service for Kubernetes (EKS): new player, fully managed Kubernetes running on AWS.
+
+#### Interesting Links
+
+- [Getting started with Amazon Elastic Container Service](https://aws.amazon.com/ecs/getting-started/)
+- [Amazon ECS task definitions](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html)
+- [Amazon ECS services](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html)
+- [Amazon ECS clusters](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/clusters.html)
+- [Amazon ECS launch types](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/launch_types.html)
+- [Amazon Elastic Kubernetes Service (EKS)(https://aws.amazon.com/eks/)
+
+### 8.3 AWS Account Setup
+
+First, we need to create an account, if we don't have one. Then, we need to create IAM role or group. IAM = Identity and Access Management. Independently of region and tier, we can create user groups and manage their permissions.
+
+By default, we access with our root account, which has all permissions, but we should avoid that: instead, we create IAM users immediately and work with them; the root account should be used only for minor management tasks. Imagine that somebody steals your root account and they start mining bitcoin!
+
+In this case, we create a **group**, which is a collection of permissions:
+
+    AWS Dashboard > IAM
+    User Groups > Create Group: ecs-admin
+    Attach permissions: Select these 3 and Create Group
+        AmazonECS_FullAccess
+        AmazonEC2ContainerRegistryFullAccess
+        IAMReadOnlyAccess
+
+Once the group is created, we can see itand its permissions. Then, we create a **user**:
+
+    AWS Dashboard > IAM
+    Users > Add users: ecs-admin
+    Enable console access
+    Add user to group: ecs-admin (the group we created previously)
+    Next, Create User
+
+Since we checked *Enable console access*, we get the credentials to access the console with the user; download the CSV `ecs-admin_credentials.csv`. Watch out: the information is shown only once on the web, so better download the CSV or copy & paste the credentials!
+    
+    Console sign-in URL
+      xxx
+    User name
+      ecs-admin
+    Console password
+      xxx
+
+Then, we need to create **access keys** for the user to allow programmatic access:
+
+    AWS Dashboard > IAM
+    Users > Select: ecs-admin
+    Security Credentials
+    Access keys > Create Access key
+      ecs-admin-access-key
+    Download CSV / Copy & Paste Credentials
+      Access key
+        xxx
+      Secret access key
+        xxx
+
+Now, we should have **two CSV files which must never be uploaded to any cloud service, and which need to be kept secure!**
+
+- `ecs-admin_credentials.csv`: console access.
+- `ecs-admin_accessKeys.csv`: access key for programmatic access.
+
+Note that the number of access keys is limited for each user; we might need to remove an old key to create a new one. Also, good practices:
+
+- Change access keys frequently.
+- **Never upload them anywhere and keep them safe!**
+
+#### Additional Notes
+
+I have more notes on AWS account setup in [`06_Deployment/DLND_Deployment.md`](https://github.com/mxagar/deep_learning_udacity/blob/main/06_Deployment/DLND_Deployment.md#2-building-a-model-using-aws-sagemaker), focusing on AWS SageMaker.
+
+Also, check: 
+
+- [How do I create and activate a new AWS account?](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/)
+- [Getting Started with AWS Identity and Access Management (IAM)](https://aws.amazon.com/iam/getting-started/)
+- [AWS Identity and Access Management Documentation](https://docs.aws.amazon.com/iam/index.html#lang/en_us)
+
+
+### 8.4 AWS CLI
+
+The AWS Command Line Interface (CLI) lets us interact with AWS via the Terminal. To use it, we need to:
+
+- install it
+- and configure it with the credentials / access key we have created.
+
+To install it, I followed [Installing or updating the latest version of the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). Concretely, I installed the PKG for Mac OS X using the GUI. After that, I checked on the Terminal:
+
+```bash
+aws --version
+# aws-cli/2.9.19 Python/3.9.11 Darwin/22.1.0 exe/x86_64 prompt/off
+```
+
+To configure it, we introduce the access key we created:
+
+```bash
+aws configure
+# AWS Access Key ID [None]: xxx
+# AWS Secret Access Key [None]: xxx
+# Default region name [None]: us-east-1
+# Default output format [None]:
+# (we can skip the last one hitting ENTER)
+
+# Check the user is configured
+# We might have several users
+aws iam list-users
+# {
+#     "Users": [
+#         {
+#             "Path": "/",
+#             "UserName": "ecs-admin",
+#             "UserId": xxx,
+#             "Arn": xxx,
+#             "CreateDate": "2023-02-01T11:11:48+00:00"
+#         }
+#     ]
+# }
+
+```
+
+#### Important Links
+
+- [Installing or updating the latest version of the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+- [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
+- [AWS CLI Reference](https://docs.aws.amazon.com/cli/latest/index.html)
+
+### 89.5 Introduction to the Elastic Container Registry (ECR)
+
+The Elastic Container Registry (ECR) is the place in AWs where we store our docker images.
+
+In order to use it, we need to create a **repository**:
+
+    AWS Dashboard > ECR: Get started / Create repository
+        Select: Private [x] / Public [ ]
+          If private, only IAM users will have access to the repository.
+        Name: xxx/census-model-api
+        Leave default
+        Create repository
+
+Now, an entry will appear in the AWS ECR dashboard in the panel Repositories (left/hamburger menu): our repository. An important property of it is the **URI**: we will use it to push our images.
+
+The idea is to:
+
+- Build the image locally.
+- Push the built image to the repository.
+- Run the container on AWS.
 
