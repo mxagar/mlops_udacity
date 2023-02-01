@@ -2331,5 +2331,79 @@ Important links:
 - [Makefiles](https://opensource.com/article/18/8/what-how-makefile)
 
 
+```bash
+# If you haven't already, log in to your Heroku account
+# and follow the prompts to create a new SSH public key
+heroku login
+
+# You must have Docker set up locally to continue.
+# You should see output when you run this command.
+docker ps
+
+# Now you can sign into Heroku Container Registry:
+# registry.heroku.com
+heroku container:login
+
+# Create the app
+# I usually do that via the web interface:
+# Heroku Dashboard 
+#   New: Create new app > App name: census-salary-container
+#   Deployment method: Container registry
+# To do it via CLI:
+#   heroku create <name-of-the-app>
+#   heroku create census-salary-container
+
+# Build the Dockerfile in the current directory
+# and push the Docker image:
+# registry.heroku.com/<app>/<process-type>
+# registry.heroku.com/census-salary-container/web
+heroku container:push web --app census-salary-container
+
+# Deploy: Release the newly pushed images to deploy your app.
+heroku container:release web --app census-salary-container
+
+# Open the app in your browser
+heroku open --app census-salary-container
+# https://census-salary-container.herokuapp.com
+```
+
+```bash
+# Log in to Heroku
+heroku login
+
+# Sign in to Heroku Container Registry: registry.heroku.com
+heroku container:login
+
+# Create the app
+# I usually do that via the web interface:
+# Heroku Dashboard 
+#   New: Create new app > App name: census-salary-container
+#   Deployment method: Container registry
+# To do it via CLI:
+#   heroku create <name-of-the-app>
+#   heroku create census-salary-container
+
+# Mac M1: Build for platform compatible with Heroku
+# https://stackoverflow.com/questions/66982720/keep-running-into-the-same-deployment-error-exec-format-error-when-pushing-nod
+docker buildx build --platform linux/amd64 -t census_model_api:latest .
+
+# Tag the local image with the registry:
+# local image: census_model_api:latest
+# registry image:
+#   registry.heroku.com/census-salary-container/web
+#   registry.heroku.com/<app>/<process-type>
+docker tag census_model_api:latest registry.heroku.com/census-salary-container/web
+
+# Push image to the Heroku registry
+docker push registry.heroku.com/census-salary-container/web
+
+# Deploy: Release the newly pushed images to deploy your app.
+heroku container:release web --app census-salary-container
+
+# Open the app in your browser
+heroku open --app census-salary-container
+# https://census-salary-container.herokuapp.com
+```
+
 ## 8. Excurs: Deployment to AWS ECS
 
