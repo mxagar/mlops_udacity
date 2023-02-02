@@ -17,6 +17,12 @@ I have extended this module with material from other courses:
 - [Deployment of Machine Learning Models](https://www.udemy.com/course/deployment-of-machine-learning-models) by Soledad Galli & Christopher Samiullah; repository: [deploying-machine-learning-models](https://github.com/mxagar/deploying-machine-learning-models).
 - [Complete Tensorflow 2 and Keras Deep Learning Bootcamp](https://www.udemy.com/course/complete-tensorflow-2-and-keras-deep-learning-bootcamp/) J.M. Portilla; repository: [data_science_python_tools](https://github.com/mxagar/data_science_python_tools/tree/main/19_NeuralNetworks_Keras)
 
+The extension material covers these topics:
+
+- Dockerization
+- Deployment to Heroku using containers
+- Deployment to AWS ECS
+
 Although I provide the links to the repositories with other notes, everything is self-contained here, too.
 
 Mikel Sagardia, 2022.  
@@ -86,11 +92,33 @@ No guarantees.
   - [6. Project: Deploying a Model with FastAPI to Heroku](#6-project-deploying-a-model-with-fastapi-to-heroku)
   - [7. Excurs: Dockerization](#7-excurs-dockerization)
     - [7.1 Docker Images and Containers](#71-docker-images-and-containers)
+      - [Environments](#environments)
     - [7.2 Dockerfile: Image Definition](#72-dockerfile-image-definition)
     - [7.3 Building the Image and Running the Container Locally](#73-building-the-image-and-running-the-container-locally)
       - [Docker Compose](#docker-compose)
     - [7.3 Heroku Docker Deployment](#73-heroku-docker-deployment)
+      - [Heroku Docker Deployment for Windows / Linux](#heroku-docker-deployment-for-windows--linux)
+      - [Heroku Docker Deployment for Mac M1](#heroku-docker-deployment-for-mac-m1)
+      - [Automate](#automate)
+      - [Updating the App and Re-Deploying](#updating-the-app-and-re-deploying)
+      - [Important Links](#important-links)
   - [8. Excurs: Deployment to AWS ECS](#8-excurs-deployment-to-aws-ecs)
+    - [8.1 Launch Types and Costs](#81-launch-types-and-costs)
+    - [8.2 Introduction to ECS](#82-introduction-to-ecs)
+      - [Orchestration](#orchestration)
+      - [Interesting Links](#interesting-links)
+    - [8.3 AWS Account Setup](#83-aws-account-setup)
+      - [Additional Notes](#additional-notes)
+    - [8.4 AWS CLI: Install and Configure AWS Account](#84-aws-cli-install-and-configure-aws-account)
+      - [Important Links](#important-links-1)
+    - [8.5 Uploading a Docker Image to the Elastic Container Registry (ECR)](#85-uploading-a-docker-image-to-the-elastic-container-registry-ecr)
+      - [Automate](#automate-1)
+      - [Links](#links)
+    - [8.6 Running an ECS Cluster with the Fargate Launch Method](#86-running-an-ecs-cluster-with-the-fargate-launch-method)
+      - [Updating the Cluster Container and Re-Deploying](#updating-the-cluster-container-and-re-deploying)
+      - [Cleaning Up](#cleaning-up)
+      - [Continuous Deployment](#continuous-deployment)
+      - [Links](#links-1)
 
 ## 1. Introduction to Deployment
 
@@ -2173,7 +2201,15 @@ Some concepts we need to know:
 When deploying our application to Heroku, we upload/push our API code to the platform. There, an image is created and instantiated in a container that runs our application. We don't need to take care of the image, only our code.
 
 However, it is possible to create container images on our own for a more customized deployment! The idea is: we define the image of our API app and push that image to the container registry of our choice; for instance, Heroku itself, or any other cloud provider like AWS! **Containerization is a way to avoid vendor-locking: all cloud services support containers, so we are not dependent anymore!**
-  
+
+#### Environments
+
+```bash
+python -m venv census-env 
+### ...
+pip freeze > requirements.txt
+```
+
 ### 7.2 Dockerfile: Image Definition
 
 A docker image is defined by its `Dockerfile`; additionally, we need to consider the `.dockerignore` file, which is the equivalent to `.gitignore`, but when building images. The reason is because image sizes increase fast, and cloud space can become expensive.
@@ -2207,7 +2243,7 @@ RUN chown -R ml-api-user:ml-api-user ./
 # Change user to the one created
 USER ml-api-user
 
-# Expose port
+# Expose port: we're going to run the app on that port!
 EXPOSE 8001
 
 # Run web server, started by run.sh
@@ -2256,7 +2292,7 @@ docker build -t census_model_api:latest .
 docker image ls
 
 # Run the container locally from a built image
-# Recall to: forward ports (-p) and pass PORT env variable (-e)
+# Recall to: forward ports (-p) and pass PORT env variable (-e), because run.sh expects it!
 # Optional: 
 # -d to detach/get the shell back,
 # --name if we want to choose conatiner name (else, one randomly chosen)
@@ -2323,15 +2359,23 @@ docker-compose down
 
 ### 7.3 Heroku Docker Deployment
 
-Important links:
+The section [Continuous Deployment to Heroku: Demo](#continuous-deployment-to-heroku-demo) explains how to perform **Continuous Deployment to Heroku** using the Github connection in the Heroku app. If we use container deployments, we don't have the option to activate *continuous delivery*. However, that could be done adding the necessary commands in the Github workflow and using Github Actions Secrets to use the necessary API keys. For more info, check this link: [deploy-to-heroku](https://github.com/marketplace/actions/deploy-to-heroku)
 
-- [Heroku Dyno Documentation](https://devcenter.heroku.com/articles/dynos)
-- [Heroku: Deploying with Docker](https://devcenter.heroku.com/categories/deploying-with-docker)
-- [Heroku: Container Registry & Runtime (Docker Deploys)](https://devcenter.heroku.com/articles/container-registry-and-runtime)
-- [Makefiles](https://opensource.com/article/18/8/what-how-makefile)
+A Heroku container deployment has these steps:
 
+1. A Dockerfile is created to define the image; we must build the image locally and run a container to test it.
+2. A Heroku app is created, as before; if we do it on the web interface, we select as *deployment method* the *container registry*.
+3. Using the `heroku` CLI, we push our image to the Heroku registry.
+4. Once the image is uploaded, we can release/deploy the app, i.e., we run the container.
 
-Heroku container registries are accessible only by the app collaborators.
+Important notes:
+
+- Heroku container registries are accessible only by the app collaborators.
+- For Mac M1 devices, `docker buildx` must be used; although it's experimental (and, by default, active in Docker Engine), it works well. Thus, in the following, two subsections are provided: one for each type of system.
+
+#### Heroku Docker Deployment for Windows / Linux
+
+This is the *default* approach, in which the image is built and pushed by Heroku. In contrast, in the second approach, we manually build the image and then push it to Heroku; additionally, the building process happens with `buildx`.
 
 ```bash
 # If you haven't already, log in to your Heroku account
@@ -2369,6 +2413,10 @@ heroku open --app census-salary-container
 # https://census-salary-container.herokuapp.com
 ```
 
+#### Heroku Docker Deployment for Mac M1
+
+In this is Mac M1 approach, we manually build the image using `buildx` and then manually push it to the Heroku Registry.
+
 ```bash
 # Log in to Heroku
 heroku login
@@ -2387,6 +2435,7 @@ heroku container:login
 
 # Mac M1: Build for platform compatible with Heroku
 # https://stackoverflow.com/questions/66982720/keep-running-into-the-same-deployment-error-exec-format-error-when-pushing-nod
+# https://alex-shim.medium.com/building-a-docker-image-for-aws-x86-64-ec2-instance-with-mac-m1-chip-44a3353516b9
 docker buildx build --platform linux/amd64 -t census_model_api:latest .
 
 # Tag the local image with the registry:
@@ -2406,6 +2455,55 @@ heroku container:release web --app census-salary-container
 heroku open --app census-salary-container
 # https://census-salary-container.herokuapp.com
 ```
+
+#### Automate
+
+In order to automate all this, we write all those commands to a bash script: `push_to_heroku.sh`.
+This script builds the image and pushes it to the Heroku, where it is deployed.
+In the header of `push_to_heroku.sh` we define the variables which change depending on the app:
+
+```bash
+APP_NAME=census-salary-container
+IMAGE_NAME=census_model_api
+PROCESS_TYPE=web
+```
+
+And the deployment/pushing commands are:
+
+```bash
+heroku login # enter the access key and the secret/pass
+# chmod a+x push_to_heroku.sh
+./push_to_heroku.sh
+```
+
+#### Updating the App and Re-Deploying
+
+If we change anything in the app, we need to re-run the `push_to_heroku.sh` script; of course, assuming all tests pass, etc.
+
+```bash
+heroku login # enter the access key and the secret/pass
+# chmod a+x push_to_heroku.sh
+./push_to_heroku.sh
+```
+
+If we open the deployed app at the `health` endpoint, we get the version of the API and the model:
+
+[https://census-salary-model.herokuapp.com/health](https://census-salary-model.herokuapp.com/health)
+
+Those version numbers are defined in the `__init__.py` files of the API and library modules.
+
+Whenever we update the app, we should update the version numbers, e.g., `0.0.1 -> 0.0.2`.
+Then, those version number changes should be reflected when we invoke the `health` endpoint of the re-deployed app.
+
+#### Important Links
+
+- [Heroku Dyno Documentation](https://devcenter.heroku.com/articles/dynos)
+- [Heroku: Deploying with Docker](https://devcenter.heroku.com/categories/deploying-with-docker)
+- [Heroku: Container Registry & Runtime (Docker Deploys)](https://devcenter.heroku.com/articles/container-registry-and-runtime)
+- [Makefiles](https://opensource.com/article/18/8/what-how-makefile)
+- [Deploy to Heroku](https://github.com/marketplace/actions/deploy-to-heroku)
+- [Deploy Docker from Mac M1](https://stackoverflow.com/questions/66982720/keep-running-into-the-same-deployment-error-exec-format-error-when-pushing-nod)
+- [Building a Docker image for AWS x86–64 EC2 instance with Mac M1 Chip](https://alex-shim.medium.com/building-a-docker-image-for-aws-x86-64-ec2-instance-with-mac-m1-chip-44a3353516b9)
 
 ## 8. Excurs: Deployment to AWS ECS
 
@@ -2550,8 +2648,7 @@ Also, check:
 - [Getting Started with AWS Identity and Access Management (IAM)](https://aws.amazon.com/iam/getting-started/)
 - [AWS Identity and Access Management Documentation](https://docs.aws.amazon.com/iam/index.html#lang/en_us)
 
-
-### 8.4 AWS CLI
+### 8.4 AWS CLI: Install and Configure AWS Account
 
 The AWS Command Line Interface (CLI) lets us interact with AWS via the Terminal. To use it, we need to:
 
@@ -2598,7 +2695,7 @@ aws iam list-users
 - [Configuring the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 - [AWS CLI Reference](https://docs.aws.amazon.com/cli/latest/index.html)
 
-### 89.5 Introduction to the Elastic Container Registry (ECR)
+### 8.5 Uploading a Docker Image to the Elastic Container Registry (ECR)
 
 The Elastic Container Registry (ECR) is the place in AWs where we store our docker images.
 
@@ -2606,16 +2703,335 @@ In order to use it, we need to create a **repository**:
 
     AWS Dashboard > ECR: Get started / Create repository
         Select: Private [x] / Public [ ]
-          If private, only IAM users will have access to the repository.
+            If private, only IAM users will have access to the repository.
         Name: xxx/census-model-api
         Leave default
         Create repository
 
-Now, an entry will appear in the AWS ECR dashboard in the panel Repositories (left/hamburger menu): our repository. An important property of it is the **URI**: we will use it to push our images.
+Now, an entry will appear in the AWS ECR dashboard in the panel Repositories (left/hamburger menu): our repository `census-model-api`. An important property of it is the **URI**: we will use it to push our images.
 
-The idea is to:
+After we have configured the AWS CLi correctly (i.e., we have set the access keys), we do the following:
 
-- Build the image locally.
-- Push the built image to the repository.
-- Run the container on AWS.
+1. Build the docker image locally (on Mac M1, we have the same issue as in the Heroku Docker deployment - see section).
+2. Tag the image to the ECR repository we created
+3. Log in to ECR
+4. Push the built image to the repository.
+5. Run/release the container on AWS. This last step has its own section later on.
+
+```bash
+# 0) CONFIGURE, if not done that yet
+# aws configure
+
+# 1) BUILD the image
+# Mac M1: Build for platform compatible with Heroku
+#   docker buildx build --platform linux/amd64 -t <app-name>:latest .
+# Windows / Linux:
+#   docker build -t <app-name>:latest .
+# References:
+#   https://stackoverflow.com/questions/66982720/keep-running-into-the-same-deployment-error-exec-format-error-when-pushing-nod
+#   https://alex-shim.medium.com/building-a-docker-image-for-aws-x86-64-ec2-instance-with-mac-m1-chip-44a3353516b9
+# NOTE: to make things easier, I chose <app-name> = <repository-name> = census-model-api
+docker buildx build --platform linux/amd64 -t census-model-api:latest .
+
+# 2) TAG the image with the AWS ECR repository
+# We nee the AWS_ACCOUNT_ID, which is in the URI of the repository we created
+#   URI: 077073585279.dkr.ecr.us-east-1.amazonaws.com/census-model-api
+# We can either copy and use that ID or set it as an environment variable
+#   docker tag <app-name>:latest ${AWS_ACCOUNT_ID}.dkr.ecr.<region>.amazonaws.com/<repository-name>:latest
+export AWS_ACCOUNT_ID=077073585279
+env | grep AWS_ACCOUNT_ID # check the ID is there
+docker tag census-model-api:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/census-model-api:latest
+# Check that the image is tagged
+docker images
+
+# 3) Log in to the ECR
+# We need a password which can be obtained with this command
+#   aws ecr get-login-password --region <region>
+aws ecr get-login-password --region us-east-1
+# HOWEVER, it is more practicle to pipe that password to the login command
+# Reference: https://awscli.amazonaws.com/v2/documentation/api/2.0.34/reference/ecr/get-login-password.html
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com
+# We should get: "Login Succeeded"
+
+# 4) PUSH image to ECR
+# We push the tagged image:
+#   docker push ${AWS_ACCOUNT_ID}.dkr.ecr.<region>.amazonaws.com/<repository-name>:latest
+docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/census-model-api:latest
+# We wait for it to be uploaded
+# Then, we can check thathe image is in the repository:
+# AWE ECR > Repositories: census-model-api > Images
+```
+
+#### Automate
+
+In order to automate all this, we write all those commands to a bash script: `push_to_ecr.sh`.
+This script builds the image and pushes it to the ECR.
+In the header of `push_to_ecr.sh` we define the variables which change depending on the app:
+
+```bash
+APP_NAME=census-model-api
+REPOSITORY_NAME=census-model-api
+AWS_ACCOUNT_ID=077073585279
+AWS_DEFAULT_REGION=us-east-1
+```
+
+And the deployment/pushing commands are:
+
+```bash
+aws configure # enter the access key and the secret/pass
+# chmod a+x push_to_ecr.sh
+./push_to_ecr.sh
+```
+
+However, even though all these steps upload the application to AWS, it is still not running!
+For that, we have the next section.
+
+#### Links
+
+- [What is Amazon Elastic Container Registry?](https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html)
+- [Create ECR repository with AWS CLI](https://docs.aws.amazon.com/cli/latest/reference/ecr/create-repository.html)
+
+### 8.6 Running an ECS Cluster with the Fargate Launch Method
+
+There are two main methods for launching an application containerized and hosted in AWS ECS:
+
+- Fargate: easier, because manages most provisioning and scaling issues.
+- EC2: more complex, but cheaper.
+
+This section covers the Fargate Launch method.
+
+In order to run the application with Fargate, we need to follow these major steps:
+
+1. Upload the docker image to AWS Elastic Container Registry (ECR), as explained in the previous section: [8.5 Uploading a Docker Image to the Elastic Container Registry (ECR)](#85-uploading-a-docker-image-to-the-elastic-container-registry-ecr).
+2. Get the Image URI from the AWS Elastic Container Registry (ECR) dashboard; we can have several, we take the one we need.
+3. Create a Cluster on the AWS Elastic Container Service (ECS) with a proper configuration.
+
+This section deals with the last 2 points. Even though it sounds easy, there are many details that must be taken into account and it lasted a couple of hours until I managed to make it work. Reference article that worked for me:
+
+[How to Deploy an Application to AWS Fargate](https://levelup.gitconnected.com/how-to-deploy-an-application-to-aws-fargate-cd3cfaccc537)
+
+Every step I took is documented.
+
+For the application we're developing in this section, the *latest* **Image URI** is:
+
+    AWS ECR > Repositories: census-model-api
+    Image URI: 077073585279.dkr.ecr.us-east-1.amazonaws.com/census-model-api:latest
+
+With that information, first, we create a **task*** on the ECS console:
+
+    AWS ECS > Task definitions: Create new task definition
+    Step 1: Configure task definition and containers
+      Task definition family name: census-model-api-task
+      Container - 1 (essential container)
+        Name: census-model-api-container
+        Image URI: 077073585279.dkr.ecr.us-east-1.amazonaws.com/census-model-api:latest
+        Port forwarding: 8001 (as required by the application)
+        Environment variables: define if necessary
+          PORT 8001
+        Next
+    Step 2: Configure environment, storage, monitoring, and tags
+      Environment
+        AWS Fargate
+        Linux/X86_64
+        Choose CPU & Memory, e.g., 1 vCPU & 2GB
+    Step 3: Review and create
+      Create
+
+Then, we need to create a **cluster** on the ECS console:
+
+    AWS ECS > Clusters: Create Cluster
+    Cluster name: census-model-api-cluster
+    Networking: use default VPC and leave 3 subnets chosen
+    Infrastructure: AWS Fargate (serverless, default)
+
+Now, we create a **load balancer** on the EC2 console:
+
+    AWS EC2 > Load balancers: Create Load balancer
+    Application load balancer: create
+    Basic configuration
+      Name: census-model-api-lb
+      Scheme: Intenet facing
+      IP address type: IPv4
+    Network mapping
+      VPS: default
+      Mappings: select at least 2, then take the same for ECS cluster services
+        us-east-1a
+        us-east-1b
+    Security groups: Create new security group -> NEW TAB
+      Basic details
+        Name: census-model-api-lb-sg
+        Description: Census Model API security group
+        VPC: leave as it is
+      Inbound groups: Add rule
+        Type: HTTP
+        Source: Anywhere (IPv4)
+        Description: Allow HTTP internet access to our load balancer from anywhere
+      Outbound rule: leave as it is
+      Create security group
+    BACK to EC2 Load balancer creation (previous tab)
+    Security groups
+      refresh & select the created security group: census-model-api-lb-sg
+    Listeners and routing: Create new target group -> NEW TAB
+      Basic configuration
+        Type: IP addresses
+        Name: census-model-api-tgrp
+        Protocol, port: HTTP, 8001 (where the application runs)
+        Leave rest as it is
+      Next
+      Registers: leave it for now
+      Create target group
+    BACK to EC2 Load balancer creation (previous tab)
+    Listeners and routing
+      refresh & select the created target group: census-model-api-tgrp
+      Protocol, Port: HTTP, 80
+    Create load balancer
+
+Then, we need to create a **Fargate service** on the ECS console:
+
+    AWS ECS > Clusters: Select census-model-api-cluster
+    Switch off new UI and use the old UI (New ECS experience, top left)
+    Services: Create
+      Step 1: Configure service
+        Launch type: Fargate
+        OS family: Linux
+        Task: census-model-api-task
+        Service name: census-model-api-service
+        Number of tasks: 3 
+          This value specifies how many Fargate instances will be created.
+          In this case, the final architecture will be composed 
+          of a load balancer and three services.
+        Leave rest, Next step
+      Step 2: Configure network
+        VPC: choose default
+        Subnets: choose the ones taken in the load balancer mappings
+          us-east-1a
+          us-east-1b
+        Security groups: Edit -> Left drawer: Configure security groups
+          We create a security group by assigning a name, e.g., the one suggested:
+            census-3473
+          We leave the rest as is
+          Save
+        Load balancing
+          Type: Application
+          Name: census-model-api-lb (we choose the one we created)
+        Container to load balance
+          The correct one is suggested: census-model-api-container : 8001
+          But need to click on: Add to load balancer
+            Production listener port: 80
+            Target group name: census-model-api-tgrp (the one we created before)
+        Next step
+      Step 3: Set Auto Scaling
+        Service Auto Scaling: Do not adjust the service’s desired count 
+          We diable it, so there are only three services
+          no matter how much load our services handle
+        Next step
+      Create service (after review)
+      View service: service dashboard is displayed
+
+Now, we need to **modify the security group of the service** to allow the load balances access; on the ECS console, on the service of the cluster:
+
+    AWS ECS > Clusters > Select census-model-api-cluster
+    Services: Select census-model-api-service
+    Details: Security groups: click on the one filled in in there -> NEW T
+      Inbound rules: Edit
+        Add
+          Type: All TCP
+          Source: Custom
+          Value: Choose the load balancer security group ID
+            In doubt, open the load balancer dashboard (AWS EC2)
+            Select census-model-api-lb
+              Look for Security Group ID: Copy ID
+
+Finally, we can open the app! We **go to the AWS EC2 load balancers and get the DNS**:
+
+    AWS EC2 > Load balancers: census-model-api-lb
+      DNS name: copy
+        census-model-api-lb-69508028.us-east-1.elb.amazonaws.com
+
+    Open the bowser and paste DNS
+      http://census-model-api-lb-69508028.us-east-1.elb.amazonaws.com
+      Et voilà! The app is there.
+
+#### Updating the Cluster Container and Re-Deploying
+
+If we open the deployed app at the `health` endpoint, we get the version of the API and the model:
+
+[http://census-model-api-lb-69508028.us-east-1.elb.amazonaws.com/health](http://census-model-api-lb-69508028.us-east-1.elb.amazonaws.com/health)
+
+Those version numbers are defined in the `__init__.py` files of the API and library modules.
+
+Imagine we change the app and we update the version numbers: `0.0.1 -> 0.0.2`.
+
+Re-deploying the new version is very easy and it consists of the following steps:
+
+1. We build and push the new image to the AWS ERC repository: `push_to_erc.sh`.
+2. We restart the cluster.
+
+That is achieved with the following commands:
+
+```bash
+# If not done yet
+aws configure # enter the access key and the secret/pass
+
+# Build and push the new version
+# chmod a+x push_to_ecr.sh
+./push_to_ecr.sh
+# In the AWS ECR console
+# we should see that in our repository
+# the image has a new timestamp
+
+# Re-deploy cluster service
+# The general command is:
+#   aws ecs update-service --cluster <cluster-name> --service <service-name> --task-definition <task-definition-name> --force-new-deployment
+# Note that the task definition name is without the appended number :x
+# In the case of the example:
+aws ecs update-service --cluster census-model-api-cluster --service census-model-api-service --task-definition census-model-api-task --force-new-deployment
+# We get a JSON output, we hit Q
+# In the AWS ECS console
+# we go to the cluster > service > tasks
+# and we should see that new tasks are PENDING or being started.
+# When started, the old one will be shut down
+# Meanwhile, the load balancer DNS has not changed!
+```
+
+After the new tasks are running, if we check the `health` endpoint, the version must have changed:
+
+[http://census-model-api-lb-69508028.us-east-1.elb.amazonaws.com/health](http://census-model-api-lb-69508028.us-east-1.elb.amazonaws.com/health)
+
+If we didn't use the **load balancer**, we'd have had an IP which changes every deployment; with the load balancer:
+
+- We can start several tasks to scale.
+- We have a DNS which is maintained every deployment.
+
+#### Cleaning Up
+
+To avoid costs perform all these steps if you want to stop and remove the app:
+
+- Stop all cluster’s tasks (AWS ECS)
+- Delete cluster’s service (AWS ECS)
+- Delete cluster (AWS ECS)
+- Delete ECR repository (AWS ECR)
+- Delete load balancer (AWS EC2)
+- Delete security group (AWS EC2) - no costs incurred, so we could leave them
+
+#### Continuous Deployment
+
+Everything could be automated using Github Actions 
+
+The section [Continuous Deployment to Heroku: Demo](#continuous-deployment-to-heroku-demo) explains how to perform **Continuous Deployment to Heroku** using the Github connection in the Heroku app. If we use container deployments with Heroku, we don't have the option to activate *continuous delivery*. Similarly, the AWS ECS deployment does not provide an automatic *continuous delivery*.
+
+However, that could be done adding the necessary commands in the Github workflow and using Github Actions Secrets to use the necessary API keys. The important variables to track in the YAML would be:
+
+```bash
+AWS_ACCESS_KEY_ID # secret
+AWS_SECRET_ACCESS_KEY # secret
+AWS_ACCOUNT_ID
+AWS_DEFAULT_REGION
+```
+
+#### Links
+
+- [Getting started with Fargate Guide](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html)
+- [Using a Load Balancer](https://aws.amazon.com/elasticloadbalancing/): beyond the scope of this notes, but required for custom domains and consistent IP addresses.
+- [How to Deploy an Application to AWS Fargate](https://levelup.gitconnected.com/how-to-deploy-an-application-to-aws-fargate-cd3cfaccc537)
 
