@@ -17,11 +17,11 @@ I have extended this module with material from other courses:
 - [Deployment of Machine Learning Models](https://www.udemy.com/course/deployment-of-machine-learning-models) by Soledad Galli & Christopher Samiullah; repository: [deploying-machine-learning-models](https://github.com/mxagar/deploying-machine-learning-models).
 - [Complete Tensorflow 2 and Keras Deep Learning Bootcamp](https://www.udemy.com/course/complete-tensorflow-2-and-keras-deep-learning-bootcamp/) J.M. Portilla; repository: [data_science_python_tools](https://github.com/mxagar/data_science_python_tools/tree/main/19_NeuralNetworks_Keras)
 
-The extension material covers these topics:
+The extension material uses the module project as example and covers these topics:
 
-- Dockerization
-- Deployment to Heroku using containers
-- Deployment to AWS ECS
+- Dockerization (Section 7)
+- Deployment to Heroku using containers (Section 7)
+- Deployment to AWS ECS (Section 8)
 
 Although I provide the links to the repositories with other notes, everything is self-contained here, too.
 
