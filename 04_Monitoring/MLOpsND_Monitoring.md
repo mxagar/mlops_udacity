@@ -22,3 +22,23 @@ No guarantees.
 
 ## 1. Introduction to Model Scoring and Monitoring
 
+Why is it important to monitor ML models?
+
+- Check model behaves correctly
+- Check accuracy is enough
+- Check any dependency/compatibility issues
+- Check data is correctly pushed to the model
+- etc.
+
+When the model is sold to the customer, an MLOps team deploy it. However, when there are problems with the model, the ML/DS Engineer is responsible for the 2nd level support, because they know the model the best. Therefore, even though the model has been shipped, we are still its *"responsible owners"*.
+
+With model monitoring
+
+- We enable predictive ML Operations: we can identify and predict model drift
+- We detect problems fast and solve them efficiently
+- We achieve transparency for the stakeholders
+- We increase productivity and result quality
+- We capture insights and ideas
+
+Module instructor: [Bradford Tuckfield](https://bradfordtuckfield.com/); he has a company: [https://kmbara.com/](https://kmbara.com/)
+
