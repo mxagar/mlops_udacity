@@ -17,7 +17,7 @@ Udacity requires the submission of a project for each module; these are the repo
 
 1. Predicting Customer Churn with *Production-Level* Software: [customer_churn_production](https://github.com/mxagar/customer_churn_production).
 2. A Reproducible Machine Learning Pipeline for Short-Term Rental Price Prediction in New York City: [ml_pipeline_rental_prices](https://github.com/mxagar/ml_pipeline_rental_prices).
-3. Deploying a Machine Learning Model on Heroku with FastAPI.
+3. Deploying a Machine Learning Model on Heroku with FastAPI: [census_model_deployment_fastapi](https://github.com/mxagar/census_model_deployment_fastapi).
 4. A Dynamic Risk Assessment System
 
 
