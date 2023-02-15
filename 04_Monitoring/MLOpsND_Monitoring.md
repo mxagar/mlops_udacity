@@ -22,7 +22,8 @@ No guarantees.
     - [1.1 Requirements for a ML Monitoring System](#11-requirements-for-a-ml-monitoring-system)
     - [1.2 History of ML Scoring](#12-history-of-ml-scoring)
     - [1.3 Overview of the Final Project: A Dynamic Risk Assessment System](#13-overview-of-the-final-project-a-dynamic-risk-assessment-system)
-  - [2. Model Re-Training and Re-Deployment](#2-model-re-training-and-re-deployment)
+  - [2. Automating the Model Re-Training and Re-Deployment](#2-automating-the-model-re-training-and-re-deployment)
+    - [2.1 Automated Data Ingestion](#21-automated-data-ingestion)
 
 ## 1. Introduction to Model Scoring and Monitoring
 
@@ -93,5 +94,6 @@ Altogether, the project builds a system with the following features:
 - diagnosis of operational issues
 - continuous monitoring with API's
 
-## 2. Model Re-Training and Re-Deployment
+## 2. Automating the Model Re-Training and Re-Deployment
 
+### 2.1 Automated Data Ingestion
