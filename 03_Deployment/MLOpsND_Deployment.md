@@ -90,7 +90,7 @@ No guarantees.
       - [Exercise/Demo: Data Ingestion and Error Handling with FastAPI](#exercisedemo-data-ingestion-and-error-handling-with-fastapi)
     - [5.6 Extra: Udemy Course Notes](#56-extra-udemy-course-notes)
   - [6. Project: Deploying a Model with FastAPI to Heroku](#6-project-deploying-a-model-with-fastapi-to-heroku)
-  - [7. Excurs: Dockerization](#7-excurs-dockerization)
+  - [7. Excursus: Dockerization](#7-excursus-dockerization)
     - [7.1 Docker Images and Containers](#71-docker-images-and-containers)
       - [Environments](#environments)
     - [7.2 Dockerfile: Image Definition](#72-dockerfile-image-definition)
@@ -102,7 +102,7 @@ No guarantees.
       - [Automate](#automate)
       - [Updating the App and Re-Deploying](#updating-the-app-and-re-deploying)
       - [Important Links](#important-links)
-  - [8. Excurs: Deployment to AWS ECS](#8-excurs-deployment-to-aws-ecs)
+  - [8. Excursus: Deployment to AWS ECS](#8-excursus-deployment-to-aws-ecs)
     - [8.1 Launch Types and Costs](#81-launch-types-and-costs)
     - [8.2 Introduction to ECS](#82-introduction-to-ecs)
       - [Orchestration](#orchestration)
@@ -119,6 +119,7 @@ No guarantees.
       - [Cleaning Up](#cleaning-up)
       - [Continuous Deployment](#continuous-deployment)
       - [Links](#links-1)
+  - [9. Excursus: Deployment to Render](#9-excursus-deployment-to-render)
 
 ## 1. Introduction to Deployment
 
@@ -1271,6 +1272,8 @@ This section is a tutorial on how to deploy a PostgreSQL web app using Render. T
 
 For now, I leave the tutorial in the following PDF, without summarizing it here: [`Udacity_Render_Tutorial.pdf`](Udacity_Render_Tutorial.pdf).
 
+In order to see the steps followed to deploy the module project to [Render](https://render.com/), check the following section: [9. Excursus: Deployment to Render](#9-excursus-deployment-to-render).
+
 ## 5. API Deployment with FastAPI
 
 Topics covered:
@@ -2170,7 +2173,7 @@ Links suggested by the project reviewer:
 - [When Do You Use an Ellipsis in Python?](https://realpython.com/python-ellipsis/)
 - [Events: startup - shutdown](https://fastapi.tiangolo.com/advanced/events/)
 
-## 7. Excurs: Dockerization
+## 7. Excursus: Dockerization
 
 This contents were not included in the Udacity Nanodegree; I wrote them on my own and, in part, following the content in [deploying-machine-learning-models](https://github.com/mxagar/deploying-machine-learning-models).
 
@@ -2505,7 +2508,7 @@ Then, those version number changes should be reflected when we invoke the `healt
 - [Deploy Docker from Mac M1](https://stackoverflow.com/questions/66982720/keep-running-into-the-same-deployment-error-exec-format-error-when-pushing-nod)
 - [Building a Docker image for AWS x86–64 EC2 instance with Mac M1 Chip](https://alex-shim.medium.com/building-a-docker-image-for-aws-x86-64-ec2-instance-with-mac-m1-chip-44a3353516b9)
 
-## 8. Excurs: Deployment to AWS ECS
+## 8. Excursus: Deployment to AWS ECS
 
 This contents were not included in the Udacity Nanodegree; I wrote them on my own and, in part, following the content in [deploying-machine-learning-models](https://github.com/mxagar/deploying-machine-learning-models).
 
@@ -3035,3 +3038,22 @@ AWS_DEFAULT_REGION
 - [Using a Load Balancer](https://aws.amazon.com/elasticloadbalancing/): beyond the scope of this notes, but required for custom domains and consistent IP addresses.
 - [How to Deploy an Application to AWS Fargate](https://levelup.gitconnected.com/how-to-deploy-an-application-to-aws-fargate-cd3cfaccc537)
 
+## 9. Excursus: Deployment to Render
+
+Heroku removed the free tier in November 28, 2022. Therefore, Udacity suggested an alternative to Heroku: [Render](https://render.com/). Render offers many services:
+
+- Static websites
+- Web services
+- PostgreSQL
+- Cron Jobs
+- etc.
+
+The co-located file  [`Udacity_Render_Tutorial.pdf`](Udacity_Render_Tutorial.pdf) contains a tutorial on how to deploy a PostgreSQL web app using Render. The tutorial uses the following example repository from Udacity: [render-cloud-example](https://github.com/udacity/render-cloud-example). I have copied the example to the module exercise repository, too: [mlops-udacity-deployment-demos](https://github.com/mxagar/mlops-udacity-deployment-demos).
+
+Instead, in this section, I explain how a Render deployment similar to the Heroku CD is done. I use the example in the module project:
+
+[Deployment of a Census Salary Classification Model Using FastAPI](https://github.com/mxagar/census_model_deployment_fastapi).
+
+:construction:
+
+TBD.
