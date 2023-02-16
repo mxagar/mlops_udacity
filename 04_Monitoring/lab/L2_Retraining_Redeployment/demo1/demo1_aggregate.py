@@ -15,6 +15,7 @@ for directory in directories:
         final_df = final_df.append(current_df).reset_index(drop=True)
 
 # Now, we could do some cleaning...
+final_df.drop_duplicates().reset_index(drop=True)
 
 # Persist aggregated dataframe
-final_df.to_csv('demo_20210330.csv')
+final_df.to_csv('result.csv', sep=',', header=True, index=False)
