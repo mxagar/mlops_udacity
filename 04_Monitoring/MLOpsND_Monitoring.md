@@ -13,6 +13,11 @@ Each module has a folder with its respective notes. This folder and file refer t
 
 This module has 5 lessons and a project. The first lesson is an introduction; the exercises for lessons 2-5 are located in [`./lab/`](./lab/).
 
+Personal useful guides:
+
+- [linux_bash_howto.txt](`../linux_bash_howto.txt`)
+- [linux_bash_howto_examples.sh](`../linux_bash_howto_examples.sh`)
+
 Mikel Sagardia, 2022.  
 No guarantees.
 
@@ -29,8 +34,7 @@ No guarantees.
       - [Data Ingestion: First Example](#data-ingestion-first-example)
       - [Process Record Keeping](#process-record-keeping)
       - [Automation Using Cron Jobs](#automation-using-cron-jobs)
-      - [Exercise](#exercise)
-    - [2.2 Automated Model Re-Training](#22-automated-model-re-training)
+    - [2.2 Automated Model Re-Training and Re-Deployment](#22-automated-model-re-training-and-re-deployment)
 
 ## 1. Introduction to Model Scoring and Monitoring
 
@@ -78,6 +82,7 @@ Interesting links:
 - [Production Machine Learning Monitoring: Outliers, Drift, Explainers & Statistical Performance](https://towardsdatascience.com/production-machine-learning-monitoring-outliers-drift-explainers-statistical-performance-d9b1d02ac158)
 - [Evaluating a machine learning model](https://www.jeremyjordan.me/evaluating-a-machine-learning-model/)
 - [How to Structure a Data Science Team: Key Models and Roles to Consider](https://www.altexsoft.com/blog/datascience/how-to-structure-data-science-team-key-models-and-roles/)
+- [The Ultimate Guide to Model Retraining](https://mlinproduction.com/model-retraining/#:~:text=Rather%20retraining%20simply%20refers%20to,t%20involve%20any%20code%20changes.)
 
 ### 1.2 History of ML Scoring
 
@@ -170,9 +175,10 @@ for directory in directories:
         final_df = final_df.append(current_df).reset_index(drop=True)
 
 # Now, we could do some cleaning...
+final_df.drop_duplicates().reset_index(drop=True)
 
 # Persist aggregated dataframe
-final_df.to_csv('demo_20210330.csv')
+final_df.to_csv('result.csv', sep=',', header=True, index=False)
 ```
 
 #### Process Record Keeping
@@ -228,7 +234,137 @@ with open(output_location, 'w') as f:
 
 #### Automation Using Cron Jobs
 
+Cron jobs from Unix systems can automate any task which is run with a script, e.g., a python script. Cron jobs are stored in a `crontab` file which can be accessed and edited as follows
 
-#### Exercise
+```bash
+# If not started yet, start the cron service on the Unix machine
+service cron start
+# On Mac
+cron start
 
-### 2.2 Automated Model Re-Training
+# Open the crontab file to add cron jobs
+crontab -e
+# vim opens with crontab file
+# Edit
+# When finished: ESC, :wq
+# Then, it is loaded automatically
+
+# To show the contents of the crontab
+crontab -l
+```
+
+With cron jobs we can run scripts any time we specify, with the regularity/frequency we specify. Thus, we can automate any task. The syntax of a cron job in the `crontab` file is the following:
+
+```bash
+# Structure: replace each field by a number in the range
+# If a field has *, it means to run for every interval,
+# e.g., * for day means run every day
+min[0-59] hour[0-24] day[1-31] month[1-12] weekday[0-6] command
+
+# Example:
+# Every day, every month, any weekday,
+# run at 12:59 the script do_something.py
+59 12 * * *  python3 /home/mikel/scripts/do_something.py
+
+# Example:
+# Run every minute
+* * * * * python3 /home/mikel/scripts/do_something.py
+
+# Example:
+# Run at 12:59 on January 5
+59 12 5 1 * python3 /home/mikel/scripts/do_something.py
+
+# Example:
+# Run on Fridays once per hour at 59 minutes past every hour
+59 12 5 1 * python3 /home/mikel/scripts/do_something.py
+
+# Example:
+# Run on reboot
+# There are other special strings: @hourly, @daily, etc.
+@reboot python3 /home/mikel/scripts/do_something.py
+```
+
+The cron output will be automatically sent to your *local email* account, which is accessed via CLI with `mail`. If you want to stop receiving emails, you can add `>/dev/null 2>&1` to a command and if you want to receive the output in a specific email, you need to specify `MAILTO` before the job description:
+
+```bash
+# DO NOT send output to local email account
+0 5 * * * /home/mikel/scripts/backup.sh >/dev/null 2>&1
+
+# DO SEND email to specific email account
+MAILTO="inbox@domain.tld"
+0 3 * * * /home/mikel/scripts/backup.sh >/dev/null 2>&1
+```
+
+The local mail can be checked in the CLI:
+
+```bash
+mail
+```
+
+Interesting links:
+
+- [Crontab Guru](https://crontab.guru/)
+- [Cron Jobs: Comprehensive Guide](https://www.hostinger.com/tutorials/cron-job)
+- [The Complete Guide to Cron and Launchd on macOS/Linux](https://towardsdatascience.com/a-step-by-step-guide-to-scheduling-tasks-for-your-data-science-project-d7df4531fc41)
+
+### 2.2 Automated Model Re-Training and Re-Deployment
+
+The process of re-deploying an optimized/updated ML model has these steps:
+
+- Ingest new data from various sources (done before)
+- Train model with new dataset
+- Deploy new trained model: persist serialized model to a production environment
+
+All these steps can be executed with cron jobs! We can either have one cron job that does all steps or separate cron jobs for each of them.
+
+A very simple retraining script:
+
+[`demo2/retraining.py`](./lab/L2_Retraining_Redeployment/demo2/retraining.py)
+
+```python
+import pickle
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+import os
+
+# Get model name from file
+# Having the name in a TXT makes possible to parametrize it
+# BUT: I would use a config.yaml or sorts...
+with open('deployed_model_name.txt', 'r') as f:
+    deployed_name = f.read()
+print(deployed_name)
+
+# Get data location + filename
+with open('data_location.txt', 'r') as f:
+    data_location = f.read()
+print(data_location)
+
+# Load dataset
+df = pd.read_csv(os.getcwd() + data_location)
+# Transform
+X = df.loc[:,['bed','bath']].values.reshape(-1, 2)
+y = df['highprice'].values.reshape(-1, 1).ravel()
+
+# Instantiate model
+logit = LogisticRegression(C=1.0, 
+                           class_weight=None, 
+                           dual=False, 
+                           fit_intercept=True, 
+                           intercept_scaling=1, 
+                           l1_ratio=None, 
+                           max_iter=100,
+                           multi_class='auto', 
+                           n_jobs=None, 
+                           penalty='l2',
+                           random_state=0, 
+                           solver='liblinear', 
+                           tol=0.0001, 
+                           verbose=0,
+                           warm_start=False)
+# Re-Train
+model = logit.fit(X, y)
+
+# Persist file with extracted name
+pickle.dump(model, open('./production/' + deployed_name, 'wb'))
+```
+
