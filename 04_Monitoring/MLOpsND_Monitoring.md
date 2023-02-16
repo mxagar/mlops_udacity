@@ -150,7 +150,7 @@ Useful python modules for manipulating files:
 
 Example code: aggregate all files in the local directories `udacity1` and `udacity2`:
 
-[`demo1/demo1.py`](./lab/L2_Retraining_Redeployment/demo1/demo1.py`)
+[`demo1/demo1_aggregate.py`](./lab/L2_Retraining_Redeployment/demo1/demo1_aggregate.py`)
 
 ```python
 import os
@@ -189,10 +189,41 @@ Along with the aggregated dataset, we should create a file where meta-data of th
 
 Example with useful snippets:
 
-[`demo2/demo2.py`](./lab/L2_Retraining_Redeployment/demo2/demo2.py`)
+[`demo1/demo1_records.py`](./lab/L2_Retraining_Redeployment/demo1/demo1_records.py`)
 
 ```python
+import pandas as pd
+from datetime import datetime
 
+source_location = './recorddatasource/'
+filename = 'recordkeepingdemo.csv'
+output_location = 'records.txt'
+
+data = pd.read_csv(source_location+filename)
+
+dateTimeObj = datetime.now()
+time_now = str(dateTimeObj.year) + '/' + str(dateTimeObj.month) + '/'+str(dateTimeObj.day)
+
+one_record = [source_location, filename, len(data.index), time_now]
+all_records = []
+all_records.append(one_record) # dummy record 1
+all_records.append(one_record) # dummy record 2 = record 1
+
+# Create TXT/CSV with record info
+with open(output_location, 'w') as f:
+    f.write("source_location,filename,num_entries,timestamp\n")
+    for record in all_records:
+        for i, element in enumerate(record):
+            f.write(str(element))
+            if i < len(record)-1:
+                f.write(",")
+            else:
+                f.write("\n")
+
+# Output: records.txt
+# source_location,filename,num_entries,timestamp
+# ./recorddatasource/,recordkeepingdemo.csv,4,2023/2/16
+# ./recorddatasource/,recordkeepingdemo.csv,4,2023/2/16
 ```
 
 #### Automation Using Cron Jobs
