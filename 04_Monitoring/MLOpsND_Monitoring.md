@@ -31,10 +31,15 @@ No guarantees.
     - [1.3 Overview of the Final Project: A Dynamic Risk Assessment System](#13-overview-of-the-final-project-a-dynamic-risk-assessment-system)
   - [2. Automating the Model Re-Training and Re-Deployment](#2-automating-the-model-re-training-and-re-deployment)
     - [2.1 Automated Data Ingestion](#21-automated-data-ingestion)
-      - [Data Ingestion: First Example](#data-ingestion-first-example)
+      - [Data Ingestion Example](#data-ingestion-example)
+      - [Dataset Merges](#dataset-merges)
       - [Process Record Keeping](#process-record-keeping)
       - [Automation Using Cron Jobs](#automation-using-cron-jobs)
+      - [Distributed Systems](#distributed-systems)
     - [2.2 Automated Model Re-Training and Re-Deployment](#22-automated-model-re-training-and-re-deployment)
+    - [2.3 Lesson Exercise](#23-lesson-exercise)
+  - [3. Model Scoring and Model Drift](#3-model-scoring-and-model-drift)
+  - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
 
 ## 1. Introduction to Model Scoring and Monitoring
 
@@ -151,7 +156,7 @@ Useful python modules for manipulating files:
 - `os.getcwd()`: get current directory string
 - `os.listdir()`: list all files in a directory
 
-#### Data Ingestion: First Example
+#### Data Ingestion Example
 
 Example code: aggregate all files in the local directories `udacity1` and `udacity2`:
 
@@ -179,6 +184,40 @@ final_df.drop_duplicates().reset_index(drop=True)
 
 # Persist aggregated dataframe
 final_df.to_csv('result.csv', sep=',', header=True, index=False)
+```
+
+#### Dataset Merges
+
+When we are merging different datasets, sometimes a row is duplicated in different files. We can remove it with `drop_duplicates()` or we could also track it by using `merge()` instead of `append()`.
+
+In the following example, a `merge(how='outer', indicator=True)` is performed, which:
+
+- Carries out an **outer join** of the datasets; see [SQL Joins](https://www.w3schools.com/sql/sql_join.asp) and [merge types](https://guides.nyu.edu/quant/merge).
+- Tracks which rows appear on both datasets or in only a specific one, thanks to the flab `indicator=True`.
+
+```python
+# Merging datasets: OUTER JOINS
+# More on JOINS:
+# https://www.w3schools.com/sql/sql_join.asp
+# https://guides.nyu.edu/quant/merge
+#
+# Example: 
+# df1 and df2 have same columns: col1, col2
+# Some rows appear only in df1, some only in df2, some in both
+# We want to merge both: we need an OUTER JOIN
+# AND we can informatively mark where each row came from
+# with indicator=True
+df_all = df1.merge(df2.drop_duplicates(),
+                   on=['col1','col2'],
+                   how='outer', 
+                   indicator=True)
+# df_all
+#       col1    col2    _merge
+#   0   7       90      both
+#   1   6       81      left_only
+#   2   2       72      right_only
+#   3   9       63      both
+#   ...
 ```
 
 #### Process Record Keeping
@@ -307,6 +346,23 @@ Interesting links:
 - [Cron Jobs: Comprehensive Guide](https://www.hostinger.com/tutorials/cron-job)
 - [The Complete Guide to Cron and Launchd on macOS/Linux](https://towardsdatascience.com/a-step-by-step-guide-to-scheduling-tasks-for-your-data-science-project-d7df4531fc41)
 
+#### Distributed Systems
+
+Sometimes datasets are so big that they cannot be stored on one file/database or even on one server. In those cases the data is partitioned and each part is saved in a database, distributed. To that end, typically a **client-server** architecture is adopted and technologies such as **MapReduce** are used to access the data.
+
+![Client-Server](./pics/clientserver.png)
+
+In such situations, performing aggregate operations on the complete dataset is more complicated; imagine how we would perform these operations:
+
+- `count` a value: count in each database separately and the sum
+- `mean`: mean in each database and the mean of the means
+- `meadian`: we need to sort each database...
+
+Interesting links:
+
+- [A Very Brief Introduction to MapReduce](https://hci.stanford.edu/courses/cs448g/a2/files/map_reduce_tutorial.pdf)
+- [What is DFS (Distributed File System)?](https://www.geeksforgeeks.org/what-is-dfsdistributed-file-system/)
+
 ### 2.2 Automated Model Re-Training and Re-Deployment
 
 The process of re-deploying an optimized/updated ML model has these steps:
@@ -368,3 +424,39 @@ model = logit.fit(X, y)
 pickle.dump(model, open('./production/' + deployed_name, 'wb'))
 ```
 
+### 2.3 Lesson Exercise
+
+The exercise is in [`exercise/`](./lab/L2_Retraining_Redeployment/exercise/).
+
+```python
+import pickle
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+
+# Load dataset
+data_location = "./sales.csv"
+df = pd.read_csv(data_location)
+
+# Transform
+X = df.loc[:,['timeperiod']].values.reshape(-1, 1)
+y = df['sales'].values.reshape(-1, 1).ravel()
+
+# Instantiate model
+lr = LinearRegression()
+# Re-Train
+model = lr.fit(X, y)
+
+# Persist file with extracted name
+deployed_name = "model.pkl"
+pickle.dump(model, open('./production/' + deployed_name, 'wb'))
+
+```
+
+## 3. Model Scoring and Model Drift
+
+
+
+
+## 6. Project: A Dynamic Risk Assessment System
+
+Starter file: [starter-file.zip](https://video.udacity-data.com/topher/2021/March/60412fe6_starter-file/starter-file.zip).
