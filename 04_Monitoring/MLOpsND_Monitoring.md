@@ -11,6 +11,8 @@ The nanodegree is composed of four modules:
 
 Each module has a folder with its respective notes. This folder and file refer to the **fourth** module: **ML Model Scoring and Monitoring**.
 
+This module has 5 lessons and a project. The first lesson is an introduction; the exercises for lessons 2-5 are located in [`./lab/`](./lab/).
+
 Mikel Sagardia, 2022.  
 No guarantees.
 
@@ -24,6 +26,11 @@ No guarantees.
     - [1.3 Overview of the Final Project: A Dynamic Risk Assessment System](#13-overview-of-the-final-project-a-dynamic-risk-assessment-system)
   - [2. Automating the Model Re-Training and Re-Deployment](#2-automating-the-model-re-training-and-re-deployment)
     - [2.1 Automated Data Ingestion](#21-automated-data-ingestion)
+      - [Data Ingestion: First Example](#data-ingestion-first-example)
+      - [Process Record Keeping](#process-record-keeping)
+      - [Automation Using Cron Jobs](#automation-using-cron-jobs)
+      - [Exercise](#exercise)
+    - [2.2 Automated Model Re-Training](#22-automated-model-re-training)
 
 ## 1. Introduction to Model Scoring and Monitoring
 
@@ -96,4 +103,101 @@ Altogether, the project builds a system with the following features:
 
 ## 2. Automating the Model Re-Training and Re-Deployment
 
+Example: Stock-trading bot which works with a deployed model that predicts whether to buy or sell.
+
+The markets are very dynamic and the model efficiency might change with time; therefore, it's important to
+
+- Store historic data
+- Monitor model performance
+- Be able to ingest the stored historic data to re-train the model if its performance has decreased
+- Be able to re-deploy the new model
+- And repeat
+
+![Stock Trading Bot](./pics/stock_trading_bot.png)
+
+**Note**: The exercises and demos of this lesson 2 are located in [`./lab/L2_Retraining_Redeployment`](./lab/L2_Retraining_Redeployment).
+
 ### 2.1 Automated Data Ingestion
+
+Data ingestion will compile, clean, process, and output the new data we need to re-train the model.
+
+Note that the data:
+
+- can be in different locations (e.g., S3, local, etc.)
+- can be in different formats (e.g., CSV, JSON, XLSX, etc.)
+- can have different sizes or update frequencies (e.g., weekly, daily, etc.)
+
+Obviously, before aggregating all the data, we need to know all those details.
+
+![Data Ingestion](./pics/data_ingestion.jpg)
+
+The processing done for aggregating all the data involves, among others:
+
+- Changing columns names
+- Removing duplicates
+- Imputing NAs
+- Removing outliers
+- Reconciling different frequencies, if needed
+- Creating a single, final dataset
+- Keeping process records: information of the ingestion process related to origin, date, etc.
+
+Useful python modules for manipulating files:
+
+- `os.getcwd()`: get current directory string
+- `os.listdir()`: list all files in a directory
+
+#### Data Ingestion: First Example
+
+Example code: aggregate all files in the local directories `udacity1` and `udacity2`:
+
+[`demo1/demo1.py`](./lab/L2_Retraining_Redeployment/demo1/demo1.py`)
+
+```python
+import os
+import pandas as pd
+
+# Define local directories to look in 
+directories=['/udacity1/','/udacity2/']
+# Instantiate empty dataframe: PE ratio, Stock price
+final_df = pd.DataFrame(columns=['peratio','price'])
+
+for directory in directories:
+    # Files in directory
+    filenames = os.listdir(os.getcwd()+directory)
+    for each_filename in filenames:
+        current_df = pd.read_csv(os.getcwd()+directory+each_filename)
+        # Append dataframe + reset index!
+        final_df = final_df.append(current_df).reset_index(drop=True)
+
+# Now, we could do some cleaning...
+
+# Persist aggregated dataframe
+final_df.to_csv('demo_20210330.csv')
+```
+
+#### Process Record Keeping
+
+Along with the aggregated dataset, we should create a file where meta-data of the ingestion process is collected so that our future selves and colleagues can track the origins; in that file, we should write, at least:
+
+- Name and location of every file we read.
+- Date when we performed data ingestion.
+- All datasets we worked with
+- Other details:
+  - How many duplicates.
+  - How many formatting changes made.
+- Name and location of the final output file.
+
+Example with useful snippets:
+
+[`demo2/demo2.py`](./lab/L2_Retraining_Redeployment/demo2/demo2.py`)
+
+```python
+
+```
+
+#### Automation Using Cron Jobs
+
+
+#### Exercise
+
+### 2.2 Automated Model Re-Training
