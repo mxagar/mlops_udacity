@@ -695,7 +695,9 @@ More documentation on Evidently: [Getting Started with Evidently](https://docs.e
 
 ### 3.6 MLflow Tutorial: Historical Data Drift
 
+See [historical_data_drift_mlflow_demo](https://github.com/mxagar/historical_data_drift_mlflow_demo).
 
+I forked that repository from [cd0583-historical-data-drift](https://github.com/udacity/cd0583-historical-data-drift) and followed the instructions below. However, it didn't work due to version collisions. I will come back to this when I have time.
 
 ## 4. Diagnosing and Fixing Operational Problems
 
