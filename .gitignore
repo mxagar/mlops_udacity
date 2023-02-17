@@ -25,3 +25,5 @@ deploying-machine-learning-models
 ml_deployment_guide
 vanilla_deployments
 census_model_deployment_fastapi
+model_scoring_evidently_demo
+historical_data_drift_mlflow_demo
