@@ -42,8 +42,11 @@ No guarantees.
     - [3.1 Automatic Model Scoring](#31-automatic-model-scoring)
       - [Demo and Exercise](#demo-and-exercise)
     - [3.2 Recording Model Scores](#32-recording-model-scores)
-    - [3.3 Checking Model Drift](#33-checking-model-drift)
+    - [3.3 Checking Model Drift: Tests](#33-checking-model-drift-tests)
       - [Demo](#demo)
+      - [Hypothesis Tests with Two Samples](#hypothesis-tests-with-two-samples)
+    - [3.4 Final Exercise](#34-final-exercise)
+    - [3.5 Evidently](#35-evidently)
   - [4. Diagnosing and Fixing Operational Problems](#4-diagnosing-and-fixing-operational-problems)
   - [5. Model Reporting and Monitoring with APIs](#5-model-reporting-and-monitoring-with-apis)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
@@ -477,6 +480,8 @@ Interesting links:
 
 - [AI/ML Model Scoring – What Good Looks Like in Production](https://h2o.ai/blog/ai-ml-model-scoring-what-good-looks-like-in-production/)
 - [Compare which Machine Learning Model performs Better](https://towardsdatascience.com/compare-which-machine-learning-model-performs-better-4912b2ed597d)
+- [Statistical Significance Tests for Comparing Machine Learning Algorithms](https://machinelearningmastery.com/statistical-significance-tests-for-comparing-machine-learning-algorithms/)
+- [Hypothesis testing and p-values](https://www.khanacademy.org/math/statistics-probability/significance-tests-one-sample/more-significance-testing-videos/v/hypothesis-testing-and-p-values)
 
 ### 3.1 Automatic Model Scoring
 
@@ -567,9 +572,9 @@ previous_scores.to_csv('newscores.csv')
 
 ```
 
-### 3.3 Checking Model Drift
+### 3.3 Checking Model Drift: Tests
 
-Instead of computing a single score (e.g., F1, R2, SSE) and checking against the maximum/minimum so far, we can perform significance tests:
+Instead of computing a single score (e.g., F1, R2, SSE) and checking against the maximum/minimum so far (aka. *raw test*), we can perform significance tests:
 
 - Parametric tests: they assume that the scores are distributed in a bell curve; in that case, we use a Z or a T-Test. However, note the assumption; also we are sensitive to outliers.
 - Non-parametric tests: they don't make any assumption. One very simple approach is based on the Inter-Quantile-Range (IQR); they are not sensitive to outliers.
@@ -592,6 +597,84 @@ The Non-Parametric outlier test is done as follows:
   - `lower_outlier < q25 - 1.5*IQR`
 
 #### Demo
+
+File: [`demos/model_drift_test.py`](./lab/L3_Scoring_Drift/demos/model_drift_test.py).
+
+```python
+import ast
+import numpy as np
+
+new_f1 = 0.38
+
+with open('previousscores_l3demo.txt', 'r') as f:
+    f1_list = ast.literal_eval(f.read())
+
+# Test 1: Raw Test: Is the score better than the best so far?
+first_test = new_f1 < np.min(f1_list)
+print(first_test) # True
+
+# Test 2: Parametric Test: Is the score significantly better than what we've seen so far?
+second_test = new_f1 < np.mean(f1_list)-2*np.std(f1_list)
+print(second_test) # False
+
+# Test 3: Non-Parametric Test: Is the score significantly better than what we've seen so far?
+iqr = np.quantile(f1_list, 0.75)-np.quantile(f1_list, 0.25)
+third_test = new_f1 < np.quantile(f1_list, 0.25)-iqr*1.5
+print(third_test) # False
+
+```
+
+#### Hypothesis Tests with Two Samples
+
+The parametric T-Test introduced so far is a test of a value against a sample; however, we can also perform a T-Test with two samples, i.e., we compare two different models that both have their own sets of historic model scores.
+
+In that case, the typical T-Test setting is followed:
+
+- Define hypothesis: H0, Ha
+- Define `alpha = 0.05`
+- Compute T statistic
+- Compute `p-value`
+- If `p < alpha`, H0 is rejected.
+
+### 3.4 Final Exercise
+
+File: [`exercises/final_exercise.py`](./lab/L3_Scoring_Drift/exercises/final_exercise.py).
+
+```python
+import pandas as pd
+import pickle
+import ast
+import numpy as np
+from sklearn.metrics import mean_squared_error
+
+## Score model
+
+with open('l3final.pkl', 'rb') as file:
+    model = pickle.load(file)
+    
+testdata = pd.read_csv('testdatafinal.csv')
+X = testdata[['timeperiod']].values.reshape(-1,1)
+y = testdata['sales'].values.reshape(-1,1)
+
+predicted = model.predict(X)
+
+new_mse = mean_squared_error(predicted,y)
+print(new_mse) # 18938.960000000043
+
+## Check drift
+
+with open('l3finalscores.txt', 'r') as f:
+    mse_list = ast.literal_eval(f.read())
+
+# Non-Parametric Test: Is the score significantly WORSE
+# than what we've seen so far?
+iqr = np.quantile(mse_list, 0.75)-np.quantile(mse_list, 0.25)
+print(iqr) # 2055.0
+drift_test = new_mse > np.quantile(mse_list, 0.75)+iqr*1.5
+print(drift_test) # True
+```
+
+### 3.5 Evidently
 
 
 
