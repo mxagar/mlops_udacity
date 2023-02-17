@@ -46,7 +46,8 @@ No guarantees.
       - [Demo](#demo)
       - [Hypothesis Tests with Two Samples](#hypothesis-tests-with-two-samples)
     - [3.4 Final Exercise](#34-final-exercise)
-    - [3.5 Evidently](#35-evidently)
+    - [3.5 Evidently Tutorial: Model Performance Monitoring and Data Drift](#35-evidently-tutorial-model-performance-monitoring-and-data-drift)
+    - [3.6 MLflow Tutorial: Historical Data Drift](#36-mlflow-tutorial-historical-data-drift)
   - [4. Diagnosing and Fixing Operational Problems](#4-diagnosing-and-fixing-operational-problems)
   - [5. Model Reporting and Monitoring with APIs](#5-model-reporting-and-monitoring-with-apis)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
@@ -674,7 +675,25 @@ drift_test = new_mse > np.quantile(mse_list, 0.75)+iqr*1.5
 print(drift_test) # True
 ```
 
-### 3.5 Evidently
+### 3.5 Evidently Tutorial: Model Performance Monitoring and Data Drift
+
+[Evidently](https://github.com/evidentlyai/evidently) is an open-source Python library which can be used to evaluate, test, and monitor the performance of ML models from validation to production. It works with tabular and text data.
+
+I forked the [demo repository from Udacity](https://github.com/udacity/cd0583-model-scoring-and-drift-using-evidently) to:
+
+[model_scoring_evidently_demo](https://github.com/mxagar/model_scoring_evidently_demo)
+
+All notes and code are in that repository of mine. The final app is deployed on:
+
+[https://model-scoring-evidently-demo.herokuapp.com/](https://model-scoring-evidently-demo.herokuapp.com/)
+
+*That main link shows the model performance for February; check other links/dashboards mentioned below.*
+
+The complete monitoring is implemented in the `main.py` of the repository: We create HTML dashboards with Evidently and save them to `./static`. Then, a FastAPI web app is instantiated to which we pass all the content in that `./static` folder.
+
+More documentation on Evidently: [Getting Started with Evidently](https://docs.evidentlyai.com/get-started/tutorial)
+
+### 3.6 MLflow Tutorial: Historical Data Drift
 
 
 
