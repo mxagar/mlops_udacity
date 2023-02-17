@@ -39,6 +39,11 @@ No guarantees.
     - [2.2 Automated Model Re-Training and Re-Deployment](#22-automated-model-re-training-and-re-deployment)
     - [2.3 Lesson Exercise](#23-lesson-exercise)
   - [3. Model Scoring and Model Drift](#3-model-scoring-and-model-drift)
+    - [3.1 Automatic Model Scoring](#31-automatic-model-scoring)
+      - [Example / Demo](#example--demo)
+      - [Exercise 1](#exercise-1)
+  - [4. Diagnosing and Fixing Operational Problems](#4-diagnosing-and-fixing-operational-problems)
+  - [5. Model Reporting and Monitoring with APIs](#5-model-reporting-and-monitoring-with-apis)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
 
 ## 1. Introduction to Model Scoring and Monitoring
@@ -454,6 +459,66 @@ pickle.dump(model, open('./production/' + deployed_name, 'wb'))
 
 ## 3. Model Scoring and Model Drift
 
+Model drift is the decrease of the model performance (predicted values vs. expected) over time. We can measure it by scoring the model in production and storing the predictions in pair with the expected values. In order to avoid loosing money, we need to check model drift regularly.
+
+Model drift occurs when the context or the properties of the business change; for example, consider House Prices: due to inflation, price prediction will be lower than the actual. In general, model drift can occur due to
+
+- Changes in the target variable (e.g., price increase due to inflation)
+- Changes in the predictor variable (e.g., new houses being built have less bedrooms, model wasn't trained on so many instances similar to them)
+- Changes in relationship between predictor and target (e.g., utility prices go up, so people prefer smaller houses, so the price of the big ones decreases due to lack of demand)
+
+![Model Drift: House Prices](./pics/model_drift_house_prices.png)
+
+**Note**: The exercises and demos of this lesson 2 are located in [`./lab/L3_Scoring_Drift`](./lab/L3_Scoring_Drift).
+
+Interesting links:
+
+- [AI/ML Model Scoring – What Good Looks Like in Production](https://h2o.ai/blog/ai-ml-model-scoring-what-good-looks-like-in-production/)
+
+### 3.1 Automatic Model Scoring
+
+Model scoring can be automated with cron jobs so that we run a scoring on the deployed model every week. Every week, the dataset is fresh from the past week and we have the target values. Thus, we compute the difference/error with an appropriate metric: SSE, MSE, Precision, Recall, F1, etc.
+
+![Model Scoring](./pics/model_scoring_1.jpg)
+
+The frequency doesn't need to be weekly, it will vary depending on the business.
+
+![Model Scoring](./pics/model_scoring_2.png)
+
+The idea is that we track the evolution of the metric: if it becomes worse, we 
+
+#### Example / Demo
+
+[`demos/demo.py`](./lab/L3_Scoring_Drift/demos/demo.py)
+
+```python
+import pandas as pd
+import pickle
+from sklearn import metrics
+from sklearn.metrics import f1_score
+
+with open('samplemodel.pkl', 'rb') as file:
+    model = pickle.load(file)
+    
+testdata = pd.read_csv('testdata_l3demo.csv')
+X = testdata[['bed','bath']].values.reshape(-1,2)
+y = testdata['highprice'].values.reshape(-1,1)
+
+predicted = model.predict(X)
+
+f1score = metrics.f1_score(predicted,y)
+print(f1score) # 0.5806451612903226
+```
+
+#### Exercise 1
+
+[`exercise_1/demo.py`](./lab/L3_Scoring_Drift/exercise_1/demo.py)
+
+## 4. Diagnosing and Fixing Operational Problems
+
+
+
+## 5. Model Reporting and Monitoring with APIs
 
 
 
