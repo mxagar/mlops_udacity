@@ -40,8 +40,8 @@ No guarantees.
     - [2.3 Lesson Exercise](#23-lesson-exercise)
   - [3. Model Scoring and Model Drift](#3-model-scoring-and-model-drift)
     - [3.1 Automatic Model Scoring](#31-automatic-model-scoring)
-      - [Example / Demo](#example--demo)
-      - [Exercise 1](#exercise-1)
+      - [Demo and Exercise](#demo-and-exercise)
+    - [3.2 Recording Model Scores](#32-recording-model-scores)
   - [4. Diagnosing and Fixing Operational Problems](#4-diagnosing-and-fixing-operational-problems)
   - [5. Model Reporting and Monitoring with APIs](#5-model-reporting-and-monitoring-with-apis)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
@@ -474,6 +474,7 @@ Model drift occurs when the context or the properties of the business change; fo
 Interesting links:
 
 - [AI/ML Model Scoring – What Good Looks Like in Production](https://h2o.ai/blog/ai-ml-model-scoring-what-good-looks-like-in-production/)
+- [Compare which Machine Learning Model performs Better](https://towardsdatascience.com/compare-which-machine-learning-model-performs-better-4912b2ed597d)
 
 ### 3.1 Automatic Model Scoring
 
@@ -487,9 +488,10 @@ The frequency doesn't need to be weekly, it will vary depending on the business.
 
 The idea is that we track the evolution of the metric: if it becomes worse, we 
 
-#### Example / Demo
+#### Demo and Exercise
 
-[`demos/demo.py`](./lab/L3_Scoring_Drift/demos/demo.py)
+- [`demos/demo.py`](./lab/L3_Scoring_Drift/demos/demo.py)
+- [`exercises/automatic_scoring.py`](./lab/L3_Scoring_Drift/exercises/automatic_scoring.py)
 
 ```python
 import pandas as pd
@@ -510,9 +512,50 @@ f1score = metrics.f1_score(predicted,y)
 print(f1score) # 0.5806451612903226
 ```
 
-#### Exercise 1
+### 3.2 Recording Model Scores
 
-[`exercise_1/demo.py`](./lab/L3_Scoring_Drift/exercise_1/demo.py)
+We need to record our model scores and we need to be able to load & extend previous records. For instance, we can do it on a CSV (MVP) and persist these value in each row: `metric`, `model_version`, `score`.
+
+![Model Score Recording](./pics/model_scores.png)
+
+Very simple snippet which performs those steps: [`demos/record_scores.py`](./lab/L3_Scoring_Drift/demos/record_scores.py)
+
+```python
+#import ast
+import pandas as pd
+#import numpy as np
+
+# New fictional scores
+recent_r2 = 0.55
+recent_sse = 49999
+
+# Load previous model scores
+previous_scores = pd.read_csv('previousscores_l3demo.csv')
+
+# Increase version: Imagine we have a new model
+max_version = previous_scores['version'].max()
+this_version = max_version + 1
+
+# Define new score rows
+new_row_r2 = {'metric': 'r2', 
+              'version': this_version, 
+              'score': recent_r2}
+
+new_row_sse = {'metric': 'sse', 
+               'version': this_version, 
+               'score': recent_sse}
+
+# Append new model score rows
+# Optional: Append them ONLY if the model improves the previous ones
+# In that case, we would deploy the better model
+if recent_r2 > previous_scores.loc[previous_scores['metric'] == 'r2','score'].max():
+    previous_scores = previous_scores.append(new_row_r2, ignore_index=True)
+    previous_scores = previous_scores.append(new_row_sse, ignore_index=True)
+    
+# Persist updated scores
+previous_scores.to_csv('newscores.csv')
+
+```
 
 ## 4. Diagnosing and Fixing Operational Problems
 
