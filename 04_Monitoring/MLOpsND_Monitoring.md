@@ -42,6 +42,8 @@ No guarantees.
     - [3.1 Automatic Model Scoring](#31-automatic-model-scoring)
       - [Demo and Exercise](#demo-and-exercise)
     - [3.2 Recording Model Scores](#32-recording-model-scores)
+    - [3.3 Checking Model Drift](#33-checking-model-drift)
+      - [Demo](#demo)
   - [4. Diagnosing and Fixing Operational Problems](#4-diagnosing-and-fixing-operational-problems)
   - [5. Model Reporting and Monitoring with APIs](#5-model-reporting-and-monitoring-with-apis)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
@@ -518,7 +520,13 @@ We need to record our model scores and we need to be able to load & extend previ
 
 ![Model Score Recording](./pics/model_scores.png)
 
-Very simple snippet which performs those steps: [`demos/record_scores.py`](./lab/L3_Scoring_Drift/demos/record_scores.py)
+Usually, we load the previous scores and compute the current score; if the score improves, the new model is deployed. Scores can be unique aggregate values (R2, F1, etc.) or we can also perform hypothesis tests; more on that later.
+
+Very simple snippet which performs those steps; present in the following files:
+
+- [`demos/record_scores.py`](./lab/L3_Scoring_Drift/demos/record_scores.py)
+- [`exercises/recordingscores.py`](./lab/L3_Scoring_Drift/exercises/recordingscores.py)
+
 
 ```python
 #import ast
@@ -548,6 +556,8 @@ new_row_sse = {'metric': 'sse',
 # Append new model score rows
 # Optional: Append them ONLY if the model improves the previous ones
 # In that case, we would deploy the better model
+# HOWEVER, it is much better to perform parametric significance tests
+# instead of looking at only one aggregated value!
 if recent_r2 > previous_scores.loc[previous_scores['metric'] == 'r2','score'].max():
     previous_scores = previous_scores.append(new_row_r2, ignore_index=True)
     previous_scores = previous_scores.append(new_row_sse, ignore_index=True)
@@ -556,6 +566,34 @@ if recent_r2 > previous_scores.loc[previous_scores['metric'] == 'r2','score'].ma
 previous_scores.to_csv('newscores.csv')
 
 ```
+
+### 3.3 Checking Model Drift
+
+Instead of computing a single score (e.g., F1, R2, SSE) and checking against the maximum/minimum so far, we can perform significance tests:
+
+- Parametric tests: they assume that the scores are distributed in a bell curve; in that case, we use a Z or a T-Test. However, note the assumption; also we are sensitive to outliers.
+- Non-parametric tests: they don't make any assumption. One very simple approach is based on the Inter-Quantile-Range (IQR); they are not sensitive to outliers.
+
+The parametric test (e.g, T-Test) is done as follows, in practice:
+
+- Compute mean standard deviations from previous scores.
+- If the current score outside in the 2-sigma band/range, there is drift (`alpha = 0.05`, approximately).
+
+Recall that some scores are better if they are smaller (e.g., SSE), and others if they are larger (e.g., R2).
+
+![Parametric Test](./pics/parametric_test.png)
+
+The Non-Parametric outlier test is done as follows:
+
+- Compute the quantiles of the scores: `min, q25, q50, q75, max`
+- Compute the **Inter-Quantile-Range (IQR)**: `IQR = q75-q25`
+- If the new score is an outlier, there is model drift:
+  - `upper_outlier > q75 + 1.5*IQR`
+  - `lower_outlier < q25 - 1.5*IQR`
+
+#### Demo
+
+
 
 ## 4. Diagnosing and Fixing Operational Problems
 
