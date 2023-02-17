@@ -2,19 +2,34 @@ import ast
 import pandas as pd
 import numpy as np
 
+# New fictional scores
 recent_r2=0.6
 recent_sse=52938
 
+# Load previous model scores
+previous_scores = pd.read_csv('previousscores.csv')
 
-#record a score in a DataFrame
+# Increase version: Imagine we have a new model
+max_version = previous_scores['version'].max()
+this_version = max_version + 1
+print(this_version)
 
+# Define new score rows
+new_row_r2 = {'metric': 'r2', 
+              'version': this_version, 
+              'score': recent_r2}
 
-#find the maximum version number
+new_row_sse = {'metric': 'sse', 
+               'version': this_version, 
+               'score': recent_sse}
 
-
-#generate rows
-
-
-#write the dataset to a csv
-
-
+# Append new model score rows
+# Optional: Append them ONLY if the model improves the previous ones
+# In that case, we would deploy the better model
+if recent_r2 < previous_scores.loc[previous_scores['metric'] == 'sse','score'].max():
+    print("New model registered!")
+    previous_scores = previous_scores.append(new_row_r2, ignore_index=True)
+    previous_scores = previous_scores.append(new_row_sse, ignore_index=True)
+    
+# Persist updated scores
+previous_scores.to_csv('newscores.csv')
