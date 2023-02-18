@@ -49,6 +49,8 @@ No guarantees.
     - [3.5 Evidently Tutorial: Model Performance Monitoring and Data Drift](#35-evidently-tutorial-model-performance-monitoring-and-data-drift)
     - [3.6 MLflow Tutorial: Historical Data Drift](#36-mlflow-tutorial-historical-data-drift)
   - [4. Diagnosing and Fixing Operational Problems](#4-diagnosing-and-fixing-operational-problems)
+    - [4.1 Process Timing](#41-process-timing)
+      - [Exercise: Process Timing](#exercise-process-timing)
   - [5. Model Reporting and Monitoring with APIs](#5-model-reporting-and-monitoring-with-apis)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
 
@@ -700,6 +702,39 @@ See [historical_data_drift_mlflow_demo](https://github.com/mxagar/historical_dat
 I forked that repository from [cd0583-historical-data-drift](https://github.com/udacity/cd0583-historical-data-drift) and followed the instructions below. However, it didn't work due to version collisions. I will come back to this when I have time.
 
 ## 4. Diagnosing and Fixing Operational Problems
+
+We are going to have many types of operational problems, which often result in worse and delayed results:
+
+- Missing data
+- Unstable data: values/means change
+- Timing problems: modules deliver too late
+- Dependency issues
+
+![Diagnosing Problems](./pics/diagnosing_problems.png)
+
+### 4.1 Process Timing
+
+Timing all our processes is very helpful, because with time records we can detect when one step has taken too long, i.e., there might be something wrong with it.
+
+```python
+import timeit
+
+# Stopwatch
+start_time = timeit.default_timer() # store current time
+# Code for any process you want to time
+timing = timeit.default_timer() - start_time # Time elapsed
+```
+
+Also, note that we can start other processes within a python session with `os.system()`:
+
+```python
+import os
+
+# Exit python session and run a shell command
+os.system('python3 addnumbers.py')
+```
+
+#### Exercise: Process Timing
 
 
 
