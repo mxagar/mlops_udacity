@@ -13,6 +13,12 @@ Each module has a folder with its respective notes. This folder and file refer t
 
 This module has 5 lessons and a project. The first lesson is an introduction; the exercises for lessons 2-5 are located in [`./lab/`](./lab/).
 
+Additionally, some tutorial repositories are mentioned, which I forked and deployed to Heroku as web apps:
+
+- [https://github.com/mxagar/model_scoring_evidently_demo](https://github.com/mxagar/model_scoring_evidently_demo)
+- [https://github.com/mxagar/historical_data_drift_mlflow_demo](https://github.com/mxagar/historical_data_drift_mlflow_demo)
+- [https://github.com/mxagar/diagnose_and_fix_mlflow_demo](https://github.com/mxagar/diagnose_and_fix_mlflow_demo)
+
 Personal useful guides:
 
 - [linux_bash_howto.txt](`../linux_bash_howto.txt`)
@@ -704,7 +710,11 @@ More documentation on Evidently: [Getting Started with Evidently](https://docs.e
 
 See [historical_data_drift_mlflow_demo](https://github.com/mxagar/historical_data_drift_mlflow_demo).
 
-I forked that repository from [cd0583-historical-data-drift](https://github.com/udacity/cd0583-historical-data-drift) and followed the instructions below. However, it didn't work due to version collisions. I will come back to this when I have time.
+I forked that repository from [cd0583-historical-data-drift](https://github.com/udacity/cd0583-historical-data-drift) and followed the instructions.
+
+I managed to make it work only on Heroku:
+
+[https://historical-data-drift-mflow.herokuapp.com/](https://historical-data-drift-mflow.herokuapp.com/)
 
 ## 4. Diagnosing and Fixing Operational Problems
 
@@ -955,9 +965,11 @@ print(the_data)
 
 See [diagnose_and_fix_mlflow_demo](https://github.com/mxagar/diagnose_and_fix_mlflow_demo).
 
-I forked that repository from [cd0583-diagnose-and-fix](https://github.com/udacity/cd0583-diagnose-and-fix) and followed the instructions below.
+I forked that repository from [cd0583-diagnose-and-fix](https://github.com/udacity/cd0583-diagnose-and-fix) and followed the instructions.
 
+The web app link:
 
+[https://diagnose-fix-mlflow-demo.herokuapp.com/](https://diagnose-fix-mlflow-demo.herokuapp.com/)
 
 ## 5. Model Reporting and Monitoring with APIs
 
