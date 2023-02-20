@@ -54,6 +54,8 @@ No guarantees.
     - [4.2 Integrity and Stability Issues](#42-integrity-and-stability-issues)
       - [Demo: Data Integrity and Stability](#demo-data-integrity-and-stability)
     - [4.3 Module Dependencies](#43-module-dependencies)
+    - [4.4 Resolving Data Integrity: Data Imputation](#44-resolving-data-integrity-data-imputation)
+    - [4.5 MLflow Tutorial: Diagnosing and Fixing Operational Problems](#45-mlflow-tutorial-diagnosing-and-fixing-operational-problems)
   - [5. Model Reporting and Monitoring with APIs](#5-model-reporting-and-monitoring-with-apis)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
 
@@ -851,6 +853,11 @@ pip list
 pip list --outdated
 # Show list of installed modules, but in a requirements format
 pip freeze
+# However, some package versions are
+# shown with @ file://... tags
+# https://stackoverflow.com/questions/62885911/pip-freeze-creates-some-weird-path-instead-of-the-package-version
+# To avoid that, perform the following:
+pip list --format=freeze > requirements.txt
 # Show info on a module, e.g. pandas: 
 # author, version, license, requirements, etc.
 pip show pandas
@@ -866,7 +873,12 @@ pip install pandas
 python -m pip list
 ```
 
-A possible way of managing dependency issues is to persist the `pip` output at each version using the `subprocess` module. Example in [`demos/dependencies.py`](./lab/L4_Diagnosing/demos/dependencies.py)
+A possible way of managing dependency issues is to persist the `pip` output at each version using the `subprocess` module. 
+
+Examples in 
+
+- [`demos/dependencies.py`](./lab/L4_Diagnosing/demos/dependencies.py)
+- [`exercises/dependency_management.py`](./lab/L4_Diagnosing/exercises/dependency_management.py)
 
 ```python
 import subprocess
@@ -892,6 +904,59 @@ numpy_info = subprocess.check_output(['python','-m','pip', 'show', 'numpy'])
 with open('numpy.txt', 'wb') as f:
     f.write(numpy_info)
 ```
+
+### 4.4 Resolving Data Integrity: Data Imputation
+
+We can impute in several ways the `NA` fields:
+
+- Fill with zeroes (bad idea)
+- Fill with mode
+- Perform linear regression with other columns to predict the feature (more advanced and expensive)
+- Fill with column mean: mean imputation; quite common.
+
+Example: [`exercises/data_imputation.py`](./lab/L4_Diagnosing/exercises/data_imputation.py):
+
+```python
+import pandas as pd
+
+the_data = pd.read_csv('samplefile3.csv')
+# 
+# col1,col2,col3
+# 1,2,0
+# 4,,0
+# 3,2,
+# 5,6,1
+# ,,0
+# 5,,
+# ,3,
+
+nas = list(the_data.isna().sum())
+na_percents = [nas[i]/len(the_data.index) for i in range(len(nas))]
+
+# pandas.to_numeric: errors=‘coerce’: invalid parsing will be set as NaN
+# pandas.mean(skipna=True): default is True
+the_data['col1'].fillna(pd.to_numeric(the_data['col1'], errors='coerce').mean(skipna=True), inplace=True)
+the_data['col2'].fillna(pd.to_numeric(the_data['col2'], errors='coerce').mean(skipna=True), inplace=True)
+the_data['col3'].fillna(pd.to_numeric(the_data['col3'], errors='coerce').mean(skipna=True), inplace=True)
+
+print(the_data)
+# 
+#    col1  col2  col3
+# 0   1.0  2.00  0.00
+# 1   4.0  3.25  0.00
+# 2   3.0  2.00  0.25
+# 3   5.0  6.00  1.00
+# 4   3.6  3.25  0.00
+# 5   5.0  3.25  0.25
+# 6   3.6  3.00  0.25
+```
+
+### 4.5 MLflow Tutorial: Diagnosing and Fixing Operational Problems
+
+See [diagnose_and_fix_mlflow_demo](https://github.com/mxagar/diagnose_and_fix_mlflow_demo).
+
+I forked that repository from [cd0583-diagnose-and-fix](https://github.com/udacity/cd0583-diagnose-and-fix) and followed the instructions below.
+
 
 
 ## 5. Model Reporting and Monitoring with APIs
