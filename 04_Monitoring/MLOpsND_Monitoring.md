@@ -52,8 +52,8 @@ No guarantees.
     - [4.1 Process Timing](#41-process-timing)
       - [Exercise: Process Timing](#exercise-process-timing)
     - [4.2 Integrity and Stability Issues](#42-integrity-and-stability-issues)
-      - [Demo: Data Integrity and Stabiity](#demo-data-integrity-and-stabiity)
-      - [Exercise: Integrity and Stability](#exercise-integrity-and-stability)
+      - [Demo: Data Integrity and Stability](#demo-data-integrity-and-stability)
+    - [4.3 Module Dependencies](#43-module-dependencies)
   - [5. Model Reporting and Monitoring with APIs](#5-model-reporting-and-monitoring-with-apis)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
 
@@ -811,9 +811,12 @@ Interesting links:
 - [What is Data Integrity and How Can You Maintain it?](https://www.varonis.com/blog/data-integrity)
 - [Detect data drift (preview) on datasets](https://learn.microsoft.com/en-us/azure/machine-learning/v1/how-to-monitor-datasets?tabs=python)
 
-#### Demo: Data Integrity and Stabiity
+#### Demo: Data Integrity and Stability
 
-[`demos/timings.py`](./lab/L4_Diagnosing/demos/demo.py)
+Two exercises are shown, both with almost identical code:
+
+- [`demos/timings.py`](./lab/L4_Diagnosing/demos/demo.py)
+- [`exercises/stability_integrity.py`](./lab/L4_Diagnosing/exercises/stability_integrity.py)
 
 ```python
 import ast
@@ -835,7 +838,8 @@ print(nas)
 
 ```
 
-#### Exercise: Integrity and Stability
+### 4.3 Module Dependencies
+
 
 
 
