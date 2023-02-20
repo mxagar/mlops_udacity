@@ -51,6 +51,9 @@ No guarantees.
   - [4. Diagnosing and Fixing Operational Problems](#4-diagnosing-and-fixing-operational-problems)
     - [4.1 Process Timing](#41-process-timing)
       - [Exercise: Process Timing](#exercise-process-timing)
+    - [4.2 Integrity and Stability Issues](#42-integrity-and-stability-issues)
+      - [Demo: Data Integrity and Stabiity](#demo-data-integrity-and-stabiity)
+      - [Exercise: Integrity and Stability](#exercise-integrity-and-stability)
   - [5. Model Reporting and Monitoring with APIs](#5-model-reporting-and-monitoring-with-apis)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
 
@@ -735,6 +738,104 @@ os.system('python3 addnumbers.py')
 ```
 
 #### Exercise: Process Timing
+
+A script is created which measures 20x the time of 2 scripts launched via `os`. Then, statistics (i.e., mean, min, max, std) are generated for each script.
+
+[`exercises/timings.py`](./lab/L4_Diagnosing/exercises/timings.py)
+
+```python
+
+import os
+import timeit
+import numpy as np
+
+def ingestion_timing():
+    starttime = timeit.default_timer()
+    os.system('python3 ingestion.py')
+    timing=timeit.default_timer() - starttime
+    return timing
+
+def training_timing():
+    starttime = timeit.default_timer()
+    os.system('python3 training.py')
+    timing=timeit.default_timer() - starttime
+    return timing
+
+def measure_and_save_timings():
+    ingestion_timings=[]
+    training_timings=[]
+    
+    for idx in range(20):
+        ingestion_timings.append(ingestion_timing())
+        training_timings.append(training_timing())
+    
+    final_output=[]
+    final_output.append(np.mean(ingestion_timings))
+    final_output.append(np.std(ingestion_timings))
+    final_output.append(np.min(ingestion_timings))
+    final_output.append(np.max(ingestion_timings))
+    final_output.append(np.mean(training_timings))
+    final_output.append(np.std(training_timings))
+    final_output.append(np.min(training_timings))
+    final_output.append(np.max(training_timings))
+    
+    return final_output
+    
+print(measure_and_save_timings())
+# [0.7203975, 0.21127245305744852, 0.6460763329999999, 1.6362521250000002, 1.415318122849999, 0.27338612631866893, 1.2490636669999944, 2.543399083]
+
+```
+
+### 4.2 Integrity and Stability Issues
+
+New datasets we use to re-train might have issues:
+
+- Integrity issues: missing data; **solutions**: remove NA or apply imputation
+- Stability issues (aka. data drift): column means vary from previous dataset; **solution**: we need to re-train and re-deploy with recent data.
+
+![Data Integrity and Stability](./pics/data_integrity_stability.jpg)
+
+We should find the root cause of integrity and stability issues.
+
+Useful tools:
+
+- `mean()`
+- `isna()`
+- `sum()`
+- `.index`
+- `len()`
+
+Interesting links:
+
+- [Missing-data imputation](http://www.stat.columbia.edu/~gelman/arm/missing.pdf)
+- [What is Data Integrity and How Can You Maintain it?](https://www.varonis.com/blog/data-integrity)
+- [Detect data drift (preview) on datasets](https://learn.microsoft.com/en-us/azure/machine-learning/v1/how-to-monitor-datasets?tabs=python)
+
+#### Demo: Data Integrity and Stabiity
+
+[`demos/timings.py`](./lab/L4_Diagnosing/demos/demo.py)
+
+```python
+import ast
+import pandas as pd
+
+with open('healthdata.txt', 'r') as f:
+    means_list = ast.literal_eval(f.read())
+    
+the_data=pd.read_csv('bloodpressure.csv')
+the_means=list(the_data.mean())
+
+mean_comparison=[(the_means[i]-means_list[i])/means_list[i] for i in range(len(means_list))]
+print(mean_comparison)
+# [-0.08285714285714281, -0.26710526315789473, -0.06451612903225806]
+
+nas=list(the_data.isna().sum())
+print(nas)
+# [0, 1, 2]
+
+```
+
+#### Exercise: Integrity and Stability
 
 
 
