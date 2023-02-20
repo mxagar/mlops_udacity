@@ -828,10 +828,12 @@ with open('healthdata.txt', 'r') as f:
 the_data=pd.read_csv('bloodpressure.csv')
 the_means=list(the_data.mean())
 
+# Column mean percentage change
 mean_comparison=[(the_means[i]-means_list[i])/means_list[i] for i in range(len(means_list))]
 print(mean_comparison)
 # [-0.08285714285714281, -0.26710526315789473, -0.06451612903225806]
 
+# Number of NAs in columns
 nas=list(the_data.isna().sum())
 print(nas)
 # [0, 1, 2]
@@ -840,7 +842,56 @@ print(nas)
 
 ### 4.3 Module Dependencies
 
+Python dependencies are controlled with `pip`; some important options of `pip`:
 
+```bash
+# Return a list of installed Python modules
+pip list
+# Show only outdated modules; it takes a bit...
+pip list --outdated
+# Show list of installed modules, but in a requirements format
+pip freeze
+# Show info on a module, e.g. pandas: 
+# author, version, license, requirements, etc.
+pip show pandas
+# Install a module, e.g. pandas
+pip install pandas
+# Run pip through python
+# The commands "python -m <module>" imports the module 
+# and runs it as if it were the main program, i.e., 
+# what in its "__main__" is specified.
+# In general it is recommended to use "python -m pip ..."
+# instead of "pip", because that way we know/control
+# the python version
+python -m pip list
+```
+
+A possible way of managing dependency issues is to persist the `pip` output at each version using the `subprocess` module. Example in [`demos/dependencies.py`](./lab/L4_Diagnosing/demos/dependencies.py)
+
+```python
+import subprocess
+# Similarly to os.system()
+# subprocess can execute a shell command, but:
+# - we need to pass each command token in a list of strings
+# - we get back the output!
+# The advantage is we can persist the output
+# as a witness of the current state
+
+# pip check
+broken = subprocess.check_output(['pip', 'check'])
+with open('broken.txt', 'wb') as f:
+    f.write(broken)
+
+# pip list --outdated
+outdated = subprocess.check_output(['pip', 'list','--outdated'])
+with open('outdated.txt', 'wb') as f:
+    f.write(outdated)
+
+# python -m pip show numpy
+numpy_info = subprocess.check_output(['python','-m','pip', 'show', 'numpy'])
+with open('numpy.txt', 'wb') as f:
+    f.write(numpy_info)
+```
 
 
 ## 5. Model Reporting and Monitoring with APIs
