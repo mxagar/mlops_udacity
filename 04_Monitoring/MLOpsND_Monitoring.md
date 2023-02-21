@@ -65,6 +65,9 @@ No guarantees.
   - [5. Model Reporting and Monitoring with APIs Using Flask](#5-model-reporting-and-monitoring-with-apis-using-flask)
     - [5.1 Configuring APIs with Flask](#51-configuring-apis-with-flask)
     - [5.2 Endpoint Scripting](#52-endpoint-scripting)
+    - [Exercise](#exercise)
+    - [5.3 Calling API Endpoints](#53-calling-api-endpoints)
+      - [Demo](#demo-1)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
 
 ## 1. Introduction to Model Scoring and Monitoring
@@ -1174,6 +1177,99 @@ def summary():
 app.run(host='0.0.0.0', port=8000)
 
 ```
+
+### Exercise
+
+[`exercises/appe2.py`](./lab/L5_Reporting_API/exercises/appe2.py)
+
+```python
+from flask import Flask, request
+import pandas as pd
+
+app = Flask(__name__)
+
+def read_pandas(filename):
+    data = pd.read_csv(filename)
+    return data
+
+# curl "http://127.0.0.1:8000?user=Mikel"
+@app.route('/')
+def index():
+    user = request.args.get('user')
+    return "Hello " + user + '!\n'
+
+# curl "http://127.0.0.1:8000/size?filename=testdata.csv"
+@app.route('/size')
+def size():
+    filename = request.args.get('filename')
+    data = read_pandas(filename)
+    return str(len(data.index))
+
+# curl "http://127.0.0.1:8000/summary?filename=testdata.csv"
+@app.route('/summary')
+def summary():
+    filename = request.args.get('filename')
+    data = read_pandas(filename)
+    return str(data.mean(axis=0))
+
+app.run(host='0.0.0.0', port=8000)
+
+```
+
+### 5.3 Calling API Endpoints
+
+So far, two ways of calling/interfacing with API endpoints have been shown:
+
+- `curl`
+- via browser
+
+```bash
+curl "127.0.0.1:8000?user=Mikel"
+```
+
+However, there are many other ways of accessing APIs, e.g.:
+
+- `requests`: a python package which is able to use the HTTP protocol
+- [Postman](https://www.postman.com/): a specific web and app for API testing.
+
+To install `requests`:
+
+```bash
+python -m pip install requests
+```
+
+#### Demo
+
+File: [`demos/app_request.py`](./lab/L5_Reporting_API/demos/app_request.py).
+
+```python
+"""This simple script requires to have an API
+with the specified endpoint running. For instance,
+./app.py.
+
+To use this, run in one terminal
+
+    $ python app.py
+    
+Then, run in another terminal:
+
+    $ python app_request.py
+    
+"""
+import requests
+import subprocess
+
+endpoint_url = "http://127.0.0.1:8000/hello?user=Mikel"
+
+response = requests.get(endpoint_url) # GET method
+print(response.content) # extract answer: b'Hello Mikel!'
+
+response = subprocess.run(["curl", endpoint_url], capture_output=True)
+print(response.stdout) # extract answer: b'Hello Mikel!'
+
+```
+
+
 
 ## 6. Project: A Dynamic Risk Assessment System
 
