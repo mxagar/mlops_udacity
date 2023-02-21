@@ -991,6 +991,7 @@ Interesting links:
 
 - [Flask vs. Django](https://steelkiwi.medium.com/flask-vs-django-how-to-understand-whether-you-need-a-hammer-or-a-toolbox-39b8b3a2e4a5)
 - [Flask Tutorials](https://www.fullstackpython.com/flask.html)
+- [Create REST APIs in Python using Flask](https://www.sqlshack.com/create-rest-apis-in-python-using-flask/)
 
 To install Flask and additional related packages (i.e., forms, SQLAlchemy, database migration tools, etc.):
 
@@ -1100,7 +1101,75 @@ curl "http://127.0.0.1:8000/hello?user=Mikel"
 
 ### 5.2 Endpoint Scripting
 
+The previous example is a very simple one, but its the basic example for defining much more complex APIs. We can as many endpoints as we want, one after the other; the order is irrelevant and all of them have:
 
+- A route address, appended to the app URL
+- A function which performs an action when the endpoint is invoked
+- A return provided by that function
+
+Out goal is to create an API which delivers information about the state of our ML model.
+
+A more sophisticated example is given in [`demos/app_dataset.py`](./lab/L5_Reporting_API/demos/app_dataset.py).
+
+```python
+"""A simple Flask API/App.
+
+Usually, a Flask app has these minimum steps:
+
+1. Instantiate the Flask app
+2. Define the endpoints so that users can interact
+3. Run the app with chosen host and port values
+
+To execute the app:
+
+    $ python app_dataset.py
+
+and the app is served. We get the IP where it's served,
+but usually, we can always access it via 127.0.0.1
+or localhost from our local machine.
+
+To use an endpoint, we run in another terminal:
+
+    $ curl "http://127.0.0.1:8000?user=Mikel"
+
+and we get back True in return.
+
+Or:
+
+    $ curl "http://127.0.0.1:8000/medians?filename=demodata.csv"
+
+and we get back
+    year            1990.0
+    population    935933.0
+"""
+
+from flask import Flask, request
+import pandas as pd
+
+app = Flask(__name__)
+
+# We can define so many auxiliary functions as we want
+# here or in separate modules, too.
+def read_pandas(filename):
+    data = pd.read_csv(filename)
+    return data
+
+# curl "http://192.168.1.75:8000?user=Mikel"
+@app.route('/')
+def index():
+    user = request.args.get('user')
+    return str(user=='Mikel') + '\n'
+
+# curl "http://192.168.1.75:8000/medians?filename=demodata.csv"
+@app.route('/medians')
+def summary():
+    filename = request.args.get('filename')  
+    data = read_pandas(filename)
+    return str(data.median(axis=0))
+
+app.run(host='0.0.0.0', port=8000)
+
+```
 
 ## 6. Project: A Dynamic Risk Assessment System
 
