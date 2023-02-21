@@ -25,8 +25,11 @@ Or:
     $ curl "http://127.0.0.1:8000/medians?filename=demodata.csv"
 
 and we get back
+
     year            1990.0
     population    935933.0
+
+Note: demodata.csv should be in the same folder for the previous usage example
 """
 
 from flask import Flask, request
@@ -40,13 +43,14 @@ def read_pandas(filename):
     data = pd.read_csv(filename)
     return data
 
-# curl "http://192.168.1.75:8000?user=Mikel"
+# curl "http://127.0.0.1:8000?user=Mikel"
 @app.route('/')
 def index():
     user = request.args.get('user')
     return str(user=='Mikel') + '\n'
 
-# curl "http://192.168.1.75:8000/medians?filename=demodata.csv"
+# curl "http://127.0.0.1:8000/medians?filename=demodata.csv"
+# (if demodata.csv is in the same folder)
 @app.route('/medians')
 def summary():
     filename = request.args.get('filename')  
