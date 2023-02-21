@@ -1039,6 +1039,7 @@ Or:
 and we get back "Hello Mikel!"
 """
 
+# request is necessary to use/get user inputs!
 from flask import Flask, request
 
 # 1. Instantiate Fask app
