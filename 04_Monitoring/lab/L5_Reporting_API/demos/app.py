@@ -10,14 +10,21 @@ To execute the app:
 
     $ python app.py
 
-and the app is served.
+and the app is served. We get the IP where it's served,
+but usually, we can always access it via 127.0.0.1
+or localhost from our local machine.
 
-Then, to use the endpoint, in another terminal:
+To use an endpoint, we run in another terminal:
 
-    $ curl 127.0.0.1:8000?number=5
+    $ curl "http://127.0.0.1:8000?number=5"
 
 and we get back 6 in return.
 
+Or:
+
+    $ curl "http://127.0.0.1:8000/hello?user=Mikel"
+
+and we get back "Hello Mikel!"
 """
 
 from flask import Flask, request
@@ -29,10 +36,22 @@ app = Flask(__name__)
 # The default enpoint is "/"
 @app.route('/')
 def index():
-    # We get an input from the user wth requests -> number
+    # We get an input from the user with requests -> number
     # We return the input +1 as a string
+    # Usage:
+    # curl "http://127.0.0.1:8000?number=5"
     number = request.args.get('number')
     return str(int(number)+1)+'\n'
+
+# Another endpoint
+@app.route('/hello')
+def hello():
+    # We get an input from the user with requests -> user
+    # We return Hello + input
+    # Usage: 
+    # curl "http://127.0.0.1:8000/hello?user=Mikel"
+    user = request.args.get('user')
+    return f"Hello {user}!"
 
 # More endpoints
 # ...
