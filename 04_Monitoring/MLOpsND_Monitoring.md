@@ -68,6 +68,7 @@ No guarantees.
     - [Exercise](#exercise)
     - [5.3 Calling API Endpoints](#53-calling-api-endpoints)
       - [Demo](#demo-1)
+      - [Exercise](#exercise-1)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
 
 ## 1. Introduction to Model Scoring and Monitoring
@@ -1269,7 +1270,45 @@ print(response.stdout) # extract answer: b'Hello Mikel!'
 
 ```
 
+#### Exercise
 
+File: [`exercises/call_api_endpoint.py`](./lab/L5_Reporting_API/exercises/call_api_endpoint.py).
+
+```python
+"""This simple script requires to have an API
+with the specified endpoints running, i.e.,
+./appe3.py
+
+To use this, run in one terminal
+
+    $ python appe3.py
+    
+Then, run in another terminal:
+
+    $ python call_api_endpoint.py
+    
+"""
+import requests
+import subprocess
+
+def run_request(endpoint_url):
+    response = requests.get(endpoint_url) # GET method
+    print(response.content)
+    response = subprocess.run(["curl", endpoint_url], capture_output=True)
+    print(response.stdout)
+
+base_url = "http://127.0.0.1:8000"
+
+endpoint_url = base_url + "?user=Mikel"
+run_request(endpoint_url)
+
+endpoint_url = base_url + "/size?filename=testdata.csv"
+run_request(endpoint_url)
+
+endpoint_url = base_url + "/summary?filename=testdata.csv"
+run_request(endpoint_url)
+
+```
 
 ## 6. Project: A Dynamic Risk Assessment System
 
