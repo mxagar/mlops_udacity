@@ -69,6 +69,8 @@ No guarantees.
     - [5.3 Calling API Endpoints](#53-calling-api-endpoints)
       - [Demo](#demo-1)
       - [Exercise](#exercise-1)
+    - [5.4 HTTP Methods](#54-http-methods)
+    - [5.5 Final Exercise: Predictions with a ML Model](#55-final-exercise-predictions-with-a-ml-model)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
 
 ## 1. Introduction to Model Scoring and Monitoring
@@ -1307,6 +1309,79 @@ run_request(endpoint_url)
 
 endpoint_url = base_url + "/summary?filename=testdata.csv"
 run_request(endpoint_url)
+
+```
+
+### 5.4 HTTP Methods
+
+Interacting with REST APIs consists in interacting with HTTP methods: POST, GET, DELETE, PUT ([CRUD](https://en.wikipedia.org/wiki/Create,_read,_update_and_delete)).
+
+So far, GET has been used, but another common one is POST: we send data and expect a response. We can even write endpoints which accept two or more methods and change the actions of the endpoint function depending on the method used at runtime; for instance:
+
+```python
+from flask import request
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        f = request.files['file']
+        f.save("/var/www/uploads/uploaded_file.txt")
+    else:
+        # ...
+```
+
+Interesting links:
+
+- [Flask HTTP methods, handle GET & POST requests](https://pythonbasics.org/flask-http-methods/).
+- [Uploading Files](https://flask.palletsprojects.com/en/2.2.x/patterns/fileuploads/).
+
+### 5.5 Final Exercise: Predictions with a ML Model
+
+This final exercises loads a machine learning model and waits for user interaction to perform batch predictions. When the user interacts with the `/predict` endpoint, the app loads a dataset and passes it to the model to perform a prediction. Note: even the code performs in-batch predictions, the batch has only one sample/row.
+
+- [`exercises/app_final.py`](./lab/L5_Reporting_API/exercises/app_final.py)
+- [`exercises/api_call_final.py`](./lab/L5_Reporting_API/exercises/api_call_final.py)
+
+```python
+### -- app_final.py
+
+from flask import Flask, request
+import pandas as pd
+import pickle
+
+# Instantiate app
+app = Flask(__name__)
+# Load model
+with open('deployedmodel.pkl', 'rb') as file:
+    model = pickle.load(file)
+   
+def read_pandas(filename):
+    data = pd.read_csv(filename)
+    return edata
+
+@app.route('/prediction')
+def prediction():
+    data = pd.read_csv('predictiondata.csv')
+    prediction = model.predict(data)
+    return str(prediction)
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=8000)
+
+### -- api_call_final.py
+
+import subprocess
+import requests
+
+base_url = 'http://127.0.0.1:8000'
+
+response1 = subprocess.run(['curl', base_url+'/prediction'],
+                           capture_output=True)
+
+response2 = requests.get(base_url+'/prediction')
+
+print(response1.stdout) # b'[1]'
+print(response2.content) # b'[1]'
 
 ```
 
