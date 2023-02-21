@@ -62,7 +62,8 @@ No guarantees.
     - [4.3 Module Dependencies](#43-module-dependencies)
     - [4.4 Resolving Data Integrity: Data Imputation](#44-resolving-data-integrity-data-imputation)
     - [4.5 MLflow Tutorial: Diagnosing and Fixing Operational Problems](#45-mlflow-tutorial-diagnosing-and-fixing-operational-problems)
-  - [5. Model Reporting and Monitoring with APIs](#5-model-reporting-and-monitoring-with-apis)
+  - [5. Model Reporting and Monitoring with APIs Using Flask](#5-model-reporting-and-monitoring-with-apis-using-flask)
+    - [5.1 Configuring APIs with Flask](#51-configuring-apis-with-flask)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
 
 ## 1. Introduction to Model Scoring and Monitoring
@@ -488,7 +489,7 @@ Model drift occurs when the context or the properties of the business change; fo
 
 ![Model Drift: House Prices](./pics/model_drift_house_prices.png)
 
-**Note**: The exercises and demos of this lesson 2 are located in [`./lab/L3_Scoring_Drift`](./lab/L3_Scoring_Drift).
+**Note**: The exercises and demos of this lesson 3 are located in [`./lab/L3_Scoring_Drift`](./lab/L3_Scoring_Drift).
 
 Interesting links:
 
@@ -726,6 +727,9 @@ We are going to have many types of operational problems, which often result in w
 - Dependency issues
 
 ![Diagnosing Problems](./pics/diagnosing_problems.png)
+
+**Note**: The exercises and demos of this lesson 4 are located in [`./lab/L4_Diagnosing`](./lab/L4_Diagnosing/).
+
 
 ### 4.1 Process Timing
 
@@ -971,8 +975,92 @@ The web app link:
 
 [https://diagnose-fix-mlflow-demo.herokuapp.com/](https://diagnose-fix-mlflow-demo.herokuapp.com/)
 
-## 5. Model Reporting and Monitoring with APIs
+## 5. Model Reporting and Monitoring with APIs Using Flask
 
+In this lesson, we learn how to build an API which reports information about the monitoring. Note that an API is a great automation tool that enables interaction with our ML model: with well defined endpoints (= specification of exactly how an API user can interact with an API), other users/scripts can communicate with our program sending/requesting information. The focus of the lesson is on all the aspects related to monitoring covered so far.
+
+So far, [FastAPI](https://fastapi.tiangolo.com/) has been used in the previous module; in this module, [Flask](https://flask.palletsprojects.com/en/2.2.x/) will be used. We could do all the exercises with FastAPI, though. In contrast to FastAPI, Flask is more general purpose, i.e., not optimized only for APIs.
+
+Related guides/files:
+
+- [https://github.com/mxagar/flask_guide](https://github.com/mxagar/flask_guide)
+- [https://github.com/mxagar/data_science_udacity/blob/main/02_SoftwareEngineering/DSND_SWEngineering.md](https://github.com/mxagar/data_science_udacity/blob/main/02_SoftwareEngineering/DSND_SWEngineering.md)
+
+Interesting links:
+
+- [Flask vs. Django](https://steelkiwi.medium.com/flask-vs-django-how-to-understand-whether-you-need-a-hammer-or-a-toolbox-39b8b3a2e4a5)
+- [Flask Tutorials](https://www.fullstackpython.com/flask.html)
+
+To install Flask and additional related packages (i.e., forms, SQLAlchemy, database migration tools, etc.):
+
+```bash
+# Flask
+conda install -c anaconda flask  -y
+# Additional tools
+conda install -c anaconda flask-wtf  -y
+pip install Flask-SQLAlchemy
+pip install Flask-Migrate
+```
+
+**Note**: The exercises and demos of this lesson 5 are located in [`./lab/L5_Reporting_API`](./lab/L5_Reporting_API/).
+
+### 5.1 Configuring APIs with Flask
+
+In order to configure an API (with Flask), we need to do 2 things:
+
+1. Define a file which runs a Flask app, e.g., `app.py`.
+2. B
+
+[`demos/app.py`](./lab/L5_Reporting_API/demos/app.py)
+
+```python
+"""A simple Flask API/App.
+
+Usually, a Flask app has these minimum steps:
+
+1. Instantiate the Flask app
+2. Define the endpoints so that users can interact
+3. Run the app with chosen host and port values
+
+To execute the app:
+
+    $ python app.py
+
+and the app is served.
+
+Then, to use the endpoint, in another terminal:
+
+    $ curl 127.0.0.1:8000?number=5
+
+and we get back 6 in return.
+
+"""
+
+from flask import Flask, request
+
+# 1. Instantiate Fask app
+app = Flask(__name__)
+
+# 2. Define the endpoints with .route()
+# The default enpoint is "/"
+@app.route('/')
+def index():
+    # We get an input from the user wth requests -> number
+    # We return the input +1 as a string
+    number = request.args.get('number')
+    return str(int(number)+1)+'\n'
+
+# More endpoints
+# ...
+
+# 3. Run the app
+# host=0.0.0.0: the app should work in whatever IP
+# is assigned to our server (it's like a placeholder)
+# port=8000: the port where the app is communicating;
+# common port in API configuration
+app.run(host='0.0.0.0', port=8000)
+
+```
 
 
 ## 6. Project: A Dynamic Risk Assessment System
