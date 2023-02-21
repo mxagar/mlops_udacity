@@ -28,3 +28,4 @@ census_model_deployment_fastapi
 model_scoring_evidently_demo
 historical_data_drift_mlflow_demo
 diagnose_and_fix_mlflow_demo
+flask_guide
