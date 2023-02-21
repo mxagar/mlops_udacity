@@ -64,6 +64,7 @@ No guarantees.
     - [4.5 MLflow Tutorial: Diagnosing and Fixing Operational Problems](#45-mlflow-tutorial-diagnosing-and-fixing-operational-problems)
   - [5. Model Reporting and Monitoring with APIs Using Flask](#5-model-reporting-and-monitoring-with-apis-using-flask)
     - [5.1 Configuring APIs with Flask](#51-configuring-apis-with-flask)
+    - [5.2 Endpoint Scripting](#52-endpoint-scripting)
   - [6. Project: A Dynamic Risk Assessment System](#6-project-a-dynamic-risk-assessment-system)
 
 ## 1. Introduction to Model Scoring and Monitoring
@@ -1006,12 +1007,7 @@ pip install Flask-Migrate
 
 ### 5.1 Configuring APIs with Flask
 
-In order to configure an API (with Flask), we need to do 2 things:
-
-1. Define a file which runs a Flask app, e.g., `app.py`.
-2. B
-
-[`demos/app.py`](./lab/L5_Reporting_API/demos/app.py)
+In order to configure an API (with Flask), we need to define a file such as [`demos/app.py`](./lab/L5_Reporting_API/demos/app.py) (below) and then run it with `python app.py`. When the app is served, we can access its endpoints via the browser or with `curl`.
 
 ```python
 """A simple Flask API/App.
@@ -1026,14 +1022,21 @@ To execute the app:
 
     $ python app.py
 
-and the app is served.
+and the app is served. We get the IP where it's served,
+but usually, we can always access it via 127.0.0.1
+or localhost from our local machine.
 
-Then, to use the endpoint, in another terminal:
+To use an endpoint, we run in another terminal:
 
-    $ curl 127.0.0.1:8000?number=5
+    $ curl "http://127.0.0.1:8000?number=5"
 
 and we get back 6 in return.
 
+Or:
+
+    $ curl "http://127.0.0.1:8000/hello?user=Mikel"
+
+and we get back "Hello Mikel!"
 """
 
 from flask import Flask, request
@@ -1045,10 +1048,22 @@ app = Flask(__name__)
 # The default enpoint is "/"
 @app.route('/')
 def index():
-    # We get an input from the user wth requests -> number
+    # We get an input from the user with requests -> number
     # We return the input +1 as a string
+    # Usage:
+    # curl "http://127.0.0.1:8000?number=5"
     number = request.args.get('number')
     return str(int(number)+1)+'\n'
+
+# Another endpoint
+@app.route('/hello')
+def hello():
+    # We get an input from the user with requests -> user
+    # We return Hello + input
+    # Usage: 
+    # curl "http://127.0.0.1:8000/hello?user=Mikel"
+    user = request.args.get('user')
+    return f"Hello {user}!"
 
 # More endpoints
 # ...
@@ -1061,6 +1076,29 @@ def index():
 app.run(host='0.0.0.0', port=8000)
 
 ```
+
+To use the app:
+
+```bash
+# Start and serve the app
+# The machine IP is shown
+# We can use it or also 127.0.0.1 or localhost
+# if we access it locally
+python app.py
+
+# Use first endpoint
+curl "http://127.0.0.1:8000?number=5"
+# We get 6
+# We can also use the browser instead of curl
+
+# Use second endpoint
+curl "http://127.0.0.1:8000/hello?user=Mikel"
+# We get "Hello Mikel!"
+# We can also use the browser instead of curl
+```
+
+### 5.2 Endpoint Scripting
+
 
 
 ## 6. Project: A Dynamic Risk Assessment System
