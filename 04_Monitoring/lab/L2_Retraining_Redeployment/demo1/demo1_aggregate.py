@@ -8,10 +8,13 @@ final_df = pd.DataFrame(columns=['peratio','price'])
 
 for directory in directories:
     # Files in directory
+    # FIXME: use os.path.join() instead of concatenating strings with +
     filenames = os.listdir(os.getcwd()+directory)
     for each_filename in filenames:
+        # FIXME: use os.path.join() instead of concatenating strings with +
         current_df = pd.read_csv(os.getcwd()+directory+each_filename)
         # Append dataframe + reset index!
+        # FIXME: Use pd.concat() instead!
         final_df = final_df.append(current_df).reset_index(drop=True)
 
 # Now, we could do some cleaning...
