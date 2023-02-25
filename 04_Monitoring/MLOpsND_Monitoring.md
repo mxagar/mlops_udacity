@@ -1393,3 +1393,12 @@ print(response2.content) # b'[1]'
 Starter file: [starter-file.zip](https://video.udacity-data.com/topher/2021/March/60412fe6_starter-file/starter-file.zip).
 
 Project repository: [churn_model_monitoring](https://github.com/mxagar/churn_model_monitoring).
+
+Links suggested by the reviewer:
+
+Other links:
+
+- [MLOps: What It Is, Why It Matters, and How to Implement It](https://neptune.ai/blog/mlops)
+- [MLOps Core](https://ml-ops.org/content/references.html)
+- [10 Amazing MLOps Learning Resources](https://medium.com/analytics-vidhya/10-amazing-mlops-learning-resources-378804c418be)
+- [MLOps-Reducing the technical debt of Machine Learning](https://medium.com/mlops-community/mlops-reducing-the-technical-debt-of-machine-learning-dac528ef39de)
