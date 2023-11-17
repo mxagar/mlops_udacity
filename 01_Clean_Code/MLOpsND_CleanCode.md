@@ -72,6 +72,7 @@ conda activate ds
 			- [Pull Request (PR) Workflow](#pull-request-pr-workflow)
 			- [Fork-Branch-Pull-Request Workflow](#fork-branch-pull-request-workflow)
 				- [Step by Step Workflow](#step-by-step-workflow)
+			- [Summary](#summary)
 		- [Model and Dataset Versioning](#model-and-dataset-versioning)
 		- [Code Reviews](#code-reviews)
 	- [4. Lesson 4: Production Ready Code](#4-lesson-4-production-ready-code)
@@ -633,6 +634,10 @@ Have a look at my git cheatsheet:
 
 `./git_howto.txt`
 
+Additionally, in this folder, you'll find a summary of the most important commands/workflow when working in teams, as well as best practices:
+
+[´git_teams_summary.md´](./git_teams_summary.md)
+
 ### Notes on `pull` and `push` and Remote/Cloud Repos
 
 We `pull` / `push` from the remote/cloud repo. Usually, that remote repo is called `origin`, and often there is only one. If we have several remote repos and several branches, we need to specify them in the `pull` / `push` command!
@@ -996,6 +1001,12 @@ git branch -d feature-test
 git push origin --delete feature-test
 
 ```
+
+#### Summary
+
+In this folder, you'll find a summary of the most important commands/workflow when working in teams, as well as best practices:
+
+[´git_teams_summary.md´](./git_teams_summary.md)
 
 ### Model and Dataset Versioning
 
