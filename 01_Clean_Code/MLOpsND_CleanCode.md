@@ -630,13 +630,10 @@ Nothing new.
 - Reviewing commands: `git status`, `git log`
 - Branching: `git checkout`, `git branch`, `git merge`
 
-Have a look at my git cheatsheet:
+Have a look at my git cheatsheets:
 
-`./git_howto.txt`
-
-Additionally, in this folder, you'll find a summary of the most important commands/workflow when working in teams, as well as best practices:
-
-[´git_teams_summary.md´](./git_teams_summary.md)
+- [`git_howto.txt`](https://github.com/mxagar/tool_guides/blob/master/git/git_howto.txt)
+- [´git_teams_summary.md´](https://github.com/mxagar/tool_guides/blob/master/git/git_teams_summary.md)
 
 ### Notes on `pull` and `push` and Remote/Cloud Repos
 
@@ -873,7 +870,9 @@ This is the Pull_request Workflow:
 
 See detailed steps in:
 
-`./git_howto.txt` / `## Social Coding: Fork, Change on Branch, Pull Request`
+- [`git_howto.txt`](https://github.com/mxagar/tool_guides/blob/master/git/git_howto.txt)
+- [´git_teams_summary.md´](https://github.com/mxagar/tool_guides/blob/master/git/git_teams_summary.md)
+- `## Social Coding: Fork, Change on Branch, Pull Request`
 
 #### Fork-Branch-Pull-Request Workflow
 
@@ -1004,9 +1003,10 @@ git push origin --delete feature-test
 
 #### Summary
 
-In this folder, you'll find a summary of the most important commands/workflow when working in teams, as well as best practices:
+In these files, you'll find a summary of the most important commands/workflow when working in teams, as well as best practices:
 
-[´git_teams_summary.md´](./git_teams_summary.md)
+- [`git_howto.txt`](https://github.com/mxagar/tool_guides/blob/master/git/git_howto.txt)
+- [´git_teams_summary.md´](https://github.com/mxagar/tool_guides/blob/master/git/git_teams_summary.md)
 
 ### Model and Dataset Versioning
 
