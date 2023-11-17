@@ -2,20 +2,10 @@
 
 This file contains a summary of the most common git commands when working in teams (*fork-branch-merge* workflow) as well as best practices for git messages and *readme* files:
 
-- [Git Version Control in Teams](#git-version-control-in-teams)
-  - [Fork-Branch-Merge Workflow](#fork-branch-merge-workflow)
-  - [Commit Messages: Best Practices](#commit-messages-best-practices)
-  - [Readme: Best Practices](#readme-best-practices)
+- [Fork-Branch-Merge Workflow](#fork-branch-merge-workflow)
+- [Commit Messages: Best Practices](#commit-messages-best-practices)
+- [Readme: Best Practices](#readme-best-practices)
     - [Markdown 101](#markdown-101)
-  - [Footnotes](#footnotes)
-  - [Heading ID](#heading-id)
-    - [My Great Heading {#custom-id}](#my-great-heading-custom-id)
-  - [Definitions](#definitions)
-  - [Task list](#task-list)
-  - [Links to files and sections](#links-to-files-and-sections)
-  - [Collapsable text](#collapsable-text)
-  - [Amazing Info](#amazing-info)
-  - [Badges](#badges)
 
 ## Fork-Branch-Merge Workflow
 
@@ -143,7 +133,7 @@ git push origin --delete feature/jira-XXX-concept
 
 ## Commit Messages: Best Practices
 
-Check: [git-styleguide](https://udacity.github.io/git-styleguide/)
+Check: [git-styleguide](https://udacity.github.io/git-styleguide/).
 
 ```
 <type>: <Subject>
@@ -244,17 +234,21 @@ __underline__
 
 ## Fenced code block
 ```
+```
 {
     "firstName": "John",
     "lastName": "Smith",
     "age": 25
 }
 ```
+```
 
 ## Fenced code block with syntax highlighting
+```
 ```python
 while(True):
     pass
+```
 ```
 
 ## Footnotes
