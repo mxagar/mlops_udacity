@@ -15,6 +15,10 @@ This module uses exercises from the following forked repository:
 
 [udacity-cd0581-building-a-reproducible-model-workflow-exercises](https://github.com/mxagar/udacity-cd0581-building-a-reproducible-model-workflow-exercises)
 
+Final note: This module uses Weights & Biases for tracking and MLflow for pipeline management, among others. I have another guide in which I show how MLflow can be used for tracking, pipeline management and model deployment (including model registries):
+
+[mxagar/mlflow_guide](https://github.com/mxagar/mlflow_guide)
+
 Mikel Sagardia, 2022.  
 No guarantees.
 
