@@ -617,6 +617,8 @@ Some links:
 - [List of Provenance Tools](https://projects.iq.harvard.edu/provenance-at-harvard/tools)
 - [Provenance Use Cases](https://confluence.csiro.au/public/PROMS/provenance-use-cases)
 
+**IMPORTANT NOTE: I have another guide on DVC with additional details: [mxagar/tool_guides/dvc](https://github.com/mxagar/tool_guides/tree/master/dvc).**
+
 ### 3.1 Introduction Data Version Control (DVC): Installation & Resemblance to Git
 
 DVC relies on Git to do the version control and it doesn't store the data/models itself, but that is done by external or remote services like S3, HDFS, GDrive, etc.

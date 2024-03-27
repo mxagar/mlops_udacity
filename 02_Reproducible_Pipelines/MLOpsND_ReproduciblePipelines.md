@@ -263,6 +263,8 @@ wandb --help
 mlflow --help
 ```
 
+**IMPORTANT NOTE: I have another guide on MLflow with additional details: [mxagar/mlflow_guide](https://github.com/mxagar/mlflow_guide).**
+
 ### 1.5 Module Project: Rental Price Prediction in New York
 
 > A property management company is renting rooms and properties in New York for short periods on various rental platforms. They need to estimate the typical price for a given property based on the price of similar properties. The company receives new data in bulk every week, so the model needs to be retrained with the same cadence, necessitating a reusable pipeline.
